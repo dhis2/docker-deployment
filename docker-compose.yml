@@ -1,0 +1,40 @@
+services:
+  app:
+    image: dhis2/core:${DHIS2_VERSION}
+    volumes:
+      - dhis2-data:/opt/dhis2
+      #- ./config/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
+      - ./config/dhis2/dhis.conf:/opt/dhis2/dhis.conf:ro
+    healthcheck:
+      test: [ "CMD","curl", "-f","http://localhost:8080/dhis-web-login/" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 120s
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+  database:
+    image: bitnami/postgresql:${POSTGRESQL_VERSION}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_POSTGRES_PASSWORD: ${POSTGRES_POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DATABASE: ${POSTGRES_DATABASE}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DATABASE}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  dhis2-data: { }
+  postgres-data: { }
