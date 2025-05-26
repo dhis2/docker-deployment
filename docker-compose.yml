@@ -2,7 +2,7 @@ services:
   app:
     image: dhis2/core:${DHIS2_VERSION}
     volumes:
-      - dhis2-data:/opt/dhis2
+      - dhis2-files:/opt/dhis2/files
       #- ./config/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
       - ./config/dhis2/dhis.conf:/opt/dhis2/dhis.conf:ro
     healthcheck:
@@ -20,7 +20,7 @@ services:
   database:
     image: bitnami/postgresql:${POSTGRESQL_VERSION}
     volumes:
-      - postgres-data:/bitnami/postgresql
+      - postgres-data:/bitnami/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d:ro
     ports:
       - "127.0.0.1:5432:5432"
@@ -37,5 +37,5 @@ services:
       retries: 3
 
 volumes:
-  dhis2-data: { }
+  dhis2-files: { }
   postgres-data: { }
