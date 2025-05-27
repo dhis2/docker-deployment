@@ -20,7 +20,7 @@ services:
   database:
     image: bitnami/postgresql:${POSTGRESQL_VERSION}
     volumes:
-      - postgres-data:/bitnami/postgresql/data
+      - postgres-data:/bitnami/postgresql
       - ./init-scripts:/docker-entrypoint-initdb.d:ro
     ports:
       - "127.0.0.1:5432:5432"
