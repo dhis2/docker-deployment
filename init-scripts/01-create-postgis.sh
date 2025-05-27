@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 
-psql -v -U $POSTGRESQL_USERNAME -c "CREATE EXTENSION postgis;"
+# Create PostGIS extension in the dhis database using postgres superuser
+PGPASSWORD="$POSTGRESQL_POSTGRES_PASSWORD" psql -v -U postgres -d "$POSTGRESQL_DATABASE" -c "CREATE EXTENSION IF NOT EXISTS postgis;"
