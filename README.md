@@ -12,6 +12,6 @@ docker compose up
 
 # TODO
 
-* Proxy server
-* Database backup/restore
-* Monitoring
+- Terminate proxy service with TLS/HTTPS
+- Database backup/restore
+- Monitoring
