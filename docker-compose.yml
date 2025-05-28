@@ -14,8 +14,8 @@ services:
     depends_on:
       database:
         condition: service_healthy
-    ports:
-      - "8080:8080"
+    environment:
+      VIRTUAL_HOST: ${DHIS2_DOMAIN:-dhis2-127-0-0-1.nip.io}
 
   database:
     image: bitnami/postgresql:${POSTGRESQL_VERSION}
@@ -35,6 +35,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+
+  proxy:
+    image: jwilder/nginx-proxy:1.7
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    ports:
+      - "80:80"
 
 volumes:
   dhis2: { }

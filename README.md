@@ -10,8 +10,13 @@ Copy .env.example to .env and edit it to match your environment.
 docker compose up
 ```
 
+Open http://dhis2-127-0-0-1.nip.io in your favourite browser.
+
 # TODO
 
-* Proxy server
-* Database backup/restore
+* Implement pipeline with basic smoke test
+* Pre-commit hooks?
+* TLS using Let's Encrypt
+* Database backup
+* Database restore
 * Monitoring
