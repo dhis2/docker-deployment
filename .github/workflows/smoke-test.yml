@@ -56,8 +56,8 @@ jobs:
       - name: Validate container state
         run: |
           # Ensure containers are running (not exited)
-          APP_STATE=$(docker compose ps --format json app | jq -r '.[0].State')
-          DB_STATE=$(docker compose ps --format json database | jq -r '.[0].State')
+          APP_STATE=$(docker compose ps --format json app | jq -r '.State')
+          DB_STATE=$(docker compose ps --format json database | jq -r '.State')
 
           echo "App state: $APP_STATE"
           echo "Database state: $DB_STATE"
