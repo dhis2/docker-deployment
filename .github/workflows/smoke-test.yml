@@ -16,7 +16,7 @@ env:
   POSTGRESQL_POSTGRES_PASSWORD: ${{ secrets.POSTGRESQL_POSTGRES_PASSWORD }}
 
 jobs:
-  validate-container:
+  smoke-test:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
