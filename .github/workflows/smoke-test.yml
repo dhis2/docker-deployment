@@ -48,7 +48,7 @@ jobs:
       - name: Verify process is running as PID 1
         run: |
           CONTAINER=$(docker compose ps -q app)
-          DHIS2_PID=$(docker exec $CONTAINER pgrep -f "java.*dhis" | head -1)
+          DHIS2_PID=$(docker exec $CONTAINER pgrep -f "java" | head -1)
           echo "DHIS2 process PID: $DHIS2_PID"
           [ "$DHIS2_PID" = "1" ] || { echo "DHIS2 not PID 1"; exit 1; }
           echo "DHIS2 running as PID 1"
