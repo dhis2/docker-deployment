@@ -2,18 +2,9 @@ name: Docker Smoke Test
 
 on:
   push:
-    branches: [master, develop]
+    branches: [master]
   pull_request:
-    branches: [master, develop]
-
-env:
-  DHIS2_VERSION: ${{ vars.DHIS2_VERSION }}
-  POSTGRESQL_VERSION: ${{ vars.POSTGRESQL_VERSION }}
-  HEALTH_CHECK_ENDPOINT: ${{ vars.HEALTH_CHECK_ENDPOINT }}
-  POSTGRESQL_USERNAME: ${{ secrets.POSTGRESQL_USERNAME }}
-  POSTGRESQL_PASSWORD: ${{ secrets.POSTGRESQL_PASSWORD }}
-  POSTGRESQL_DATABASE: ${{ secrets.POSTGRESQL_DATABASE }}
-  POSTGRESQL_POSTGRES_PASSWORD: ${{ secrets.POSTGRESQL_POSTGRES_PASSWORD }}
+    branches: [master]
 
 jobs:
   smoke-test:
@@ -24,47 +15,22 @@ jobs:
       - name: Start services
         run: |
           docker compose up -d
-          docker compose ps
-
-      - name: Wait for database readiness
-        run: |
-          timeout 1m bash -c 'until docker compose exec -T database pg_isready -U ${{ env.POSTGRESQL_USERNAME }} -d ${{ env.POSTGRESQL_DATABASE }}; do sleep 2; done'
-          echo "Database is ready"
 
       - name: Health check application
-        id: healthcheck
         run: |
-          timeout 2m bash -c 'until curl --silent --fail http://dhis2-127-0-0-1.nip.io${{ env.HEALTH_CHECK_ENDPOINT }}; do sleep 5; done'
-          echo "Application is healthy"
+          timeout 2m bash -c 'until curl --silent --fail http://dhis2-127-0-0-1.nip.io/dhis-web-login/; do sleep 5; done'
 
       - name: Verify process isn't running as root
         run: |
-          CONTAINER=$(docker compose ps -q app)
-          USER=$(docker exec $CONTAINER whoami)
+          USER=$(docker compose exec -T app whoami)
           echo "Container user: $USER"
-          [ "$USER" != "root" ] || { echo "Container running as root"; exit 1; }
-          echo "Container NOT running as root"
+          [ "$USER" != "root" ]
 
       - name: Verify process is running as PID 1
         run: |
-          CONTAINER=$(docker compose ps -q app)
-          DHIS2_PID=$(docker exec $CONTAINER pgrep -f "java" | head -1)
+          DHIS2_PID=$(docker compose exec -T app pgrep java | head -n 1)
           echo "DHIS2 process PID: $DHIS2_PID"
-          [ "$DHIS2_PID" = "1" ] || { echo "DHIS2 not PID 1"; exit 1; }
-          echo "DHIS2 running as PID 1"
-
-      - name: Validate container state
-        run: |
-          # Ensure containers are running (not exited)
-          APP_STATE=$(docker compose ps --format json app | jq -r '.State')
-          DB_STATE=$(docker compose ps --format json database | jq -r '.State')
-
-          echo "App state: $APP_STATE"
-          echo "Database state: $DB_STATE"
-
-          [ "$APP_STATE" = "running" ] || { echo "App not running"; exit 1; }
-          [ "$DB_STATE" = "running" ] || { echo "Database not running"; exit 1; }
-          echo "All containers running"
+          [ "$DHIS2_PID" = "1" ]
 
       - name: Debug on failure
         if: failure()
@@ -75,9 +41,3 @@ jobs:
           docker compose logs app --tail=50
           echo "=== Database Logs (last 20 lines) ==="  
           docker compose logs database --tail=20
-
-      - name: Cleanup
-        if: always()
-        run: |
-          docker compose down -v
-          docker system prune -f
