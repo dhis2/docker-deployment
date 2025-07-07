@@ -6,7 +6,7 @@ services:
       #- ./config/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
       - ./config/dhis2/dhis.conf:/opt/dhis2/dhis.conf:ro
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/dhis-web-login/"]
+      test: [ "CMD", "curl", "-f", "http://127.0.0.1:8080/dhis-web-login/" ]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -48,5 +48,5 @@ services:
       - "80:80"
 
 volumes:
-  dhis2: {}
-  postgres: {}
+  dhis2: { }
+  postgres: { }
