@@ -11,7 +11,12 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-
+      - name: Configure environment
+        run: |
+          echo "POSTGRESQL_USERNAME=dhis" >> $GITHUB_ENV
+          echo "POSTGRESQL_PASSWORD=dhis" >> $GITHUB_ENV
+          echo "POSTGRESQL_POSTGRES_PASSWORD=dhis" >> $GITHUB_ENV
+          echo "PGPASSWORD=dhis" >> $GITHUB_ENV
       - name: Start services
         run: |
           docker compose up -d
