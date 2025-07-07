@@ -15,6 +15,7 @@ jobs:
         run: |
           echo "POSTGRESQL_USERNAME=dhis" >> $GITHUB_ENV
           echo "POSTGRESQL_PASSWORD=dhis" >> $GITHUB_ENV
+          echo "POSTGRESQL_DATABASE=dhis" >> $GITHUB_ENV
           echo "POSTGRESQL_POSTGRES_PASSWORD=dhis" >> $GITHUB_ENV
           echo "PGPASSWORD=dhis" >> $GITHUB_ENV
       - name: Start services
