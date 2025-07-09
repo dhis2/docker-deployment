@@ -1,12 +1,12 @@
 services:
   app:
-    image: dhis2/core:${DHIS2_VERSION}
+    image: dhis2/core:${DHIS2_VERSION:-42}
     volumes:
       - dhis2:/opt/dhis2/
       #- ./config/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
       - ./config/dhis2/dhis.conf:/opt/dhis2/dhis.conf:ro
     healthcheck:
-      test: [ "CMD","curl", "-f","http://localhost:8080/dhis-web-login/" ]
+      test: [ "CMD", "curl", "-f", "http://127.0.0.1:8080/dhis-web-login/" ]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -18,7 +18,7 @@ services:
       VIRTUAL_HOST: ${DHIS2_DOMAIN:-dhis2-127-0-0-1.nip.io}
 
   database:
-    image: bitnami/postgresql:${POSTGRESQL_VERSION}
+    image: bitnami/postgresql:${POSTGRESQL_VERSION:-17}
     volumes:
       - postgres:/bitnami/postgresql
       - ./init-scripts:/docker-entrypoint-initdb.d:ro
@@ -27,11 +27,11 @@ services:
     environment:
       POSTGRESQL_USERNAME: ${POSTGRESQL_USERNAME}
       POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
-      POSTGRESQL_DATABASE: ${POSTGRESQL_DATABASE}
+      POSTGRESQL_DATABASE: ${POSTGRESQL_DATABASE:-dhis}
       POSTGRESQL_POSTGRES_PASSWORD: ${POSTGRESQL_POSTGRES_PASSWORD}
       PGPASSWORD: ${POSTGRESQL_PASSWORD}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRESQL_USERNAME} -d ${POSTGRESQL_DATABASE}" ]
+      test: [ "CMD-SHELL","pg_isready -U ${POSTGRESQL_USERNAME} -d ${POSTGRESQL_DATABASE}" ]
       interval: 10s
       timeout: 5s
       retries: 3

@@ -1,0 +1,49 @@
+name: Docker Smoke Test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure environment
+        run: |
+          echo "POSTGRESQL_USERNAME=dhis" >> $GITHUB_ENV
+          echo "POSTGRESQL_PASSWORD=dhis" >> $GITHUB_ENV
+          echo "POSTGRESQL_DATABASE=dhis" >> $GITHUB_ENV
+          echo "POSTGRESQL_POSTGRES_PASSWORD=dhis" >> $GITHUB_ENV
+          echo "PGPASSWORD=dhis" >> $GITHUB_ENV
+      - name: Start services
+        run: |
+          docker compose up -d
+
+      - name: Wait for application to be ready
+        run: |
+          timeout 2m bash -c 'until curl --silent --fail http://dhis2-127-0-0-1.nip.io/dhis-web-login/; do sleep 5; done'
+
+      - name: Verify process isn't running as root
+        run: |
+          USER=$(docker compose exec -T app whoami)
+          echo "Container user: $USER"
+          [ "$USER" != "root" ]
+
+      - name: Verify process is running as PID 1
+        run: |
+          DHIS2_PID=$(docker compose exec -T app pgrep java | head -n 1)
+          echo "DHIS2 process PID: $DHIS2_PID"
+          [ "$DHIS2_PID" = "1" ]
+
+      - name: Debug on failure
+        if: failure()
+        run: |
+          echo "=== Container Status ==="
+          docker compose ps -a
+          echo "=== App Logs (last 50 lines) ==="
+          docker compose logs app --tail=50
+          echo "=== Database Logs (last 20 lines) ==="  
+          docker compose logs database --tail=20
