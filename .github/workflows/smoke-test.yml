@@ -13,11 +13,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Configure environment
         run: |
-          echo "POSTGRESQL_USERNAME=dhis" >> $GITHUB_ENV
-          echo "POSTGRESQL_PASSWORD=dhis" >> $GITHUB_ENV
-          echo "POSTGRESQL_DATABASE=dhis" >> $GITHUB_ENV
-          echo "POSTGRESQL_POSTGRES_PASSWORD=dhis" >> $GITHUB_ENV
-          echo "PGPASSWORD=dhis" >> $GITHUB_ENV
+          echo "POSTGRES_USER=dhis" >> $GITHUB_ENV
+          echo "POSTGRES_PASSWORD=dhis" >> $GITHUB_ENV
+          echo "POSTGRES_DB=dhis" >> $GITHUB_ENV
       - name: Start services
         run: |
           docker compose up -d
