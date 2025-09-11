@@ -43,13 +43,10 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      #- "8080:8080"
     volumes:
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
       - ./traefik/acme.json:/cert/acme.json
     environment:
-      #- TRAEFIK_API_DASHBOARD=true
-      #- TRAEFIK_API_INSECURE=true
       - TRAEFIK_ENTRYPOINTS_WEB_ADDRESS=:80
       - TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_TO=websecure
       - TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME=https
