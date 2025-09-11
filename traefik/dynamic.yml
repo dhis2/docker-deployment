@@ -1,0 +1,15 @@
+http:
+  routers:
+    app:
+      rule: "Host(`dhis2-127-0-0-1.nip.io`)"
+      service: app
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    app:
+      loadBalancer:
+        servers:
+          - url: "http://app:8080"

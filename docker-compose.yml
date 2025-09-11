@@ -15,7 +15,6 @@ services:
       database:
         condition: service_healthy
     environment:
-      VIRTUAL_HOST: ${DHIS2_DOMAIN:-dhis2-127-0-0-1.nip.io}
       POSTGRESQL_USERNAME: ${POSTGRESQL_USERNAME}
       POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
       POSTGRESQL_DATABASE: ${POSTGRESQL_DATABASE:-dhis}
@@ -39,12 +38,27 @@ services:
       timeout: 5s
       retries: 3
 
-  proxy:
-    image: jwilder/nginx-proxy:1.7
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
+  traefik:
+    image: traefik:v3.5
     ports:
       - "80:80"
+      - "443:443"
+      #- "8080:8080"
+    volumes:
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./traefik/acme.json:/cert/acme.json
+    environment:
+      #- TRAEFIK_API_DASHBOARD=true
+      #- TRAEFIK_API_INSECURE=true
+      - TRAEFIK_ENTRYPOINTS_WEB_ADDRESS=:80
+      - TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_TO=websecure
+      - TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME=https
+      - TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS=:443
+      - TRAEFIK_PROVIDERS_FILE_FILENAME=/etc/traefik/dynamic.yml
+      - TRAEFIK_PROVIDERS_FILE_WATCH=true
+      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL=devops@dhis2.org
+      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_STORAGE=/cert/acme.json
+      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_TLSCHALLENGE=true
 
 volumes:
   dhis2: { }
