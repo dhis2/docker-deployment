@@ -1,21 +1,33 @@
-PYTHON ?= python3.11
+PYTHON ?= python3
 PRE_COMMIT_VERSION ?= 4.3.0
 
-.PHONY: install lint update help venv
+VENV := .venv
+PIP := $(VENV)/bin/python -m pip
+PRE_COMMIT := $(VENV)/bin/pre-commit
 
-venv:
-	@test -d .venv || $(PYTHON) -m venv .venv
+.DEFAULT_GOAL := check
+.PHONY: init lint check clean update
 
-install:
-	$(MAKE) venv
-	.venv/bin/python -m pip install --upgrade pip
-	.venv/bin/python -m pip install "pre-commit==$(PRE_COMMIT_VERSION)"
-	npm install -g dclint
-	.venv/bin/pre-commit install
+$(VENV):
+	@test -d $(VENV) || $(PYTHON) -m venv $(VENV)
 
-lint:
-	.venv/bin/pre-commit run --all-files
+$(PRE_COMMIT): $(VENV)
+	$(PIP) install --upgrade pip
+	$(PIP) install "pre-commit==$(PRE_COMMIT_VERSION)"
+
+.git/hooks/pre-commit: $(PRE_COMMIT)
+	$(PRE_COMMIT) install
+	@touch $@
+
+init: .git/hooks/pre-commit
+
+lint: init
+	$(PRE_COMMIT) run --all-files
+
+check: lint
 
 update:
-	.venv/bin/pre-commit autoupdate
-	npm update -g dclint
+	$(PRE_COMMIT) autoupdate
+
+clean:
+	rm -rf $(VENV)
