@@ -12,8 +12,6 @@ Generate a new `.env` file by executing the following command
 
 Potentially adjust the generated `.env` file to your needs. However, it's highly recommended not to change the generated values of the password variables.
 
-Update the hostname in `traefik/dynamic.yml` file to match your needs. Do note that you'll have to update your DNS records accordingly.
-
 Launch the application by executing the following command
 
 ```shell
