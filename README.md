@@ -22,8 +22,6 @@ Potentially adjust the generated `.env` file to your needs. However, it's highly
 ### Set up development environment
 
 ```bash
-git clone git@github.com:dhis2/docker-deployment.git
-cd docker-deployment
 make
 ```
 
