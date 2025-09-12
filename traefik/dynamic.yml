@@ -1,7 +1,7 @@
 http:
   routers:
     app:
-      rule: "Host(`dhis2-127-0-0-1.nip.io`)"
+      rule: 'Host(`{{env "HOSTNAME"}}`)'
       service: app
       entryPoints:
         - websecure
