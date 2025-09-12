@@ -47,6 +47,9 @@ services:
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
       - ./traefik/acme.json:/cert/acme.json
     environment:
+      - TRAEFIK_PING=true
+      - TRAEFIK_PING_ENTRYPOINT=ping
+      - TRAEFIK_ENTRYPOINTS_PING_ADDRESS=:8082
       - TRAEFIK_ENTRYPOINTS_WEB_ADDRESS=:80
       - TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_TO=websecure
       - TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME=https
@@ -56,6 +59,12 @@ services:
       - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL=devops@dhis2.org
       - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_STORAGE=/cert/acme.json
       - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_TLSCHALLENGE=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 20s
 
 volumes:
   dhis2: { }
