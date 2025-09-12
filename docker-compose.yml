@@ -40,6 +40,7 @@ services:
 
   traefik:
     image: traefik:v3.5
+    user: nobody:nobody
     ports:
       - "80:80"
       - "443:443"
