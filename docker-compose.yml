@@ -64,11 +64,11 @@ services:
       TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_TLSCHALLENGE: true
       HOSTNAME: ${HOSTNAME}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8082/ping"]
+      test: [ "CMD", "traefik", "healthcheck" ]
       interval: 10s
       timeout: 3s
       retries: 3
-      start_period: 20s
+      start_period: 10s
 
 volumes:
   dhis2: { }
