@@ -41,6 +41,13 @@ services:
   traefik:
     image: traefik:v3.5
     user: nobody:nobody
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     ports:
       - "80:80"
       - "443:443"
