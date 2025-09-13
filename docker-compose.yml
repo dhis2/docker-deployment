@@ -49,8 +49,8 @@ services:
       - ./traefik/acme.json:/cert/acme.json
     environment:
       TRAEFIK_LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      TRAEFIK_ACCESSLOG: true
-      TRAEFIK_ACCESSLOG_FORMAT: json
+      TRAEFIK_ACCESSLOG: ${LOG_ACCESS:-true}
+      TRAEFIK_ACCESSLOG_FORMAT: ${LOG_FORMAT:-json}
       TRAEFIK_PING: true
       TRAEFIK_ENTRYPOINTS_WEB_ADDRESS: :80
       TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_TO: websecure
