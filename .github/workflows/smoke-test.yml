@@ -1,10 +1,11 @@
+---
 name: Docker Smoke Test
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   smoke-test:
@@ -45,5 +46,5 @@ jobs:
           docker compose ps -a
           echo "=== App Logs (last 50 lines) ==="
           docker compose logs app --tail=50
-          echo "=== Database Logs (last 20 lines) ==="  
+          echo "=== Database Logs (last 20 lines) ==="
           docker compose logs database --tail=20
