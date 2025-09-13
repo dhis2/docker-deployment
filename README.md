@@ -31,4 +31,4 @@ Launch the application by executing the following command
 docker compose up
 ```
 
-Open why in your favourite browser.
+Open in your favourite browser.
