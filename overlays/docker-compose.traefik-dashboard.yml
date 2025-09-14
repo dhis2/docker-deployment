@@ -1,0 +1,7 @@
+services:
+  traefik:
+    ports:
+      - "8080:8080"
+    environment:
+      TRAEFIK_API_DASHBOARD: true
+      TRAEFIK_API_INSECURE: true
