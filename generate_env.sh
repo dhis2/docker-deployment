@@ -16,6 +16,7 @@ if [ ! -f "$TEMPLATE_FILE" ]; then
 fi
 
 POSTGRES_PASSWORD=$(LC_ALL=C tr -dc "$CHARSET" < /dev/urandom | head -c "$LENGTH")
+POSTGRES_DB_PASSWORD=$(LC_ALL=C tr -dc "$CHARSET" < /dev/urandom | head -c "$LENGTH")
 
 cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
 
@@ -23,9 +24,11 @@ cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
 if sed --version >/dev/null 2>&1; then
   # GNU sed
   sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$POSTGRES_PASSWORD/" "$OUTPUT_FILE"
+  sed -i "s/^POSTGRES_DB_PASSWORD=.*/POSTGRES_DB_PASSWORD=$POSTGRES_DB_PASSWORD/" "$OUTPUT_FILE"
 else
   # BSD sed (macOS)
   sed -i '' "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$POSTGRES_PASSWORD/" "$OUTPUT_FILE"
+  sed -i '' "s/^POSTGRES_DB_PASSWORD=.*/POSTGRES_DB_PASSWORD=$POSTGRES_DB_PASSWORD/" "$OUTPUT_FILE"
 fi
 
 chmod u+rw,go-rwx "$OUTPUT_FILE"
