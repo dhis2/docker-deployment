@@ -18,6 +18,8 @@ Launch the application by executing the following command
 docker compose up
 ```
 
+Open http://dhis2-127-0-0-1.nip.io in your favourite browser.
+
 ### Prerequisites
 
 - Python 3.11+
