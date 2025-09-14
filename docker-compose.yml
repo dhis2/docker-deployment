@@ -1,6 +1,7 @@
 services:
   app:
     image: dhis2/core:${DHIS2_VERSION:-42}
+    restart: unless-stopped
     volumes:
       - dhis2:/opt/dhis2/
       #- ./config/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
@@ -21,6 +22,7 @@ services:
 
   database:
     image: postgis/postgis:${POSTGRES_VERSION:-17-3.4}
+    restart: unless-stopped
     volumes:
       - postgres:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d:ro
@@ -40,6 +42,7 @@ services:
 
   traefik:
     image: traefik:v3.5
+    restart: unless-stopped
     user: nobody:nobody
     read_only: true
     tmpfs:
