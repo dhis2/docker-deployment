@@ -1,4 +1,3 @@
-PYTHON ?= python3
 PRE_COMMIT_VERSION ?= 4.3.0
 
 VENV := .venv
@@ -9,7 +8,7 @@ PRE_COMMIT := $(VENV)/bin/pre-commit
 .PHONY: init lint check clean update
 
 $(VENV):
-	@test -d $(VENV) || $(PYTHON) -m venv $(VENV)
+	@test -d $(VENV) || python3 -m venv $(VENV)
 
 $(PRE_COMMIT): $(VENV)
 	$(PIP) install --upgrade pip
