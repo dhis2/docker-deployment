@@ -12,6 +12,12 @@ Generate a new `.env` file by executing the following command
 
 Potentially adjust the generated `.env` file to your needs. However, it's highly recommended not to change the generated values of the password variables.
 
+Launch the application by executing the following command
+
+```shell
+docker compose up
+```
+
 ### Prerequisites
 
 - Python 3.11+
@@ -21,14 +27,6 @@ Potentially adjust the generated `.env` file to your needs. However, it's highly
 
 ### Set up development environment
 
-```bash
+```shell
 make init
 ```
-
-Launch the application by executing the following command
-
-```shell
-docker compose up
-```
-
-Open in your favourite browser.
