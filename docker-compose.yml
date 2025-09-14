@@ -1,6 +1,7 @@
 services:
   app:
     image: dhis2/core:${DHIS2_VERSION:-42}
+    restart: unless-stopped
     user: 65534:65534
     read_only: true
     tmpfs:
@@ -26,13 +27,13 @@ services:
       database:
         condition: service_healthy
     environment:
-      VIRTUAL_HOST: ${DHIS2_DOMAIN:-dhis2-127-0-0-1.nip.io}
       POSTGRES_DB: ${POSTGRES_DB:-dhis}
       POSTGRES_DB_USERNAME: ${POSTGRES_DB_USERNAME}
       POSTGRES_DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
 
   database:
     image: postgis/postgis:${POSTGRES_VERSION:-17-3.4}
+    restart: unless-stopped
     user: postgres
     security_opt:
       - no-new-privileges:true
@@ -53,12 +54,44 @@ services:
       timeout: 5s
       retries: 3
 
-  proxy:
-    image: jwilder/nginx-proxy:1.7
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
+  traefik:
+    image: traefik:v3.5
+    restart: unless-stopped
+    user: nobody:nobody
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./traefik/acme.json:/cert/acme.json:rw
+    environment:
+      TRAEFIK_LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      TRAEFIK_ACCESSLOG: ${LOG_ACCESS:-true}
+      TRAEFIK_ACCESSLOG_FORMAT: ${LOG_FORMAT:-json}
+      TRAEFIK_PING: true
+      TRAEFIK_ENTRYPOINTS_WEB_ADDRESS: :80
+      TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_TO: websecure
+      TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME: https
+      TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS: :443
+      TRAEFIK_PROVIDERS_FILE_FILENAME: /etc/traefik/dynamic.yml
+      TRAEFIK_PROVIDERS_FILE_WATCH: true
+      TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL: ${LETSENCRYPT_ACME_EMAIL}
+      TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_STORAGE: /cert/acme.json
+      TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_TLSCHALLENGE: true
+      HOSTNAME: ${HOSTNAME}
+    healthcheck:
+      test: [ "CMD", "traefik", "healthcheck" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
 
 volumes:
   dhis2: { }
