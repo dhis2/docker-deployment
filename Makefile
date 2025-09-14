@@ -3,7 +3,7 @@ PRE_COMMIT_VERSION ?= 4.3.0
 VENV := .venv
 PRE_COMMIT := $(VENV)/bin/pre-commit
 
-.PHONY: init lint check clean update
+.PHONY: init reinit check
 
 init:
 	@test -d $(VENV) || python3 -m venv $(VENV)
