@@ -13,3 +13,4 @@ Thumbs.db
 
 # IDE
 .vscode/
+traefik/acme.json
