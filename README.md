@@ -22,7 +22,7 @@ Potentially adjust the generated `.env` file to your needs. However, it's highly
 ### Set up development environment
 
 ```bash
-make
+make init
 ```
 
 Launch the application by executing the following command

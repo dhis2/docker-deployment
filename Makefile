@@ -4,29 +4,16 @@ VENV := .venv
 PIP := $(VENV)/bin/python -m pip
 PRE_COMMIT := $(VENV)/bin/pre-commit
 
-.DEFAULT_GOAL := check
 .PHONY: init lint check clean update
 
-$(VENV):
+init:
 	@test -d $(VENV) || python3 -m venv $(VENV)
-
-$(PRE_COMMIT): $(VENV)
-	$(PIP) install --upgrade pip
 	$(PIP) install "pre-commit==$(PRE_COMMIT_VERSION)"
-
-.git/hooks/pre-commit: $(PRE_COMMIT)
 	$(PRE_COMMIT) install
-	@touch $@
 
-init: .git/hooks/pre-commit
-
-lint: init
-	$(PRE_COMMIT) run --all-files
-
-check: lint
-
-update:
-	$(PRE_COMMIT) autoupdate
-
-clean:
+reinit:
 	rm -rf $(VENV)
+	$(MAKE) init
+
+check:
+	$(PRE_COMMIT) run --all-files
