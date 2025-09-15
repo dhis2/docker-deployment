@@ -58,7 +58,7 @@ make backup
 
 #### Backup Database
 
-The database can be backed up in two different formats 
+The database can be backed up in two different formats: `custom` and `plain`. The default format is `custom` but it can be changed by setting the `POSTGRES_BACKUP_FORMAT` environment variable to either value.
 
 A backup of the database can be created by executing the following command
 

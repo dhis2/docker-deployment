@@ -99,7 +99,6 @@ services:
   backup-database:
     profiles:
       - backup
-      - backup-database
     <<: *database-image
     volumes:
       - ./backups:/backups
@@ -130,7 +129,6 @@ services:
   backup-filestorage:
     profiles:
       - backup
-      - backup-filestorage
     image: busybox:1.37.0
     volumes:
       - dhis2:/opt/dhis2/
