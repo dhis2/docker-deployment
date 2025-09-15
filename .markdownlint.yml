@@ -1,0 +1,6 @@
+---
+# https://github.com/DavidAnson/markdownlint
+default: true
+MD013: false # line-length - Line length
+MD033: false # inline HTML - Inline HTML
+MD034: false # no-bare-urls - No bare URLs

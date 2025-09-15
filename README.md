@@ -41,3 +41,14 @@ The Traefik dashboard can be enabled by launching the application with the follo
 ```shell
 docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml up
 ```
+
+## Set up development environment
+
+### Prerequisites
+
+- Python 3.11+
+- Make
+
+```shell
+make init
+```

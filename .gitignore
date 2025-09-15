@@ -1,3 +1,16 @@
 .idea
 .env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
 traefik/acme.json
