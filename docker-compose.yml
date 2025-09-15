@@ -111,15 +111,10 @@ services:
       PGPASSWORD: ${POSTGRES_DB_PASSWORD}
     command: >
       /bin/sh -c "
-        EXT=''
-        case \"$$POSTGRES_BACKUP_FORMAT\" in
-          plain) EXT=sql;;
-          custom) EXT=pgc;;
-        esac
-        pg_dump --host $$POSTGRES_HOST --username $$POSTGRES_USER --format $$POSTGRES_BACKUP_FORMAT --file /backups/$$BACKUP_TIMESTAMP.$$EXT $$POSTGRES_DB --verbose
         if [ \"$$POSTGRES_BACKUP_FORMAT\" = \"plain\" ]; then
-          tar --create --gzip --file /backups/$$BACKUP_TIMESTAMP.$$EXT.tar.gz --directory /backups $$BACKUP_TIMESTAMP.$$EXT
-          rm /backups/$$BACKUP_TIMESTAMP.$$EXT
+          pg_dump --host $$POSTGRES_HOST --username $$POSTGRES_USER --format plain $$POSTGRES_DB --verbose | gzip > /backups/$$BACKUP_TIMESTAMP.sql.gz
+        else
+          pg_dump --host $$POSTGRES_HOST --username $$POSTGRES_USER --format $$POSTGRES_BACKUP_FORMAT --file /backups/$$BACKUP_TIMESTAMP.pgc $$POSTGRES_DB --verbose
         fi
       "
     depends_on:
