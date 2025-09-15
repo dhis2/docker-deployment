@@ -1,5 +1,5 @@
 x-database-image: &database-image
-  image: postgis/postgis:${POSTGRES_VERSION:-16}
+  image: postgis/postgis:${POSTGRES_VERSION:-16-master}
 
 services:
   app:
