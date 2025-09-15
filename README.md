@@ -38,7 +38,7 @@ Open http://dhis2-127-0-0-1.nip.io in your favourite browser.
 
 The Traefik dashboard can be enabled by launching the application with the following command
 
-````shell
+```shell
 docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml up
 ```
 
@@ -51,4 +51,4 @@ docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboar
 
 ```shell
 make init
-````
+```
