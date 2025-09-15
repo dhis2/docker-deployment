@@ -1,3 +1,6 @@
+x-database-image: &database-image
+  image: postgis/postgis:${POSTGRES_VERSION:-17-3.4}
+
 services:
   app:
     image: dhis2/core:${DHIS2_VERSION:-42}
@@ -32,7 +35,7 @@ services:
       POSTGRES_DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
 
   database:
-    image: postgis/postgis:${POSTGRES_VERSION:-17-3.4}
+    <<: *database-image
     restart: unless-stopped
     user: postgres
     security_opt:
@@ -92,6 +95,47 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+
+  backup-database:
+    profiles:
+      - backup
+      - backup-database
+    <<: *database-image
+    volumes:
+      - ./backups:/backups
+    environment:
+      POSTGRES_HOST: database
+      POSTGRES_USER: ${POSTGRES_DB_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-dhis}
+      POSTGRES_BACKUP_FORMAT: ${POSTGRES_BACKUP_FORMAT:-custom}
+      PGPASSWORD: ${POSTGRES_DB_PASSWORD}
+    command: >
+      /bin/sh -c "
+        EXT=''
+        case \"$$POSTGRES_BACKUP_FORMAT\" in
+          plain) EXT=sql;;
+          custom) EXT=pgc;;
+        esac
+        pg_dump --host $$POSTGRES_HOST --username $$POSTGRES_USER --format $$POSTGRES_BACKUP_FORMAT --file /backups/$$BACKUP_TIMESTAMP.$$EXT $$POSTGRES_DB --verbose
+        if [ \"$$POSTGRES_BACKUP_FORMAT\" = \"plain\" ]; then
+          tar --create --gzip --file /backups/$$BACKUP_TIMESTAMP.$$EXT.tar.gz --directory /backups $$BACKUP_TIMESTAMP.$$EXT
+          rm /backups/$$BACKUP_TIMESTAMP.$$EXT
+        fi
+      "
+    depends_on:
+      database:
+        condition: service_healthy
+
+  backup-filestorage:
+    profiles:
+      - backup
+      - backup-filestorage
+    image: busybox:1.37.0
+    volumes:
+      - dhis2:/opt/dhis2/
+      - ./backups:/backups
+    entrypoint: /bin/sh -c "tar --create --verbose --gzip --file /backups/$$BACKUP_TIMESTAMP.tar.gz --directory /opt/dhis2/files ."
 
 volumes:
   dhis2: { }

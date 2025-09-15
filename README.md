@@ -42,6 +42,42 @@ The Traefik dashboard can be enabled by launching the application with the follo
 docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml up
 ```
 
+## Backup and Restore
+
+Backups are stored in the `./backups` directory.
+
+We support backup of both the database and the filestorage.
+
+### Backup
+
+A complete backup of both database and filestorage can be created by executing the following command
+
+```shell
+make backup
+```
+
+#### Backup Database
+
+The database can be backed up in two different formats 
+
+A backup of the database can be created by executing the following command
+
+```shell
+make backup-database
+```
+
+#### Backup Filestorage
+
+A backup of the filestorage can be created by executing the following command
+
+```shell
+make backup-filestorage
+```
+
+### Restore
+
+TODO
+
 ## Set up development environment
 
 ### Prerequisites
