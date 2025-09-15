@@ -17,9 +17,11 @@ check:
 BACKUP_TIMESTAMP := $(shell date -Is)
 
 backup-database:
+	mkdir -p ./backups
 	docker compose run -e BACKUP_TIMESTAMP=$(BACKUP_TIMESTAMP) --rm backup-database
 
 backup-file-storage:
+	mkdir -p ./backups
 	docker compose run -e BACKUP_TIMESTAMP=$(BACKUP_TIMESTAMP) --rm backup-file-storage
 
 backup: backup-database backup-file-storage
