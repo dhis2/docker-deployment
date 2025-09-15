@@ -19,7 +19,7 @@ BACKUP_TIMESTAMP := $(shell date -Is)
 backup-database:
 	docker compose run -e BACKUP_TIMESTAMP=$(BACKUP_TIMESTAMP) --rm backup-database
 
-backup-filestorage:
-	docker compose run -e BACKUP_TIMESTAMP=$(BACKUP_TIMESTAMP) --rm backup-filestorage
+backup-file-storage:
+	docker compose run -e BACKUP_TIMESTAMP=$(BACKUP_TIMESTAMP) --rm backup-file-storage
 
-backup: backup-database backup-filestorage
+backup: backup-database backup-file-storage

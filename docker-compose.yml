@@ -126,7 +126,7 @@ services:
       database:
         condition: service_healthy
 
-  backup-filestorage:
+  backup-file-storage:
     profiles:
       - backup
     image: busybox:1.37.0

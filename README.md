@@ -46,11 +46,11 @@ docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboar
 
 Backups are stored in the `./backups` directory.
 
-We support backup of both the database and the filestorage.
+We support backup of both the database and the file storage.
 
 ### Backup
 
-A complete backup of both database and filestorage can be created by executing the following command
+A complete backup of both database and file storage can be created by executing the following command
 
 ```shell
 make backup
@@ -66,12 +66,12 @@ A backup of the database can be created by executing the following command
 make backup-database
 ```
 
-#### Backup Filestorage
+#### Backup File Storage
 
-A backup of the filestorage can be created by executing the following command
+A backup of the file storage can be created by executing the following command
 
 ```shell
-make backup-filestorage
+make backup-file-storage
 ```
 
 ### Restore
