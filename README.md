@@ -80,7 +80,7 @@ make backup-file-storage
 
 ### Restore
 
-The restore process relies on the `DB_RESTORE_FILE` and `FILE_STORAGE_RESTORE_FILE` environment variables to be set to the path of the backup file to restore. Note that both variable values must be set without the folder prefix and the files must be in the `./backups` directory.
+The restore process relies on the `DB_RESTORE_FILE` and `FILE_STORAGE_RESTORE_SOURCE_DIR` environment variables to be set to the path of the backup file to restore. Note that both variable values must be set without the folder prefix and the files must be in the `./backups` directory.
 
 A complete restore of both database and file storage can be done by executing the following command
 
@@ -100,7 +100,7 @@ make restore-database
 
 #### Restore File Storage
 
-The file storage to restore can be set by setting the `FILE_STORAGE_RESTORE_FILE` environment variable.
+The file storage to restore can be set by setting the `FILE_STORAGE_RESTORE_SOURCE_DIR` environment variable.
 
 Restoring just the file storage can be done by executing the following command
 
