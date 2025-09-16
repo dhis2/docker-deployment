@@ -42,6 +42,42 @@ The Traefik dashboard can be enabled by launching the application with the follo
 docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml up
 ```
 
+## Backup and Restore
+
+Backups are stored in the `./backups` directory.
+
+We support backup of both the database and the file storage.
+
+### Backup
+
+A complete backup of both database and file storage can be created by executing the following command
+
+```shell
+make backup
+```
+
+#### Backup Database
+
+The database can be backed up in two different formats: `custom` and `plain`. The default format is `custom` but it can be changed by setting the `POSTGRES_BACKUP_FORMAT` environment variable to either value.
+
+A backup of the database can be created by executing the following command
+
+```shell
+make backup-database
+```
+
+#### Backup File Storage
+
+A backup of the file storage can be created by executing the following command
+
+```shell
+make backup-file-storage
+```
+
+### Restore
+
+TODO
+
 ## Set up development environment
 
 ### Prerequisites

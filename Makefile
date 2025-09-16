@@ -13,3 +13,15 @@ reinit:
 
 check:
 	.venv/bin/pre-commit run --all-files
+
+BACKUP_TIMESTAMP := $(shell date +%Y-%m-%dT%H:%M:%S%z)
+
+backup-database:
+	mkdir -p ./backups
+	docker compose run -e BACKUP_TIMESTAMP=$(BACKUP_TIMESTAMP) --rm backup-database
+
+backup-file-storage:
+	mkdir -p ./backups
+	docker compose run -e BACKUP_TIMESTAMP=$(BACKUP_TIMESTAMP) --rm backup-file-storage
+
+backup: backup-database backup-file-storage
