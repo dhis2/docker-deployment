@@ -131,7 +131,7 @@ services:
       - restore
     <<: *database-image
     volumes:
-      - ./backups:/backups
+      - ./backups:/backups:ro
     environment:
       POSTGRES_HOST: database
       POSTGRES_USER: ${POSTGRES_DB_USERNAME}
@@ -182,7 +182,7 @@ services:
       - backup
     <<: *file-storage-image
     volumes:
-      - dhis2:/opt/dhis2/
+      - dhis2:/opt/dhis2:ro
       - ./backups:/backups
     environment:
       BACKUP_TIMESTAMP: ${BACKUP_TIMESTAMP}
@@ -201,8 +201,8 @@ services:
       - restore
     <<: *file-storage-image
     volumes:
-      - dhis2:/opt/dhis2/
-      - ./backups:/backups
+      - dhis2:/opt/dhis2
+      - ./backups:/backups:ro
     environment:
       FILE_STORAGE_RESTORE_SOURCE_DIR: ${FILE_STORAGE_RESTORE_SOURCE_DIR}
       RESTORE_DESTINATION_PATH: ${RESTORE_DESTINATION_PATH:-/opt/dhis2/files}
