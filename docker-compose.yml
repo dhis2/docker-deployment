@@ -111,6 +111,8 @@ services:
       PGPASSWORD: ${POSTGRES_DB_PASSWORD}
     command: >
       /bin/sh -c "
+        set -o errexit
+
         if [ \"$$POSTGRES_BACKUP_FORMAT\" = \"plain\" ]; then
           pg_dump --host $$POSTGRES_HOST --username $$POSTGRES_USER --format plain --exclude-table \"analytics_*\" --exclude-table \"_*\" $$POSTGRES_DB --verbose | gzip > /backups/$$BACKUP_TIMESTAMP.sql.gz
         else
@@ -128,7 +130,93 @@ services:
     volumes:
       - dhis2:/opt/dhis2/
       - ./backups:/backups
-    entrypoint: /bin/sh -c "tar --create --verbose --gzip --file /backups/$$BACKUP_TIMESTAMP.tar.gz --directory /opt/dhis2/files ."
+    entrypoint: >
+      /bin/sh -c "
+        set -o errexit
+
+        tar --create --verbose --gzip --file /backups/$$BACKUP_TIMESTAMP.tar.gz --directory /opt/dhis2/files .
+      "
+
+  restore-database:
+    profiles:
+      - restore
+    <<: *database-image
+    volumes:
+      - ./backups:/backups
+    environment:
+      POSTGRES_HOST: database
+      POSTGRES_USER: ${POSTGRES_DB_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-dhis}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      DB_RESTORE_FILE: ${DB_RESTORE_FILE}
+    command: >
+      /bin/sh -c "
+        set -o errexit
+
+        if [ -z \"$DB_RESTORE_FILE\" ]; then
+          echo \"Error: DB_RESTORE_FILE environment variable must be set\"
+          exit 1
+        fi
+      
+        if [ ! -f \"/backups/$DB_RESTORE_FILE\" ]; then
+          echo \"Error: Restore file /backups/$DB_RESTORE_FILE not found\"
+          exit 1
+        fi
+
+        echo \"Restoring database from $DB_RESTORE_FILE\"
+
+        echo \"Waiting for database to be ready...\"
+        until pg_isready -h $$POSTGRES_HOST -U $$POSTGRES_USER; do
+          sleep 2
+        done
+      
+        psql --host=\"$$POSTGRES_HOST\" --username=postgres --dbname=$$POSTGRES_DB --command=\"DROP SCHEMA public CASCADE; CREATE SCHEMA public;\"
+      
+        if echo \"$$DB_RESTORE_FILE\" | grep -q \"\\.sql\\.gz$\"; then
+          gunzip -c /backups/þ$DB_RESTORE_FILE | psql --host $$POSTGRES_HOST --username $$POSTGRES_USER --dbname $$POSTGRES_DB --verbose
+        elif echo \"$$DB_RESTORE_FILE\" | grep -q \"\\.pgc$\"; then
+          pg_restore -w --host $$POSTGRES_HOST --username postgres --dbname $$POSTGRES_DB --verbose --clean --if-exists /backups/$$DB_RESTORE_FILE
+        else
+          echo \"Error: Unsupported file format. Use .sql.gz for plain format or .pgc for custom format\"
+          exit 1
+        fi
+
+        echo \"Database restore completed successfully\"
+      "
+    depends_on:
+      database:
+        condition: service_healthy
+
+  restore-file-storage:
+    profiles:
+      - restore
+    image: busybox:1.37.0
+    volumes:
+      - dhis2:/opt/dhis2/
+      - ./backups:/backups
+    environment:
+      FILE_STORAGE_RESTORE_FILE: ${FILE_STORAGE_RESTORE_FILE}
+    entrypoint: >
+      /bin/sh -c "
+        set -o errexit
+
+        if [ -z \"$$FILE_STORAGE_RESTORE_FILE\" ]; then
+          echo \"Error: FILE_STORAGE_RESTORE_FILE environment variable must be set\"
+          exit 1
+        fi
+      
+        if [ ! -f \"/backups/$$FILE_STORAGE_RESTORE_FILE\" ]; then
+          echo \"Error: Restore file /backups/$$FILE_STORAGE_RESTORE_FILE not found\"
+          exit 1
+        fi
+      
+        echo \"Restoring file storage from $$FILE_STORAGE_RESTORE_FILE\"
+      
+        tar --extract --verbose --gzip --file /backups/$$FILE_STORAGE_RESTORE_FILE --directory /opt/dhis2/files
+      
+        echo \"File storage restore completed successfully\"
+      "
 
 volumes:
   dhis2: { }

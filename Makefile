@@ -25,3 +25,11 @@ backup-file-storage:
 	docker compose run -e BACKUP_TIMESTAMP=$(BACKUP_TIMESTAMP) --rm backup-file-storage
 
 backup: backup-database backup-file-storage
+
+restore-database:
+	docker compose run --rm restore-database
+
+restore-file-storage:
+	docker compose run --rm restore-file-storage
+
+restore: restore-database restore-file-storage

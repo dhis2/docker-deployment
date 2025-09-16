@@ -56,6 +56,8 @@ A complete backup of both database and file storage can be created by executing 
 make backup
 ```
 
+Execute the above command should create two files in the `./backups` directory. One for the database and one for the file storage. Please see the [Backup Database](#backup-database) and [Backup File Storage](#backup-file-storage) sections for more details.
+
 #### Backup Database
 
 The database can be backed up in two different formats: `custom` and `plain`. The default format is `custom` but it can be changed by setting the `POSTGRES_BACKUP_FORMAT` environment variable to either value.
@@ -65,6 +67,8 @@ A backup of the database can be created by executing the following command
 ```shell
 make backup-database
 ```
+
+Execute the above command should create a file in the `./backups` directory. The file name will be `$TIMESTAM.pgc` if the `POSTGRES_BACKUP_FORMAT` environment variable is set to `custom` or `$TIMESTAMP.sql.gz` if the `POSTGRES_BACKUP_FORMAT` environment variable is set to `plain`. Please consult the [PostgreSQL documentation](https://www.postgresql.org/docs/current/app-pgdump.html) for more details.
 
 #### Backup File Storage
 
@@ -76,7 +80,17 @@ make backup-file-storage
 
 ### Restore
 
-TODO
+The restore process relies on the `DB_RESTORE_FILE` and `FILE_STORAGE_RESTORE_FILE` environment variables to be set to the path of the backup file to restore.
+
+A complete restore of both database and file storage can be done by executing the following command
+
+```shell
+make backup
+```
+
+#### Restore Database
+
+#### Restore File Storage
 
 ## Set up development environment
 
