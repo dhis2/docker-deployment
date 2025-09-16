@@ -215,7 +215,7 @@ services:
           exit 1
         fi
 
-        # Add traingling slash to ensure content of the folder is copied rather than the folder itself
+        # Add trailing slash to ensure content of the folder is copied rather than the folder itself
         SRC=/backups/$$FILE_STORAGE_RESTORE_SOURCE_DIR/
 
         if [ ! -d \"$$SRC\" ]; then
