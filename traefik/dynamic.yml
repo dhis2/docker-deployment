@@ -7,6 +7,18 @@ http:
         - websecure
       tls:
         certResolver: letsencrypt
+      middlewares:
+        - security
+
+  middlewares:
+    security:
+      headers:
+        forceSTSHeader: true
+        stsSeconds: 63072000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        frameDeny: true
 
   services:
     app:
