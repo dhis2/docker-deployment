@@ -139,6 +139,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-dhis}
       PGPASSWORD: ${POSTGRES_PASSWORD}
       DB_RESTORE_FILE: ${DB_RESTORE_FILE}
+      DB_RESTORE_NUMBER_OF_JOBS: ${DB_RESTORE_NUMBER_OF_JOBS:-4}
     command: >
       /bin/sh -c "
         set -o errexit
@@ -156,16 +157,16 @@ services:
         echo \"Restoring database from $DB_RESTORE_FILE\"
 
         echo \"Waiting for database to be ready...\"
-        until pg_isready -h $$POSTGRES_HOST -U $$POSTGRES_USER; do
+        until pg_isready --host $$POSTGRES_HOST --username $$POSTGRES_USER; do
           sleep 2
         done
       
         psql --host=\"$$POSTGRES_HOST\" --username=postgres --dbname=$$POSTGRES_DB --command=\"DROP SCHEMA public CASCADE; CREATE SCHEMA public;\"
       
         if echo \"$$DB_RESTORE_FILE\" | grep -q \"\\.sql\\.gz$\"; then
-          gunzip -c /backups/þ$DB_RESTORE_FILE | psql --host $$POSTGRES_HOST --username $$POSTGRES_USER --dbname $$POSTGRES_DB --verbose
+          gunzip --stdout /backups/þ$DB_RESTORE_FILE | psql --host $$POSTGRES_HOST --username $$POSTGRES_USER --dbname $$POSTGRES_DB --verbose
         elif echo \"$$DB_RESTORE_FILE\" | grep -q \"\\.pgc$\"; then
-          pg_restore -w --host $$POSTGRES_HOST --username postgres --dbname $$POSTGRES_DB --verbose --clean --if-exists /backups/$$DB_RESTORE_FILE
+          pg_restore --no-password --host $$POSTGRES_HOST --username postgres --dbname $$POSTGRES_DB --jobs=$$DB_RESTORE_NUMBER_OF_JOBS --verbose --clean --if-exists /backups/$$DB_RESTORE_FILE
         else
           echo \"Error: Unsupported file format. Use .sql.gz for plain format or .pgc for custom format\"
           exit 1
