@@ -1,11 +1,15 @@
 PRE_COMMIT_VERSION ?= 4.3.0
 
-.PHONY: init reinit check
+.PHONY: init reinit check docs
 
 init:
 	@test -d .venv || python3 -m venv .venv
 	.venv/bin/python -m pip install "pre-commit==$(PRE_COMMIT_VERSION)"
 	.venv/bin/pre-commit install
+
+playWright:
+	@test -d .venv || python3 -m venv .venv
+	.venv/bin/python -m pip install playwright pytest
 
 reinit:
 	rm -rf .venv
@@ -33,3 +37,6 @@ restore-file-storage:
 	docker compose run --rm restore-file-storage
 
 restore: restore-database restore-file-storage
+
+docs:
+	docker compose run --rm compose-docs > ./docs/environment-variables.md
