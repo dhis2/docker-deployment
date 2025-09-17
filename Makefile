@@ -27,9 +27,17 @@ backup-file-storage:
 backup: backup-database backup-file-storage
 
 restore-database:
+	docker compose stop app
 	docker compose run --rm restore-database
+	docker compose start app
 
 restore-file-storage:
+	docker compose stop app
 	docker compose run --rm restore-file-storage
+	docker compose start app
 
-restore: restore-database restore-file-storage
+restore:
+	docker compose stop app
+	docker compose run --rm restore-database
+	docker compose run --rm restore-file-storage
+	docker compose start app

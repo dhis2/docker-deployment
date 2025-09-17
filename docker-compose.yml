@@ -1,6 +1,9 @@
 x-database-image: &database-image
   image: postgis/postgis:${POSTGRES_VERSION:-16-master}
 
+x-file-storage-image: &file-storage-image
+  image: rclone/rclone:${RCLONE_VERSION:-1.68}
+
 services:
   app:
     image: dhis2/core:${DHIS2_VERSION:-42}
@@ -123,26 +126,12 @@ services:
       database:
         condition: service_healthy
 
-  backup-file-storage:
-    profiles:
-      - backup
-    image: busybox:1.37.0
-    volumes:
-      - dhis2:/opt/dhis2/
-      - ./backups:/backups
-    entrypoint: >
-      /bin/sh -c "
-        set -o errexit
-
-        tar --create --verbose --gzip --file /backups/$$BACKUP_TIMESTAMP.tar.gz --directory /opt/dhis2/files .
-      "
-
   restore-database:
     profiles:
       - restore
     <<: *database-image
     volumes:
-      - ./backups:/backups
+      - ./backups:/backups:ro
     environment:
       POSTGRES_HOST: database
       POSTGRES_USER: ${POSTGRES_DB_USERNAME}
@@ -150,6 +139,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-dhis}
       PGPASSWORD: ${POSTGRES_PASSWORD}
       DB_RESTORE_FILE: ${DB_RESTORE_FILE}
+      DB_RESTORE_NUMBER_OF_JOBS: ${DB_RESTORE_NUMBER_OF_JOBS:-4}
     command: >
       /bin/sh -c "
         set -o errexit
@@ -167,16 +157,16 @@ services:
         echo \"Restoring database from $DB_RESTORE_FILE\"
 
         echo \"Waiting for database to be ready...\"
-        until pg_isready -h $$POSTGRES_HOST -U $$POSTGRES_USER; do
+        until pg_isready --host $$POSTGRES_HOST --username $$POSTGRES_USER; do
           sleep 2
         done
       
         psql --host=\"$$POSTGRES_HOST\" --username=postgres --dbname=$$POSTGRES_DB --command=\"DROP SCHEMA public CASCADE; CREATE SCHEMA public;\"
       
         if echo \"$$DB_RESTORE_FILE\" | grep -q \"\\.sql\\.gz$\"; then
-          gunzip -c /backups/þ$DB_RESTORE_FILE | psql --host $$POSTGRES_HOST --username $$POSTGRES_USER --dbname $$POSTGRES_DB --verbose
+          gunzip --stdout /backups/þ$DB_RESTORE_FILE | psql --host $$POSTGRES_HOST --username $$POSTGRES_USER --dbname $$POSTGRES_DB --verbose
         elif echo \"$$DB_RESTORE_FILE\" | grep -q \"\\.pgc$\"; then
-          pg_restore -w --host $$POSTGRES_HOST --username postgres --dbname $$POSTGRES_DB --verbose --clean --if-exists /backups/$$DB_RESTORE_FILE
+          pg_restore --no-password --host $$POSTGRES_HOST --username postgres --dbname $$POSTGRES_DB --jobs=$$DB_RESTORE_NUMBER_OF_JOBS --verbose --clean --if-exists /backups/$$DB_RESTORE_FILE
         else
           echo \"Error: Unsupported file format. Use .sql.gz for plain format or .pgc for custom format\"
           exit 1
@@ -188,34 +178,55 @@ services:
       database:
         condition: service_healthy
 
+  backup-file-storage:
+    profiles:
+      - backup
+    <<: *file-storage-image
+    volumes:
+      - dhis2:/opt/dhis2:ro
+      - ./backups:/backups
+    environment:
+      BACKUP_TIMESTAMP: ${BACKUP_TIMESTAMP}
+      BACKUP_SOURCE_PATH: ${BACKUP_SOURCE_PATH:-/opt/dhis2/files}
+    entrypoint: >
+      /bin/sh -c "
+        set -o errexit
+      
+        rclone copy \"$$BACKUP_SOURCE_PATH\" \"/backups/file-storage-$${BACKUP_TIMESTAMP}\" --verbose --create-empty-src-dirs
+
+        echo 'File storage backup completed successfully'
+      "
+
   restore-file-storage:
     profiles:
       - restore
-    image: busybox:1.37.0
+    <<: *file-storage-image
     volumes:
-      - dhis2:/opt/dhis2/
-      - ./backups:/backups
+      - dhis2:/opt/dhis2
+      - ./backups:/backups:ro
     environment:
-      FILE_STORAGE_RESTORE_FILE: ${FILE_STORAGE_RESTORE_FILE}
+      FILE_STORAGE_RESTORE_SOURCE_DIR: ${FILE_STORAGE_RESTORE_SOURCE_DIR}
+      RESTORE_DESTINATION_PATH: ${RESTORE_DESTINATION_PATH:-/opt/dhis2/files}
     entrypoint: >
       /bin/sh -c "
         set -o errexit
 
-        if [ -z \"$$FILE_STORAGE_RESTORE_FILE\" ]; then
-          echo \"Error: FILE_STORAGE_RESTORE_FILE environment variable must be set\"
+        if [ -z \"$$FILE_STORAGE_RESTORE_SOURCE_DIR\" ]; then
+          echo 'Error: FILE_STORAGE_RESTORE_SOURCE_DIR environment variable must be set'
           exit 1
         fi
-      
-        if [ ! -f \"/backups/$$FILE_STORAGE_RESTORE_FILE\" ]; then
-          echo \"Error: Restore file /backups/$$FILE_STORAGE_RESTORE_FILE not found\"
+
+        # Add trailing slash to ensure content of the folder is copied rather than the folder itself
+        SRC=/backups/$$FILE_STORAGE_RESTORE_SOURCE_DIR/
+
+        if [ ! -d \"$$SRC\" ]; then
+          echo \"Error: Restore directory $$SRC not found\"
           exit 1
         fi
-      
-        echo \"Restoring file storage from $$FILE_STORAGE_RESTORE_FILE\"
-      
-        tar --extract --verbose --gzip --file /backups/$$FILE_STORAGE_RESTORE_FILE --directory /opt/dhis2/files
-      
-        echo \"File storage restore completed successfully\"
+
+        rclone copy \"$$SRC\" \"$$RESTORE_DESTINATION_PATH\" --verbose --create-empty-src-dirs
+
+        echo 'File storage restore completed successfully'
       "
 
 volumes:
