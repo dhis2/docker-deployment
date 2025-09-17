@@ -10,6 +10,16 @@ http:
       middlewares:
         - security
 
+    grafana:
+      rule: 'Host(`grafana.{{env "HOSTNAME"}}`)'
+      service: grafana
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - security
+
   middlewares:
     security:
       headers:
@@ -25,3 +35,8 @@ http:
       loadBalancer:
         servers:
           - url: "http://app:8080"
+
+    grafana:
+      loadBalancer:
+        servers:
+          - url: "http://grafana:3000"
