@@ -29,7 +29,7 @@ services:
     command: ["sh", "-c", "mkdir -p /loki/chunks /loki/rules /loki/wal /loki/boltdb-shipper-compactor && chown -R 65534:65534 /loki"]
 
   loki:
-    image: grafana/loki:2.9.0
+    image: grafana/loki:${LOKI_VERSION:-2.9.0}
     restart: unless-stopped
     user: 65534:65534
     security_opt:
@@ -53,7 +53,7 @@ services:
       start_period: 10s
 
   prometheus:
-    image: prom/prometheus:v2.45.0
+    image: prom/prometheus:${PROMETHEUS_VERSION:-v2.45.0}
     restart: unless-stopped
     user: 65534:65534
     read_only: true
@@ -82,7 +82,7 @@ services:
       start_period: 10s
 
   grafana:
-    image: grafana/grafana:10.0.0
+    image: grafana/grafana:${GRAFANA_VERSION:-10.0.0}
     restart: unless-stopped
     user: 472:472
     read_only: true
