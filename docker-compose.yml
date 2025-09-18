@@ -9,7 +9,7 @@ services:
   app:
     image: dhis2/core:${DHIS2_VERSION:-42}
     restart: unless-stopped
-    user: 65534:65534
+    user: nobody:nobody
     read_only: true
     tmpfs:
       - /tmp

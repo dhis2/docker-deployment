@@ -32,12 +32,12 @@ services:
     user: root
     volumes:
       - loki:/loki
-    command: ["sh", "-c", "mkdir -p /loki/chunks /loki/rules /loki/wal /loki/boltdb-shipper-compactor && chown -R 65534:65534 /loki"]
+    command: ["sh", "-c", "mkdir -p /loki/chunks /loki/rules /loki/wal /loki/boltdb-shipper-compactor && chown -R nobody:nobody /loki"]
 
   loki:
     image: grafana/loki:${LOKI_VERSION:-2.9.0}
     restart: unless-stopped
-    user: 65534:65534
+    user: nobody:nobody
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -58,7 +58,7 @@ services:
   prometheus:
     image: prom/prometheus:${PROMETHEUS_VERSION:-v2.45.0}
     restart: unless-stopped
-    user: 65534:65534
+    user: nobody:nobody
     read_only: true
     security_opt:
       - no-new-privileges:true
@@ -84,7 +84,7 @@ services:
   grafana:
     image: grafana/grafana:${GRAFANA_VERSION:-10.0.0}
     restart: unless-stopped
-    user: 472:472
+    user: grafana:grafana
     read_only: true
     security_opt:
       - no-new-privileges:true
