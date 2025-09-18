@@ -4,10 +4,6 @@ x-database-image: &database-image
 x-file-storage-image: &file-storage-image
   image: rclone/rclone:${RCLONE_VERSION:-1.68}
 
-x-loki-logging: &loki-logging
-  driver: loki
-  options:
-    loki-url: "http://host.docker.internal:3100/loki/api/v1/push"
 
 services:
   app:
@@ -28,7 +24,6 @@ services:
       - dhis2:/opt/dhis2/
       #- ./config/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
       - ./config/dhis2/dhis.conf:/opt/dhis2/dhis.conf:ro
-    logging: *loki-logging
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://127.0.0.1:8080/dhis-web-login/" ]
       interval: 10s
@@ -54,7 +49,6 @@ services:
       - ./init-scripts:/docker-entrypoint-initdb.d:ro
     ports:
       - "127.0.0.1:5432:5432"
-    logging: *loki-logging
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-dhis}
@@ -84,7 +78,6 @@ services:
     volumes:
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
       - ./traefik/acme.json:/cert/acme.json:rw
-    logging: *loki-logging
     environment:
       TRAEFIK_LOG_LEVEL: ${LOG_LEVEL:-INFO}
       TRAEFIK_ACCESSLOG: ${LOG_ACCESS:-true}

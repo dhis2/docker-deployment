@@ -132,6 +132,8 @@ Before starting the monitoring services, you need to install the Docker Loki Dri
 
 This script will automatically detect your system architecture and install the appropriate version of the Loki Docker Driver plugin.
 
+**Note**: The plugin is only required when using the monitoring overlay.
+
 ### Basic Monitoring
 
 Start the core application with monitoring:

@@ -1,3 +1,8 @@
+x-loki-logging: &loki-logging
+  driver: loki
+  options:
+    loki-url: "http://host.docker.internal:3100/loki/api/v1/push"
+
 services:
   app:
     environment:
@@ -7,6 +12,13 @@ services:
       - MONITORING_HIBERNATE_ENABLED=on
       - MONITORING_UPTIME_ENABLED=on
       - MONITORING_CPU_ENABLED=on
+    logging: *loki-logging
+
+  database:
+    logging: *loki-logging
+
+  traefik:
+    logging: *loki-logging
 
   # This is needed to avoid permission issues with the loki container when running as non-root user
   loki-init:
