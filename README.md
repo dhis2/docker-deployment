@@ -9,7 +9,7 @@ Docker production deployment of the DHIS2 application
 Generate a new `.env` file by executing the following command
 
 ```shell
-./generate_env.sh
+./scripts/generate_env.sh
 ```
 
 Potentially adjust the generated `.env` file to your needs. However, it's highly recommended not to change the generated values of the password variables.
@@ -127,7 +127,7 @@ This deployment supports optional monitoring through Docker Compose overlays. Th
 Before starting the monitoring services, you need to install the Docker Loki Driver plugin:
 
 ```shell
-./install-loki-driver.sh
+./scripts/install-loki-driver.sh
 ```
 
 This script will automatically detect your system architecture and install the appropriate version of the Loki Docker Driver plugin.
