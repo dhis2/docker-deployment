@@ -1,6 +1,6 @@
 PRE_COMMIT_VERSION ?= 4.3.0
 
-.PHONY: init reinit check
+.PHONY: init reinit check docs
 
 init:
 	@test -d .venv || python3 -m venv .venv
@@ -41,3 +41,7 @@ restore:
 	docker compose run --rm restore-database
 	docker compose run --rm restore-file-storage
 	docker compose start app
+
+docs:
+	mkdir -p ./docs
+	docker compose run --rm compose-docs > docs/environment-variables.md

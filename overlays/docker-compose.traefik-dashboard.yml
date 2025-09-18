@@ -3,5 +3,7 @@ services:
     ports:
       - "8080:8080"
     environment:
+      # -- Enable dashboard
       TRAEFIK_API_DASHBOARD: true
+      # -- Allow insecure access to dashboard
       TRAEFIK_API_INSECURE: true

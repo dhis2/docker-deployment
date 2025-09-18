@@ -33,8 +33,11 @@ services:
       database:
         condition: service_healthy
     environment:
+      # -- Name of the database to use
       POSTGRES_DB: ${POSTGRES_DB:-dhis}
+      # -- Database username
       POSTGRES_DB_USERNAME: ${POSTGRES_DB_USERNAME}
+      # -- Database password
       POSTGRES_DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
 
   database:
@@ -49,10 +52,15 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     environment:
+      # -- Postgres user password
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # -- Name of the database
       POSTGRES_DB: ${POSTGRES_DB:-dhis}
+      # -- Database username
       POSTGRES_DB_USERNAME: ${POSTGRES_DB_USERNAME}
+      # -- Database password
       POSTGRES_DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      # -- Initdb arguments
       POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
     healthcheck:
       test: [ "CMD-SHELL","pg_isready -U postgres -d ${POSTGRES_DB}" ]
@@ -78,19 +86,33 @@ services:
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
       - ./traefik/acme.json:/cert/acme.json:rw
     environment:
+      # -- Log level
       TRAEFIK_LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # -- Enable access logs
       TRAEFIK_ACCESSLOG: ${LOG_ACCESS:-true}
+      # -- Access log format
       TRAEFIK_ACCESSLOG_FORMAT: ${LOG_FORMAT:-json}
+      # -- Allow ping
       TRAEFIK_PING: true
+      # -- Default entrypoint port
       TRAEFIK_ENTRYPOINTS_WEB_ADDRESS: :80
+      # -- Redirect to https
       TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_TO: websecure
+      # -- Redirect scheme
       TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME: https
+      # -- Default secure entrypoint port
       TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS: :443
+      # -- Provider file
       TRAEFIK_PROVIDERS_FILE_FILENAME: /etc/traefik/dynamic.yml
-      TRAEFIK_PROVIDERS_FILE_WATCH: true
+      # -- Watch the provider file for changes
+      TRAEFIK_PROVIDERS_FILE_WATCH: false
+      # -- ACME email
       TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL: ${LETSENCRYPT_ACME_EMAIL}
+      # -- ACME storage file
       TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_STORAGE: /cert/acme.json
+      # -- ACME DNS challenge
       TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_TLSCHALLENGE: true
+      # -- Hostname
       HOSTNAME: ${HOSTNAME}
     healthcheck:
       test: [ "CMD", "traefik", "healthcheck" ]
@@ -106,11 +128,17 @@ services:
     volumes:
       - ./backups:/backups
     environment:
+      # -- Database hostname
       POSTGRES_HOST: database
+      # -- Database username
       POSTGRES_USER: ${POSTGRES_DB_USERNAME}
+      # -- Database password
       POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      # -- Database name
       POSTGRES_DB: ${POSTGRES_DB:-dhis}
+      # -- Database backup format
       POSTGRES_BACKUP_FORMAT: ${POSTGRES_BACKUP_FORMAT:-custom}
+      # -- The `PGPASSWORD` environment variable is used by the `pg_dump` command`
       PGPASSWORD: ${POSTGRES_DB_PASSWORD}
     command: >
       /bin/sh -c "
@@ -133,12 +161,19 @@ services:
     volumes:
       - ./backups:/backups:ro
     environment:
+      # -- Database hostname
       POSTGRES_HOST: database
+      # -- Database username
       POSTGRES_USER: ${POSTGRES_DB_USERNAME}
+      # -- Database password
       POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      # -- Database name
       POSTGRES_DB: ${POSTGRES_DB:-dhis}
+      # -- The `PGPASSWORD` environment variable is used by the `pg_dump` command`
       PGPASSWORD: ${POSTGRES_PASSWORD}
+      # -- Database restore file
       DB_RESTORE_FILE: ${DB_RESTORE_FILE}
+      # -- Number of parallel jobs for pg_restore
       DB_RESTORE_NUMBER_OF_JOBS: ${DB_RESTORE_NUMBER_OF_JOBS:-4}
     command: >
       /bin/sh -c "
@@ -186,7 +221,9 @@ services:
       - dhis2:/opt/dhis2:ro
       - ./backups:/backups
     environment:
+      # -- Backup timestamp. Used to name the backup directory and the backup file. Since those are created by different containers, we need to ensure the backup timestamp is the same for both containers.
       BACKUP_TIMESTAMP: ${BACKUP_TIMESTAMP}
+      # -- Directory to back up
       BACKUP_SOURCE_PATH: ${BACKUP_SOURCE_PATH:-/opt/dhis2/files}
     entrypoint: >
       /bin/sh -c "
@@ -205,7 +242,9 @@ services:
       - dhis2:/opt/dhis2
       - ./backups:/backups:ro
     environment:
+      # -- Directory to restore from
       FILE_STORAGE_RESTORE_SOURCE_DIR: ${FILE_STORAGE_RESTORE_SOURCE_DIR}
+      # -- Directory to restore to
       RESTORE_DESTINATION_PATH: ${RESTORE_DESTINATION_PATH:-/opt/dhis2/files}
     entrypoint: >
       /bin/sh -c "
@@ -228,6 +267,15 @@ services:
 
         echo 'File storage restore completed successfully'
       "
+
+  compose-docs:
+    profiles:
+      - docs
+    image: tons/docker-compose-docs:1.0.0
+    volumes:
+      - .:/src:ro
+    environment:
+      DOCKER_COMPOSE_FILE_PATHS: /src;/src/overlays
 
 volumes:
   dhis2: { }
