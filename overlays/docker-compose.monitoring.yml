@@ -3,6 +3,12 @@ x-loki-logging: &loki-logging
   options:
     loki-url: "http://host.docker.internal:3100/loki/api/v1/push"
 
+x-healthcheck-options: &healthcheck-options
+  interval: 10s
+  timeout: 3s
+  retries: 3
+  start_period: 30s
+
 services:
   app:
     environment:
@@ -47,10 +53,7 @@ services:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "curl", "-f", "http://host.docker.internal:3100/ready"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
+      <<: *healthcheck-options
 
   prometheus:
     image: prom/prometheus:${PROMETHEUS_VERSION:-v2.45.0}
@@ -76,10 +79,7 @@ services:
       - '--web.enable-admin-api'
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9090/-/healthy"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
+      <<: *healthcheck-options
 
   grafana:
     image: grafana/grafana:${GRAFANA_VERSION:-10.0.0}
@@ -106,10 +106,7 @@ services:
       GF_SERVER_SERVE_FROM_SUB_PATH: false
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 30s
+      <<: *healthcheck-options
 
 volumes:
   loki: { }
