@@ -9,7 +9,7 @@ Docker production deployment of the DHIS2 application
 Generate a new `.env` file by executing the following command
 
 ```shell
-./generate_env.sh
+./scripts/generate_env.sh
 ```
 
 Potentially adjust the generated `.env` file to your needs. However, it's highly recommended not to change the generated values of the password variables.
@@ -43,6 +43,16 @@ The Traefik dashboard can be enabled by launching the application with the follo
 ```shell
 docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml up
 ```
+
+### Monitoring
+
+For comprehensive monitoring including Grafana, Loki, and Prometheus, use the monitoring overlay:
+
+```shell
+docker compose -f docker-compose.yml -f overlays/docker-compose.monitoring.yml up
+```
+
+More details in the [Monitoring section](#monitoring-1)
 
 ## Backup and Restore
 
@@ -109,6 +119,63 @@ Restoring just the file storage can be done by executing the following command
 ```shell
 make restore-file-storage
 ```
+
+## Monitoring
+
+This deployment supports optional monitoring through Docker Compose overlays. The monitoring stack includes Grafana, Loki, and Prometheus for logs and metrics collection.
+
+### Prerequisites
+
+Before starting the monitoring services, you need to install the Docker Loki Driver plugin:
+
+```shell
+./scripts/install-loki-driver.sh
+```
+
+**Note**: The plugin is only required when using the monitoring overlay.
+
+### Basic Monitoring
+
+Start the core application with monitoring:
+
+```shell
+docker compose -f docker-compose.yml -f overlays/docker-compose.monitoring.yml up
+```
+
+This enables:
+- **Grafana** (https://grafana.{HOSTNAME}): Web-based monitoring and visualization platform
+- **Prometheus** (https://prometheus.{HOSTNAME}): Metrics collection and storage
+- **Loki** (https://loki.{HOSTNAME}): Log aggregation system
+- **DHIS2 Monitoring**: Enables DHIS2's built-in monitoring APIs
+
+### Accessing Monitoring Services
+
+1. Start the services with monitoring overlay
+2. Open https://grafana.{HOSTNAME} in your browser
+3. Login with:
+   - Username: `admin`
+   - Password: Check your `.env` file for `GRAFANA_ADMIN_PASSWORD`
+
+### Log Aggregation
+
+All container logs are automatically sent to Loki using the Docker Loki Driver plugin:
+- **DHIS2**: Application logs
+- **PostgreSQL**: Database logs
+- **Traefik**: Reverse proxy logs
+
+### Metrics Collection
+
+Prometheus automatically collects metrics from:
+- DHIS2 application (via the `/api/metrics` endpoint)
+- Prometheus itself
+
+### Configuration
+
+Monitoring settings can be configured via environment variables in your `.env` file:
+
+- `GRAFANA_ADMIN_PASSWORD`: Grafana admin password (auto-generated)
+- `PROMETHEUS_RETENTION_TIME`: Prometheus data retention (default: 15d)
+- `LOKI_RETENTION_PERIOD`: Loki log retention (default: 744h = 31 days)
 
 ## Set up development environment
 

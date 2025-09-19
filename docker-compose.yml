@@ -4,6 +4,7 @@ x-database-image: &database-image
 x-file-storage-image: &file-storage-image
   image: rclone/rclone:${RCLONE_VERSION:-1.68}
 
+
 services:
   app:
     image: dhis2/core:${DHIS2_VERSION:-42}
