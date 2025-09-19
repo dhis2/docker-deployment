@@ -21,6 +21,23 @@ services:
       MONITORING_CPU_ENABLED: on
     logging: *loki-logging
 
+  create-monitoring-user:
+    image: alpine:3.22
+    depends_on:
+      app:
+        condition: service_healthy
+    volumes:
+      - ./scripts/create-monitoring-user.sh:/create-monitoring-user.sh:ro
+    entrypoint: ["/bin/sh", "/create-monitoring-user.sh"]
+    environment:
+      # This must match the name of the Docker Compose service running the DHIS2 app and the port it is listening on
+      DHIS2_HOSTNAME: ${DHIS2_HOSTNAME:-http://app:8080}
+      DHIS2_ADMIN_USERNAME: ${DHIS2_ADMIN_USERNAME}
+      DHIS2_ADMIN_PASSWORD: ${DHIS2_ADMIN_PASSWORD}
+      DHIS2_MONITOR_USERNAME: ${DHIS2_MONITOR_USERNAME}
+      DHIS2_MONITOR_PASSWORD: ${DHIS2_MONITOR_PASSWORD}
+    logging: *loki-logging
+
   database:
     logging: *loki-logging
 
@@ -71,6 +88,8 @@ services:
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     environment:
       PROMETHEUS_RETENTION_TIME: ${PROMETHEUS_RETENTION_TIME:-15d}
+      DHIS2_MONITOR_USERNAME: ${DHIS2_MONITOR_USERNAME}
+      DHIS2_MONITOR_PASSWORD: ${DHIS2_MONITOR_PASSWORD}
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -86,7 +105,7 @@ services:
   grafana:
     image: grafana/grafana:${GRAFANA_VERSION:-10.0.0}
     restart: unless-stopped
-    user: grafana:grafana
+    user: 472:472
     read_only: true
     security_opt:
       - no-new-privileges:true

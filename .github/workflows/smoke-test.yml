@@ -18,7 +18,7 @@ jobs:
           cat .env | sed /^#/d >> $GITHUB_ENV
       - name: Start services
         run: |
-          docker compose up -d
+          docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml -f overlays/docker-compose.monitoring.yml up -d
 
       - name: Wait for application to be ready
         run: |
