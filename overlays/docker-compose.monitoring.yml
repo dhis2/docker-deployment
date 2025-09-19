@@ -21,11 +21,18 @@ services:
       MONITORING_CPU_ENABLED: on
     logging: *loki-logging
 
+  update-admin-password:
+    logging: *loki-logging
+
   create-monitoring-user:
     image: alpine:3.22
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     depends_on:
-      app:
-        condition: service_healthy
+      update-admin-password:
+        condition: service_completed_successfully
     volumes:
       - ./scripts/create-monitoring-user.sh:/create-monitoring-user.sh:ro
     entrypoint: ["/bin/sh", "/create-monitoring-user.sh"]
