@@ -78,7 +78,8 @@ services:
     image: prom/prometheus:${PROMETHEUS_VERSION:-v2.45.0}
     restart: unless-stopped
     user: nobody:nobody
-    read_only: true
+    # TODO: If we want read only we can't read the DHIS2_MONITOR_PASSWORD from the host environment. We would need to write it to a file and reference the file in our secrets configration by the end of this file
+    #read_only: true
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -88,8 +89,8 @@ services:
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     environment:
       PROMETHEUS_RETENTION_TIME: ${PROMETHEUS_RETENTION_TIME:-15d}
-      DHIS2_MONITOR_USERNAME: ${DHIS2_MONITOR_USERNAME}
-      DHIS2_MONITOR_PASSWORD: ${DHIS2_MONITOR_PASSWORD}
+    secrets:
+      - dhis2_monitor_password
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -133,3 +134,7 @@ volumes:
   loki: { }
   prometheus: { }
   grafana: { }
+
+secrets:
+  dhis2_monitor_password:
+    environment: DHIS2_MONITOR_PASSWORD

@@ -8,5 +8,6 @@ scrape_configs:
       - targets: ['app:8080']
     metrics_path: '/api/metrics'
     basic_auth:
-      username: ${DHIS2_MONITOR_USERNAME}
-      password: ${DHIS2_MONITOR_PASSWORD}
+      # Username is hard coded since we can't use a secret here
+      username: monitor
+      password_file: /run/secrets/dhis2_monitor_password
