@@ -10,6 +10,16 @@
 | `POSTGRES_DB_USERNAME` | Database username | `-` |
 | `POSTGRES_DB_PASSWORD` | Database password | `-` |
 
+### Service: database
+
+| Variable | Description | Default Value |
+|----------|-------------|---------------|
+| `POSTGRES_PASSWORD` | Postgres user password | `-` |
+| `POSTGRES_DB` | Name of the database | `dhis` |
+| `POSTGRES_DB_USERNAME` | Database username | `-` |
+| `POSTGRES_DB_PASSWORD` | Database password | `-` |
+| `POSTGRES_INITDB_ARGS` | Initdb arguments | `--auth-host=scram-sha-256 --auth-local=scram-sha-256` |
+
 ### Service: traefik
 
 | Variable | Description | Default Value |

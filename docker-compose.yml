@@ -271,7 +271,7 @@ services:
   compose-docs:
     profiles:
       - docs
-    image: tons/docker-compose-docs:1.0.0
+    image: tons/docker-compose-docs:1.0.1
     volumes:
       - .:/src:ro
     environment:
