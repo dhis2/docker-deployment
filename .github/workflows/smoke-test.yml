@@ -16,6 +16,9 @@ jobs:
         run: |
           ./scripts/generate_env.sh
           cat .env | sed /^#/d >> $GITHUB_ENV
+          
+          ./scripts/install-loki-driver.sh
+
       - name: Start services
         run: |
           docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml -f overlays/docker-compose.monitoring.yml up -d
