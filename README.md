@@ -14,6 +14,8 @@ Generate a new `.env` file by executing the following command
 
 Potentially adjust the generated `.env` file to your needs. However, it's highly recommended not to change the generated values of the password variables.
 
+Documentation for the environment variables can be found [here](docs/environment-variables.md).
+
 ### Automatic Certificate Management Environment
 
 The acme file needs to be owned, only writable, by the same user running Traefik
