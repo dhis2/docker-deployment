@@ -78,7 +78,9 @@ services:
     image: prom/prometheus:${PROMETHEUS_VERSION:-v2.45.0}
     restart: unless-stopped
     user: nobody:nobody
-    # TODO: If we want read only we can't read the DHIS2_MONITOR_PASSWORD from the host environment. We would need to write it to a file and reference the file in our secrets configration by the end of this file
+    # TODO: If we want read only we can't read the DHIS2_MONITOR_PASSWORD from the host environment. We would need to
+    #  write it to a file and reference the file in our secrets configration by the end of this file. For the sake of
+    #  simplicity I'll advice that we don't use read only for now.
     #read_only: true
     security_opt:
       - no-new-privileges:true
