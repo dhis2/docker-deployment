@@ -7,8 +7,8 @@ TEMPLATE_FILE=".env.example"
 
 generate_password() {
     local password=""
-    password+=$(LC_ALL=C tr -dc 'A-Z' < /dev/urandom | head -c 1)
-    password+=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | head -c 1)
+    password+=$(LC_ALL=C tr -dc '[:upper:]' < /dev/urandom | head -c 1)
+    password+=$(LC_ALL=C tr -dc '[:lower:]' < /dev/urandom | head -c 1)
     password+=$(LC_ALL=C tr -dc '0-9' < /dev/urandom | head -c 1)
     password+=$(LC_ALL=C tr -dc '_=.-' < /dev/urandom | head -c 1)
     local remaining=$((LENGTH - 4))

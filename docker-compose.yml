@@ -4,35 +4,16 @@ x-database-image: &database-image
 x-file-storage-image: &file-storage-image
   image: rclone/rclone:${RCLONE_VERSION:-1.68}
 
-
 services:
   app:
     image: dhis2/core:${DHIS2_VERSION:-42}
-    restart: unless-stopped
-    user: 65534:65534
-    read_only: true
-    tmpfs:
-      - /tmp
-      - /usr/local/tomcat/temp
-      - /usr/local/tomcat/logs
-      - /usr/local/tomcat/work/Catalina/localhost/ROOT
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
+    depends_on:
+      database:
+        condition: service_healthy
     volumes:
       - dhis2:/opt/dhis2/
       #- ./config/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
       - ./config/dhis2/dhis.conf:/opt/dhis2/dhis.conf:ro
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://127.0.0.1:8080/dhis-web-login/" ]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 120s
-    depends_on:
-      database:
-        condition: service_healthy
     environment:
       # -- Name of the database to use
       POSTGRES_DB: ${POSTGRES_DB:-dhis}
@@ -40,6 +21,87 @@ services:
       POSTGRES_DB_USERNAME: ${POSTGRES_DB_USERNAME}
       # -- Database password
       POSTGRES_DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://127.0.0.1:8080/dhis-web-login/" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 120s
+    user: 65534:65534
+    cap_drop:
+      - ALL
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /usr/local/tomcat/temp
+      - /usr/local/tomcat/logs
+      - /usr/local/tomcat/work/Catalina/localhost/ROOT
+
+  backup-database:
+    <<: *database-image
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - ./backups:/backups
+    environment:
+      # -- Database hostname
+      POSTGRES_HOST: database
+      # -- Database username
+      POSTGRES_USER: ${POSTGRES_DB_USERNAME}
+      # -- Database password
+      POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      # -- Database name
+      POSTGRES_DB: ${POSTGRES_DB:-dhis}
+      # -- Database backup format
+      POSTGRES_BACKUP_FORMAT: ${POSTGRES_BACKUP_FORMAT:-custom}
+      # -- The `PGPASSWORD` environment variable is used by the `pg_dump` command`
+      PGPASSWORD: ${POSTGRES_DB_PASSWORD}
+    command: >
+      /bin/sh -c "
+        set -o errexit
+
+        if [ \"$$POSTGRES_BACKUP_FORMAT\" = \"plain\" ]; then
+          pg_dump --host $$POSTGRES_HOST --username $$POSTGRES_USER --format plain --exclude-table \"analytics_*\" --exclude-table \"_*\" $$POSTGRES_DB --verbose | gzip > /backups/$$BACKUP_TIMESTAMP.sql.gz
+        else
+          pg_dump --host $$POSTGRES_HOST --username $$POSTGRES_USER --format $$POSTGRES_BACKUP_FORMAT --exclude-table \"analytics_*\" --exclude-table \"_*\" --file /backups/$$BACKUP_TIMESTAMP.pgc $$POSTGRES_DB --verbose
+        fi
+      "
+    profiles:
+      - backup
+
+  backup-file-storage:
+    <<: *file-storage-image
+    volumes:
+      - dhis2:/opt/dhis2:ro
+      - ./backups:/backups
+    environment:
+      # -- Backup timestamp. Used to name the backup directory and the backup file. Since those are created by different containers, we need to ensure the backup timestamp is the same for both containers.
+      BACKUP_TIMESTAMP: ${BACKUP_TIMESTAMP}
+      # -- Directory to back up
+      BACKUP_SOURCE_PATH: ${BACKUP_SOURCE_PATH:-/opt/dhis2/files}
+    entrypoint: >
+      /bin/sh -c "
+        set -o errexit
+
+        rclone copy \"$$BACKUP_SOURCE_PATH\" \"/backups/file-storage-$${BACKUP_TIMESTAMP}\" --verbose --create-empty-src-dirs
+
+        echo 'File storage backup completed successfully'
+      "
+    profiles:
+      - backup
+
+  compose-docs:
+    image: tons/docker-compose-docs:1.0.1
+    volumes:
+      - .:/src:ro
+    environment:
+      DOCKER_COMPOSE_FILE_PATHS: /src;/src/overlays
+    profiles:
+      - docs
 
   update-admin-password:
     <<: *database-image
@@ -53,7 +115,7 @@ services:
     volumes:
       - ./scripts/update-admin-password.sh:/update-admin-password.sh:ro
     working_dir: /root
-    entrypoint: ["/bin/sh", "/update-admin-password.sh"]
+    entrypoint: [ "/bin/sh", "/update-admin-password.sh" ]
     environment:
       # -- Database hostname
       POSTGRES_HOST: database
@@ -69,15 +131,9 @@ services:
 
   database:
     <<: *database-image
-    restart: unless-stopped
-    user: postgres
-    security_opt:
-      - no-new-privileges:true
     volumes:
       - postgres:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d:ro
-    ports:
-      - "127.0.0.1:5432:5432"
     environment:
       # -- Postgres user password
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -89,26 +145,113 @@ services:
       POSTGRES_DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
       # -- Initdb arguments
       POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    ports:
+      - "127.0.0.1:5432:5432"
+    restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL","pg_isready -U postgres -d ${POSTGRES_DB}" ]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB}" ]
       interval: 10s
       timeout: 5s
       retries: 3
+    user: postgres
+    security_opt:
+      - no-new-privileges:true
+
+  restore-database:
+    <<: *database-image
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - ./backups:/backups:ro
+    environment:
+      # -- Database hostname
+      POSTGRES_HOST: database
+      # -- Database username
+      POSTGRES_USER: ${POSTGRES_DB_USERNAME}
+      # -- Database password
+      POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      # -- Database name
+      POSTGRES_DB: ${POSTGRES_DB:-dhis}
+      # -- The `PGPASSWORD` environment variable is used by the `pg_dump` command`
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      # -- Database restore file
+      DB_RESTORE_FILE: ${DB_RESTORE_FILE}
+      # -- Number of parallel jobs for pg_restore
+      DB_RESTORE_NUMBER_OF_JOBS: ${DB_RESTORE_NUMBER_OF_JOBS:-4}
+    command: >
+      /bin/sh -c "
+        set -o errexit
+
+        if [ -z \"$DB_RESTORE_FILE\" ]; then
+          echo \"Error: DB_RESTORE_FILE environment variable must be set\"
+          exit 1
+        fi
+
+        if [ ! -f \"/backups/$DB_RESTORE_FILE\" ]; then
+          echo \"Error: Restore file /backups/$DB_RESTORE_FILE not found\"
+          exit 1
+        fi
+
+        echo \"Restoring database from $DB_RESTORE_FILE\"
+
+        echo \"Waiting for database to be ready...\"
+        until pg_isready --host $$POSTGRES_HOST --username $$POSTGRES_USER; do
+          sleep 2
+        done
+
+        psql --host=\"$$POSTGRES_HOST\" --username=postgres --dbname=$$POSTGRES_DB --command=\"DROP SCHEMA public CASCADE; CREATE SCHEMA public;\"
+
+        if echo \"$$DB_RESTORE_FILE\" | grep -q \"\\.sql\\.gz$\"; then
+          gunzip --stdout /backups/þ$DB_RESTORE_FILE | psql --host $$POSTGRES_HOST --username $$POSTGRES_USER --dbname $$POSTGRES_DB --verbose
+        elif echo \"$$DB_RESTORE_FILE\" | grep -q \"\\.pgc$\"; then
+          pg_restore --no-password --host $$POSTGRES_HOST --username postgres --dbname $$POSTGRES_DB --jobs=$$DB_RESTORE_NUMBER_OF_JOBS --verbose --clean --if-exists /backups/$$DB_RESTORE_FILE
+        else
+          echo \"Error: Unsupported file format. Use .sql.gz for plain format or .pgc for custom format\"
+          exit 1
+        fi
+
+        echo \"Database restore completed successfully\"
+      "
+    profiles:
+      - restore
+
+  restore-file-storage:
+    <<: *file-storage-image
+    volumes:
+      - dhis2:/opt/dhis2
+      - ./backups:/backups:ro
+    environment:
+      # -- Directory to restore from
+      FILE_STORAGE_RESTORE_SOURCE_DIR: ${FILE_STORAGE_RESTORE_SOURCE_DIR}
+      # -- Directory to restore to
+      RESTORE_DESTINATION_PATH: ${RESTORE_DESTINATION_PATH:-/opt/dhis2/files}
+    entrypoint: >
+      /bin/sh -c "
+        set -o errexit
+
+        if [ -z \"$$FILE_STORAGE_RESTORE_SOURCE_DIR\" ]; then
+          echo 'Error: FILE_STORAGE_RESTORE_SOURCE_DIR environment variable must be set'
+          exit 1
+        fi
+
+        # Add trailing slash to ensure content of the folder is copied rather than the folder itself
+        SRC=/backups/$$FILE_STORAGE_RESTORE_SOURCE_DIR/
+
+        if [ ! -d \"$$SRC\" ]; then
+          echo \"Error: Restore directory $$SRC not found\"
+          exit 1
+        fi
+
+        rclone copy \"$$SRC\" \"$$RESTORE_DESTINATION_PATH\" --verbose --create-empty-src-dirs
+
+        echo 'File storage restore completed successfully'
+      "
+    profiles:
+      - restore
 
   traefik:
     image: traefik:v3.5
-    restart: unless-stopped
-    user: nobody:nobody
-    read_only: true
-    tmpfs:
-      - /tmp
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    ports:
-      - "80:80"
-      - "443:443"
     volumes:
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
       - ./traefik/acme.json:/cert/acme.json:rw
@@ -141,168 +284,24 @@ services:
       TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_TLSCHALLENGE: true
       # -- Hostname
       HOSTNAME: ${HOSTNAME}
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "traefik", "healthcheck" ]
       interval: 10s
       timeout: 3s
       retries: 3
       start_period: 10s
-
-  backup-database:
-    profiles:
-      - backup
-    <<: *database-image
-    volumes:
-      - ./backups:/backups
-    environment:
-      # -- Database hostname
-      POSTGRES_HOST: database
-      # -- Database username
-      POSTGRES_USER: ${POSTGRES_DB_USERNAME}
-      # -- Database password
-      POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
-      # -- Database name
-      POSTGRES_DB: ${POSTGRES_DB:-dhis}
-      # -- Database backup format
-      POSTGRES_BACKUP_FORMAT: ${POSTGRES_BACKUP_FORMAT:-custom}
-      # -- The `PGPASSWORD` environment variable is used by the `pg_dump` command`
-      PGPASSWORD: ${POSTGRES_DB_PASSWORD}
-    command: >
-      /bin/sh -c "
-        set -o errexit
-
-        if [ \"$$POSTGRES_BACKUP_FORMAT\" = \"plain\" ]; then
-          pg_dump --host $$POSTGRES_HOST --username $$POSTGRES_USER --format plain --exclude-table \"analytics_*\" --exclude-table \"_*\" $$POSTGRES_DB --verbose | gzip > /backups/$$BACKUP_TIMESTAMP.sql.gz
-        else
-          pg_dump --host $$POSTGRES_HOST --username $$POSTGRES_USER --format $$POSTGRES_BACKUP_FORMAT --exclude-table \"analytics_*\" --exclude-table \"_*\" --file /backups/$$BACKUP_TIMESTAMP.pgc $$POSTGRES_DB --verbose
-        fi
-      "
-    depends_on:
-      database:
-        condition: service_healthy
-
-  restore-database:
-    profiles:
-      - restore
-    <<: *database-image
-    volumes:
-      - ./backups:/backups:ro
-    environment:
-      # -- Database hostname
-      POSTGRES_HOST: database
-      # -- Database username
-      POSTGRES_USER: ${POSTGRES_DB_USERNAME}
-      # -- Database password
-      POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
-      # -- Database name
-      POSTGRES_DB: ${POSTGRES_DB:-dhis}
-      # -- The `PGPASSWORD` environment variable is used by the `pg_dump` command`
-      PGPASSWORD: ${POSTGRES_PASSWORD}
-      # -- Database restore file
-      DB_RESTORE_FILE: ${DB_RESTORE_FILE}
-      # -- Number of parallel jobs for pg_restore
-      DB_RESTORE_NUMBER_OF_JOBS: ${DB_RESTORE_NUMBER_OF_JOBS:-4}
-    command: >
-      /bin/sh -c "
-        set -o errexit
-
-        if [ -z \"$DB_RESTORE_FILE\" ]; then
-          echo \"Error: DB_RESTORE_FILE environment variable must be set\"
-          exit 1
-        fi
-      
-        if [ ! -f \"/backups/$DB_RESTORE_FILE\" ]; then
-          echo \"Error: Restore file /backups/$DB_RESTORE_FILE not found\"
-          exit 1
-        fi
-
-        echo \"Restoring database from $DB_RESTORE_FILE\"
-
-        echo \"Waiting for database to be ready...\"
-        until pg_isready --host $$POSTGRES_HOST --username $$POSTGRES_USER; do
-          sleep 2
-        done
-      
-        psql --host=\"$$POSTGRES_HOST\" --username=postgres --dbname=$$POSTGRES_DB --command=\"DROP SCHEMA public CASCADE; CREATE SCHEMA public;\"
-      
-        if echo \"$$DB_RESTORE_FILE\" | grep -q \"\\.sql\\.gz$\"; then
-          gunzip --stdout /backups/þ$DB_RESTORE_FILE | psql --host $$POSTGRES_HOST --username $$POSTGRES_USER --dbname $$POSTGRES_DB --verbose
-        elif echo \"$$DB_RESTORE_FILE\" | grep -q \"\\.pgc$\"; then
-          pg_restore --no-password --host $$POSTGRES_HOST --username postgres --dbname $$POSTGRES_DB --jobs=$$DB_RESTORE_NUMBER_OF_JOBS --verbose --clean --if-exists /backups/$$DB_RESTORE_FILE
-        else
-          echo \"Error: Unsupported file format. Use .sql.gz for plain format or .pgc for custom format\"
-          exit 1
-        fi
-
-        echo \"Database restore completed successfully\"
-      "
-    depends_on:
-      database:
-        condition: service_healthy
-
-  backup-file-storage:
-    profiles:
-      - backup
-    <<: *file-storage-image
-    volumes:
-      - dhis2:/opt/dhis2:ro
-      - ./backups:/backups
-    environment:
-      # -- Backup timestamp. Used to name the backup directory and the backup file. Since those are created by different containers, we need to ensure the backup timestamp is the same for both containers.
-      BACKUP_TIMESTAMP: ${BACKUP_TIMESTAMP}
-      # -- Directory to back up
-      BACKUP_SOURCE_PATH: ${BACKUP_SOURCE_PATH:-/opt/dhis2/files}
-    entrypoint: >
-      /bin/sh -c "
-        set -o errexit
-      
-        rclone copy \"$$BACKUP_SOURCE_PATH\" \"/backups/file-storage-$${BACKUP_TIMESTAMP}\" --verbose --create-empty-src-dirs
-
-        echo 'File storage backup completed successfully'
-      "
-
-  restore-file-storage:
-    profiles:
-      - restore
-    <<: *file-storage-image
-    volumes:
-      - dhis2:/opt/dhis2
-      - ./backups:/backups:ro
-    environment:
-      # -- Directory to restore from
-      FILE_STORAGE_RESTORE_SOURCE_DIR: ${FILE_STORAGE_RESTORE_SOURCE_DIR}
-      # -- Directory to restore to
-      RESTORE_DESTINATION_PATH: ${RESTORE_DESTINATION_PATH:-/opt/dhis2/files}
-    entrypoint: >
-      /bin/sh -c "
-        set -o errexit
-
-        if [ -z \"$$FILE_STORAGE_RESTORE_SOURCE_DIR\" ]; then
-          echo 'Error: FILE_STORAGE_RESTORE_SOURCE_DIR environment variable must be set'
-          exit 1
-        fi
-
-        # Add trailing slash to ensure content of the folder is copied rather than the folder itself
-        SRC=/backups/$$FILE_STORAGE_RESTORE_SOURCE_DIR/
-
-        if [ ! -d \"$$SRC\" ]; then
-          echo \"Error: Restore directory $$SRC not found\"
-          exit 1
-        fi
-
-        rclone copy \"$$SRC\" \"$$RESTORE_DESTINATION_PATH\" --verbose --create-empty-src-dirs
-
-        echo 'File storage restore completed successfully'
-      "
-
-  compose-docs:
-    profiles:
-      - docs
-    image: tons/docker-compose-docs:1.0.1
-    volumes:
-      - .:/src:ro
-    environment:
-      DOCKER_COMPOSE_FILE_PATHS: /src;/src/overlays
+    user: nobody:nobody
+    cap_drop:
+      - ALL
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
 
 volumes:
   dhis2: { }

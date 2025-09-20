@@ -1,14 +1,14 @@
-x-loki-logging: &loki-logging
-  driver: loki
-  options:
-    # We're using the special DNS name host.docker.internal which resolves to the internal IP address used by the host, as the Loki Docker Driver is running on the host network and we need to send logs to it from the service containers
-    loki-url: "http://host.docker.internal:3100/loki/api/v1/push"
-
 x-healthcheck-options: &healthcheck-options
   interval: 10s
   timeout: 3s
   retries: 3
   start_period: 30s
+
+x-loki-logging: &loki-logging
+  driver: loki
+  options:
+    # We're using the special DNS name host.docker.internal which resolves to the internal IP address used by the host, as the Loki Docker Driver is running on the host network and we need to send logs to it from the service containers
+    loki-url: "http://host.docker.internal:3100/loki/api/v1/push"
 
 services:
   app:
@@ -35,7 +35,7 @@ services:
         condition: service_completed_successfully
     volumes:
       - ./scripts/create-monitoring-user.sh:/create-monitoring-user.sh:ro
-    entrypoint: ["/bin/sh", "/create-monitoring-user.sh"]
+    entrypoint: [ "/bin/sh", "/create-monitoring-user.sh" ]
     environment:
       # This must match the name of the Docker Compose service running the DHIS2 app and the port it is listening on
       DHIS2_HOSTNAME: ${DHIS2_HOSTNAME:-http://app:8080}
@@ -48,79 +48,8 @@ services:
   database:
     logging: *loki-logging
 
-  traefik:
-    logging: *loki-logging
-
-  # This is needed to avoid permission issues with the loki container when running as non-root user
-  loki-init:
-    image: busybox:1.37.0
-    user: root
-    volumes:
-      - loki:/loki
-    command: ["sh", "-c", "mkdir -p /loki/chunks /loki/rules /loki/wal /loki/boltdb-shipper-compactor && chown -R nobody:nobody /loki"]
-
-  loki:
-    image: grafana/loki:${LOKI_VERSION:-2.9.0}
-    restart: unless-stopped
-    user: nobody:nobody
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    volumes:
-      - loki:/loki
-    # Port is exposed as the Loki Docker Driver is running on the host network and we need to send logs to it from the service containers
-    ports:
-      - "3100:3100"
-    environment:
-      LOKI_RETENTION_PERIOD: ${LOKI_RETENTION_PERIOD:-744h}
-    depends_on:
-      loki-init:
-        condition: service_completed_successfully
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://host.docker.internal:3100/ready"]
-      <<: *healthcheck-options
-
-  prometheus:
-    image: prom/prometheus:${PROMETHEUS_VERSION:-v2.45.0}
-    restart: unless-stopped
-    user: nobody:nobody
-    # TODO: If we want read only we can't read the DHIS2_MONITOR_PASSWORD from the host environment. We would need to
-    #  write it to a file and reference the file in our secrets configration by the end of this file. For the sake of
-    #  simplicity I'll advice that we don't use read only for now.
-    #read_only: true
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    volumes:
-      - prometheus:/prometheus
-      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    environment:
-      PROMETHEUS_RETENTION_TIME: ${PROMETHEUS_RETENTION_TIME:-15d}
-    secrets:
-      - dhis2_monitor_password
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=15d'
-      - '--web.enable-lifecycle'
-      - '--web.enable-admin-api'
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9090/-/healthy"]
-      <<: *healthcheck-options
-
   grafana:
     image: grafana/grafana:${GRAFANA_VERSION:-10.0.0}
-    restart: unless-stopped
-    user: 472:472
-    read_only: true
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
     volumes:
       - grafana:/var/lib/grafana
       - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -135,9 +64,80 @@ services:
       GF_PATHS_PROVISIONING: /etc/grafana/provisioning
       GF_SERVER_ROOT_URL: https://grafana.${HOSTNAME}
       GF_SERVER_SERVE_FROM_SUB_PATH: false
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]
       <<: *healthcheck-options
+    user: 472:472
+    cap_drop:
+      - ALL
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+
+  loki:
+    image: grafana/loki:${LOKI_VERSION:-2.9.0}
+    depends_on:
+      loki-init:
+        condition: service_completed_successfully
+    volumes:
+      - loki:/loki
+    environment:
+      LOKI_RETENTION_PERIOD: ${LOKI_RETENTION_PERIOD:-744h}
+    # Port is exposed as the Loki Docker Driver is running on the host network and we need to send logs to it from the service containers
+    ports:
+      - "127.0.0.1:3100:3100"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://host.docker.internal:3100/ready" ]
+      <<: *healthcheck-options
+    user: nobody:nobody
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # This is needed to avoid permission issues with the loki container when running as non-root user
+  loki-init:
+    image: busybox:1.37.0
+    volumes:
+      - loki:/loki
+    command: [ "sh", "-c", "mkdir -p /loki/chunks /loki/rules /loki/wal /loki/boltdb-shipper-compactor && chown -R nobody:nobody /loki" ]
+    user: root
+
+  prometheus:
+    image: prom/prometheus:${PROMETHEUS_VERSION:-v2.45.0}
+    volumes:
+      - prometheus:/prometheus
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    secrets:
+      - dhis2_monitor_password
+    environment:
+      PROMETHEUS_RETENTION_TIME: ${PROMETHEUS_RETENTION_TIME:-15d}
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9090/-/healthy" ]
+      <<: *healthcheck-options
+    user: nobody:nobody
+    cap_drop:
+      - ALL
+    # TODO: If we want read only we can't read the DHIS2_MONITOR_PASSWORD from the host environment. We would need to
+    #  write it to a file and reference the file in our secrets configuration by the end of this file. For the sake of
+    #  simplicity I'll advice that we don't use read only for now.
+    #read_only: true
+    security_opt:
+      - no-new-privileges:true
+
+  traefik:
+    logging: *loki-logging
 
 volumes:
   loki: { }
