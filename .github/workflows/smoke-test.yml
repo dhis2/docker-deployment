@@ -41,7 +41,7 @@ jobs:
                 echo -n "Checking $name..."
                 status=$(docker inspect "$name" --format "{{.State.Health.Status}}")
                 if [ "$status" = "healthy" ]; then
-                  echo "Checking $name..."
+                  echo "$name is healthy."
                 else
                   all_healthy=false
                   break
