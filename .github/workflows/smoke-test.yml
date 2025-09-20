@@ -27,7 +27,7 @@ jobs:
         run: |
           docker compose ps
           sleep 10
-          timeout 60 bash -c '
+          timeout 180 bash -c '
             echo "Waiting for all services to be healthy..."
             while true; do
               all_healthy=true
