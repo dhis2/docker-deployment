@@ -25,6 +25,7 @@ jobs:
 
       - name: Wait for all services to be healthy
         run: |
+          docker compose ps
           timeout 60 bash -c '
           echo "Waiting for all services to be healthy..."
           while true; do
