@@ -40,6 +40,31 @@ services:
       - /usr/local/tomcat/logs
       - /usr/local/tomcat/work/Catalina/localhost/ROOT
 
+  update-admin-password:
+    <<: *database-image
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    depends_on:
+      app:
+        condition: service_healthy
+    volumes:
+      - ./scripts/update-admin-password.sh:/update-admin-password.sh:ro
+    working_dir: /root
+    entrypoint: [ "/bin/sh", "/update-admin-password.sh" ]
+    environment:
+      # -- Database hostname
+      POSTGRES_HOST: database
+      # -- Postgres user password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # -- Name of the database
+      POSTGRES_DB: ${POSTGRES_DB:-dhis}
+      # -- DHIS2 admin username
+      DHIS2_ADMIN_USERNAME: ${DHIS2_ADMIN_USERNAME}
+      # -- DHIS2 admin password
+      DHIS2_ADMIN_PASSWORD: ${DHIS2_ADMIN_PASSWORD}
+
   database:
     <<: *database-image
     volumes:
@@ -174,31 +199,6 @@ services:
       "
     profiles:
       - backup
-
-  update-admin-password:
-    <<: *database-image
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    depends_on:
-      app:
-        condition: service_healthy
-    volumes:
-      - ./scripts/update-admin-password.sh:/update-admin-password.sh:ro
-    working_dir: /root
-    entrypoint: [ "/bin/sh", "/update-admin-password.sh" ]
-    environment:
-      # -- Database hostname
-      POSTGRES_HOST: database
-      # -- Postgres user password
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      # -- Name of the database
-      POSTGRES_DB: ${POSTGRES_DB:-dhis}
-      # -- DHIS2 admin username
-      DHIS2_ADMIN_USERNAME: ${DHIS2_ADMIN_USERNAME}
-      # -- DHIS2 admin password
-      DHIS2_ADMIN_PASSWORD: ${DHIS2_ADMIN_PASSWORD}
 
   restore-database:
     <<: *database-image
