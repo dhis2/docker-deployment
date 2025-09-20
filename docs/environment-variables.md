@@ -76,7 +76,6 @@
 | `FILE_STORAGE_RESTORE_SOURCE_DIR` | Directory to restore from | `-` |
 | `RESTORE_DESTINATION_PATH` | Directory to restore to | `/opt/dhis2/files` |
 
-
 ## File: `../src/overlays/docker-compose.traefik-dashboard.yml`
 
 ### Service: traefik

@@ -143,6 +143,7 @@ docker compose -f docker-compose.yml -f overlays/docker-compose.monitoring.yml u
 ```
 
 This enables:
+
 - **Grafana** (https://grafana.{HOSTNAME}): Web-based monitoring and visualization platform
 - **Prometheus** (https://prometheus.{HOSTNAME}): Metrics collection and storage
 - **Loki** (https://loki.{HOSTNAME}): Log aggregation system
@@ -159,6 +160,7 @@ This enables:
 ### Log Aggregation
 
 All container logs are automatically sent to Loki using the Docker Loki Driver plugin:
+
 - **DHIS2**: Application logs
 - **PostgreSQL**: Database logs
 - **Traefik**: Reverse proxy logs
@@ -166,6 +168,7 @@ All container logs are automatically sent to Loki using the Docker Loki Driver p
 ### Metrics Collection
 
 Prometheus automatically collects metrics from:
+
 - DHIS2 application (via the `/api/metrics` endpoint)
 - Prometheus itself
 

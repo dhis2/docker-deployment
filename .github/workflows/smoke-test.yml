@@ -16,7 +16,7 @@ jobs:
         run: |
           ./scripts/generate_env.sh
           cat .env | sed /^#/d >> $GITHUB_ENV
-          
+
           ./scripts/install-loki-driver.sh
 
       - name: Start services
