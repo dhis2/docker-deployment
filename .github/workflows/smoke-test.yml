@@ -24,7 +24,7 @@ jobs:
           docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml -f overlays/docker-compose.monitoring.yml up -d
 
       - name: Ensure services are healthy
-        run: timeout 60s bash .github/workflows/scripts/ensure-healthy-services.sh
+        run: timeout 60s ./.github/workflows/scripts/ensure-healthy-services.sh
 
       - name: Wait for application to be ready
         run: timeout 1m bash -c 'until [ "$(curl --insecure --silent --output /dev/null --write-out "%{http_code}" https://dhis2-127-0-0-1.nip.io/dhis-web-login/)" = "200" ]; do sleep 5; done'
