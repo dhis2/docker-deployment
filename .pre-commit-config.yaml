@@ -4,7 +4,17 @@ minimum_pre_commit_version: "4.3.0"
 default_language_version:
   python: python3
 
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+
 repos:
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.9.1
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
   - repo: local
     hooks:
       - id: docker-compose-linter
