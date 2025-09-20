@@ -28,7 +28,11 @@ jobs:
         timeout-minutes: 1
 
       - name: Wait for application to be ready
-        run: timeout 1m bash -c 'until [ "$(curl --insecure --silent --output /dev/null --write-out "%{http_code}" https://dhis2-127-0-0-1.nip.io/dhis-web-login/)" = "200" ]; do sleep 5; done'
+        run: |
+          until [ "$(curl --insecure --silent --output /dev/null --write-out "%{http_code}" https://dhis2-127-0-0-1.nip.io/dhis-web-login/)" = "200" ]; do
+            sleep 5
+          done
+        timeout-minutes: 1
 
       - name: Verify process isn't running as root
         run: |
