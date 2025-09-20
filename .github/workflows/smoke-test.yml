@@ -26,8 +26,7 @@ jobs:
       - name: Wait for services with health checks to pass
         run: |
           docker compose ps
-          # TODO: This shouldn't take nearly as long but for some reason the 'docker compose ps --format "{{.Name}}" command seems to hang
-          timeout 600 bash -c '
+          timeout 60 bash -c '
             SERVICES=$(docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml -f overlays/docker-compose.monitoring.yml config | python3 -c "import sys, yaml, json; print(json.dumps(yaml.safe_load(sys.stdin)))" | jq -r '\''.services | to_entries[] | select(.value.healthcheck) | .key'\'')
             echo "Services with health checks: $SERVICES"
             echo "Waiting for services with health checks to be healthy..."
@@ -42,9 +41,8 @@ jobs:
                 echo -n "Checking $name..."
                 status=$(docker inspect "$name" --format "{{.State.Health.Status}}")
                 if [ "$status" = "healthy" ]; then
-                  echo -e "\rChecking $name... ✅"
+                  echo "Checking $name..."
                 else
-                  echo -e "\rChecking $name... ❌ ($status)"
                   all_healthy=false
                   break
                 fi
