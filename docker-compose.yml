@@ -115,7 +115,7 @@ services:
     volumes:
       - ./scripts/update-admin-password.sh:/update-admin-password.sh:ro
     working_dir: /root
-    entrypoint: ["/bin/sh", "/update-admin-password.sh"]
+    entrypoint: [ "/bin/sh", "/update-admin-password.sh" ]
     environment:
       # -- Database hostname
       POSTGRES_HOST: database
