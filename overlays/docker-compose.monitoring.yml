@@ -89,7 +89,7 @@ services:
       - "127.0.0.1:3100:3100"
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://host.docker.internal:3100/ready" ]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready || exit 1" ]
       <<: *healthcheck-options
     user: nobody:nobody
     cap_drop:
@@ -124,7 +124,7 @@ services:
       - "--web.enable-admin-api"
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9090/-/healthy" ]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy || exit 1" ]
       <<: *healthcheck-options
     user: nobody:nobody
     cap_drop:
