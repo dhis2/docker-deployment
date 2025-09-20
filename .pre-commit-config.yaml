@@ -30,7 +30,7 @@ repos:
     rev: v1.37.1
     hooks:
       - id: yamllint
-        exclude: (docker-)?compose.*\.ya?ml$
+        exclude: (docker-)?compose.*\.ya?ml$,docs/environment-variables.md
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.45.0
