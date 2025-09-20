@@ -33,10 +33,12 @@ jobs:
             while true; do
               all_healthy=true
               for name in $(docker compose ps --format "{{.Name}}"); do
-                echo "Checking $name..."
+                echo -n "Checking $name..."
                 status=$(docker inspect "$name" --format "{{.State.Health.Status}}")
-                if [ "$status" != "healthy" ]; then
-                  echo "Service $name is $status, waiting..."
+                if [ "$status" = "healthy" ]; then
+                  echo -e "\rChecking $name... ✅"
+                else
+                  echo -e "\rChecking $name... ❌ ($status)"
                   all_healthy=false
                   break
                 fi
