@@ -19,21 +19,31 @@ jobs:
 
           ./scripts/install-loki-driver.sh
 
+      - name: Install yq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yq
+
       - name: Start services
         run: |
           docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml -f overlays/docker-compose.monitoring.yml up -d
 
-      - name: Wait for all services to be healthy
+      - name: Wait for services with health checks to pass
         run: |
           docker compose ps
-          time docker compose ps --format "{{.Name}}"
-          sleep 10
+          SERVICES=$(docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml -f overlays/docker-compose.monitoring.yml config | yq -o=json | jq -r '.services | to_entries[] | select(.value.healthcheck) | .key')
+          echo "Services with health checks: $SERVICES"
           # TODO: This shouldn't take nearly as long but for some reason the 'docker compose ps --format "{{.Name}}" command seems to hang
           timeout 600 bash -c '
-            echo "Waiting for all services to be healthy..."
+            echo "Waiting for services with health checks to be healthy..."
             while true; do
               all_healthy=true
-              for name in $(docker compose ps --format "{{.Name}}"); do
+              for service in '"$SERVICES"'; do
+                name=$(docker compose ps --filter "name=$service" --format "{{.Name}}")
+                if [ -z "$name" ]; then
+                  echo "Service $service not running, skipping..."
+                  continue
+                fi
                 echo -n "Checking $name..."
                 status=$(docker inspect "$name" --format "{{.State.Health.Status}}")
                 if [ "$status" = "healthy" ]; then
@@ -45,7 +55,7 @@ jobs:
                 fi
               done
               if $all_healthy; then
-                echo "All services are healthy."
+                echo "All services with health checks are healthy."
                 break
               fi
               sleep 5
