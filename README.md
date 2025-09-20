@@ -46,7 +46,7 @@ docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboar
 
 ### Monitoring
 
-For comprehensive monitoring including Grafana, Loki, and Prometheus, use the monitoring overlay:
+The monitoring stack includes Grafana, Loki, and Prometheus for logs and metrics collection. It can be enabled by applying the monitoring overlay:
 
 ```shell
 docker compose -f docker-compose.yml -f overlays/docker-compose.monitoring.yml up
@@ -122,17 +122,15 @@ make restore-file-storage
 
 ## Monitoring
 
-This deployment supports optional monitoring through Docker Compose overlays. The monitoring stack includes Grafana, Loki, and Prometheus for logs and metrics collection.
+The monitoring stack includes Grafana, Loki, and Prometheus for logs and metrics collection.
 
 ### Prerequisites
 
-Before starting the monitoring services, you need to install the Docker Loki Driver plugin:
+The Docker Loki Driver plugin is required
 
 ```shell
 ./scripts/install-loki-driver.sh
 ```
-
-**Note**: The plugin is only required when using the monitoring overlay.
 
 ### Basic Monitoring
 
