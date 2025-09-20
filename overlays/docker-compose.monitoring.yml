@@ -42,7 +42,7 @@ services:
       GF_SERVER_SERVE_FROM_SUB_PATH: false
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]
       <<: *healthcheck-options
     user: grafana:grafana
     cap_drop:
@@ -65,7 +65,7 @@ services:
       - "127.0.0.1:3100:3100"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://host.docker.internal:3100/ready"]
+      test: [ "CMD", "curl", "-f", "http://host.docker.internal:3100/ready" ]
       <<: *healthcheck-options
     user: nobody:nobody
     cap_drop:
@@ -78,12 +78,7 @@ services:
     image: busybox:1.37.0
     volumes:
       - loki:/loki
-    command:
-      [
-        "sh",
-        "-c",
-        "mkdir -p /loki/chunks /loki/rules /loki/wal /loki/boltdb-shipper-compactor && chown -R nobody:nobody /loki",
-      ]
+    command: [ "sh", "-c", "mkdir -p /loki/chunks /loki/rules /loki/wal /loki/boltdb-shipper-compactor && chown -R nobody:nobody /loki" ]
     user: root
 
   prometheus:
@@ -103,7 +98,7 @@ services:
       - "--web.enable-admin-api"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9090/-/healthy"]
+      test: [ "CMD", "curl", "-f", "http://localhost:9090/-/healthy" ]
       <<: *healthcheck-options
     user: nobody:nobody
     cap_drop:
@@ -116,6 +111,6 @@ services:
     logging: *loki-logging
 
 volumes:
-  loki: {}
-  prometheus: {}
-  grafana: {}
+  loki: { }
+  prometheus: { }
+  grafana: { }

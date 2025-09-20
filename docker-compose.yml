@@ -23,7 +23,7 @@ services:
       POSTGRES_DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/dhis-web-login/"]
+      test: [ "CMD", "curl", "-f", "http://127.0.0.1:8080/dhis-web-login/" ]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -123,7 +123,7 @@ services:
       - "127.0.0.1:5432:5432"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB}"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB}" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -263,7 +263,7 @@ services:
       - "443:443"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "traefik", "healthcheck"]
+      test: [ "CMD", "traefik", "healthcheck" ]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -278,5 +278,5 @@ services:
       - /tmp
 
 volumes:
-  dhis2: {}
-  postgres: {}
+  dhis2: { }
+  postgres: { }
