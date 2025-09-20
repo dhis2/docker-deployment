@@ -19,11 +19,6 @@ jobs:
 
           ./scripts/install-loki-driver.sh
 
-      - name: Install yq
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y yq
-
       - name: Start services
         run: |
           docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml -f overlays/docker-compose.monitoring.yml up -d
@@ -31,15 +26,15 @@ jobs:
       - name: Wait for services with health checks to pass
         run: |
           docker compose ps
-          SERVICES=$(docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml -f overlays/docker-compose.monitoring.yml config | yq -o json | jq -r '.services | to_entries[] | select(.value.healthcheck) | .key')
-          echo "Services with health checks: $SERVICES"
           # TODO: This shouldn't take nearly as long but for some reason the 'docker compose ps --format "{{.Name}}" command seems to hang
           timeout 600 bash -c '
+            SERVICES=$(docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml -f overlays/docker-compose.monitoring.yml config | python3 -c "import sys, yaml, json; print(json.dumps(yaml.safe_load(sys.stdin)))" | jq -r '\''.services | to_entries[] | select(.value.healthcheck) | .key'\'')
+            echo "Services with health checks: $SERVICES"
             echo "Waiting for services with health checks to be healthy..."
             while true; do
               all_healthy=true
-              for service in '"$SERVICES"'; do
-                name=$(docker compose ps --format "table {{.Name}}\t{{.Service}}" | awk -v s="$service" '$2 == s {print $1}')
+              for service in $SERVICES; do
+                name=$(docker compose ps --format "table {{.Name}}\t{{.Service}}" | awk -v s="$service" '\''$2 == s {print $1}'\'')
                 if [ -z "$name" ]; then
                   echo "Service $service not running, skipping..."
                   continue
@@ -61,7 +56,6 @@ jobs:
               sleep 5
             done
           '
-
       - name: Wait for application to be ready
         run: |
           timeout 2m bash -c 'until curl --silent --fail http://dhis2-127-0-0-1.nip.io/dhis-web-login/; do sleep 5; done'
