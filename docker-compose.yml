@@ -40,6 +40,87 @@ services:
       - /usr/local/tomcat/logs
       - /usr/local/tomcat/work/Catalina/localhost/ROOT
 
+  database:
+    <<: *database-image
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    environment:
+      # -- Postgres user password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # -- Name of the database
+      POSTGRES_DB: ${POSTGRES_DB:-dhis}
+      # -- Database username
+      POSTGRES_DB_USERNAME: ${POSTGRES_DB_USERNAME}
+      # -- Database password
+      POSTGRES_DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      # -- Initdb arguments
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    ports:
+      - "127.0.0.1:5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    user: postgres
+    security_opt:
+      - no-new-privileges:true
+
+  traefik:
+    image: traefik:v3.5
+    volumes:
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./traefik/acme.json:/cert/acme.json:rw
+    environment:
+      # -- Log level
+      TRAEFIK_LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # -- Enable access logs
+      TRAEFIK_ACCESSLOG: ${LOG_ACCESS:-true}
+      # -- Access log format
+      TRAEFIK_ACCESSLOG_FORMAT: ${LOG_FORMAT:-json}
+      # -- Allow ping
+      TRAEFIK_PING: true
+      # -- Default entrypoint port
+      TRAEFIK_ENTRYPOINTS_WEB_ADDRESS: :80
+      # -- Redirect to https
+      TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_TO: websecure
+      # -- Redirect scheme
+      TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME: https
+      # -- Default secure entrypoint port
+      TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS: :443
+      # -- Provider file
+      TRAEFIK_PROVIDERS_FILE_FILENAME: /etc/traefik/dynamic.yml
+      # -- Watch the provider file for changes
+      TRAEFIK_PROVIDERS_FILE_WATCH: false
+      # -- ACME email
+      TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL: ${LETSENCRYPT_ACME_EMAIL}
+      # -- ACME storage file
+      TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_STORAGE: /cert/acme.json
+      # -- ACME DNS challenge
+      TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_TLSCHALLENGE: true
+      # -- Hostname
+      HOSTNAME: ${HOSTNAME}
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "traefik", "healthcheck" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    user: nobody:nobody
+    cap_drop:
+      - ALL
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+
   backup-database:
     <<: *database-image
     depends_on:
@@ -94,15 +175,6 @@ services:
     profiles:
       - backup
 
-  compose-docs:
-    image: tons/docker-compose-docs:1.0.1
-    volumes:
-      - .:/src:ro
-    environment:
-      DOCKER_COMPOSE_FILE_PATHS: /src;/src/overlays
-    profiles:
-      - docs
-
   update-admin-password:
     <<: *database-image
     security_opt:
@@ -127,35 +199,6 @@ services:
       DHIS2_ADMIN_USERNAME: ${DHIS2_ADMIN_USERNAME}
       # -- DHIS2 admin password
       DHIS2_ADMIN_PASSWORD: ${DHIS2_ADMIN_PASSWORD}
-
-
-  database:
-    <<: *database-image
-    volumes:
-      - postgres:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d:ro
-    environment:
-      # -- Postgres user password
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      # -- Name of the database
-      POSTGRES_DB: ${POSTGRES_DB:-dhis}
-      # -- Database username
-      POSTGRES_DB_USERNAME: ${POSTGRES_DB_USERNAME}
-      # -- Database password
-      POSTGRES_DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
-      # -- Initdb arguments
-      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
-    ports:
-      - "127.0.0.1:5432:5432"
-    restart: unless-stopped
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    user: postgres
-    security_opt:
-      - no-new-privileges:true
 
   restore-database:
     <<: *database-image
@@ -250,58 +293,14 @@ services:
     profiles:
       - restore
 
-  traefik:
-    image: traefik:v3.5
+  compose-docs:
+    image: tons/docker-compose-docs:1.0.1
     volumes:
-      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
-      - ./traefik/acme.json:/cert/acme.json:rw
+      - .:/src:ro
     environment:
-      # -- Log level
-      TRAEFIK_LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      # -- Enable access logs
-      TRAEFIK_ACCESSLOG: ${LOG_ACCESS:-true}
-      # -- Access log format
-      TRAEFIK_ACCESSLOG_FORMAT: ${LOG_FORMAT:-json}
-      # -- Allow ping
-      TRAEFIK_PING: true
-      # -- Default entrypoint port
-      TRAEFIK_ENTRYPOINTS_WEB_ADDRESS: :80
-      # -- Redirect to https
-      TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_TO: websecure
-      # -- Redirect scheme
-      TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME: https
-      # -- Default secure entrypoint port
-      TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS: :443
-      # -- Provider file
-      TRAEFIK_PROVIDERS_FILE_FILENAME: /etc/traefik/dynamic.yml
-      # -- Watch the provider file for changes
-      TRAEFIK_PROVIDERS_FILE_WATCH: false
-      # -- ACME email
-      TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL: ${LETSENCRYPT_ACME_EMAIL}
-      # -- ACME storage file
-      TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_STORAGE: /cert/acme.json
-      # -- ACME DNS challenge
-      TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_TLSCHALLENGE: true
-      # -- Hostname
-      HOSTNAME: ${HOSTNAME}
-    ports:
-      - "80:80"
-      - "443:443"
-    restart: unless-stopped
-    healthcheck:
-      test: [ "CMD", "traefik", "healthcheck" ]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
-    user: nobody:nobody
-    cap_drop:
-      - ALL
-    read_only: true
-    security_opt:
-      - no-new-privileges:true
-    tmpfs:
-      - /tmp
+      DOCKER_COMPOSE_FILE_PATHS: /src;/src/overlays
+    profiles:
+      - docs
 
 volumes:
   dhis2: { }
