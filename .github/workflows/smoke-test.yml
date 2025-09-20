@@ -23,6 +23,29 @@ jobs:
         run: |
           docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml -f overlays/docker-compose.monitoring.yml up -d
 
+      - name: Wait for all services to be healthy
+        run: |
+          timeout 60 bash -c '
+          echo "Waiting for all services to be healthy..."
+          while true; do
+            all_healthy=true
+            for name in $(docker compose ps --format "{{.Name}}"); do
+              echo "Checking $name..."
+              status=$(docker inspect "$name" --format "{{.State.Health.Status}}")
+              if [ "$status" != "healthy" ]; then
+                echo "Service $name is $status, waiting..."
+                all_healthy=false
+                break
+              fi
+            done
+            if $all_healthy; then
+              echo "All services are healthy."
+              break
+            fi
+            sleep 5
+          done
+          '
+
       - name: Wait for application to be ready
         run: |
           timeout 2m bash -c 'until curl --silent --fail http://dhis2-127-0-0-1.nip.io/dhis-web-login/; do sleep 5; done'
