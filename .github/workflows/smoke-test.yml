@@ -23,39 +23,16 @@ jobs:
         run: |
           docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml -f overlays/docker-compose.monitoring.yml up -d
 
-      - name: Wait for services with health checks to pass
-        run: |
-          docker compose ps
-          timeout 60s bash -c '
-            SERVICES=$(docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml -f overlays/docker-compose.monitoring.yml config | python3 -c "import sys, yaml, json; print(json.dumps(yaml.safe_load(sys.stdin)))" | jq -r '\''.services | to_entries[] | select(.value.healthcheck) | .key'\'')
-            echo "Services with health checks: $SERVICES"
-            echo "Waiting for services with health checks to be healthy..."
-            while true; do
-              all_healthy=true
-              for service in $SERVICES; do
-                name=$(docker compose ps --format "table {{.Name}}\t{{.Service}}" | awk -v s="$service" '\''$2 == s {print $1}'\'')
-                if [ -z "$name" ]; then
-                  echo "Service $service not running, skipping..."
-                  continue
-                fi
-                echo -n "Checking $name..."
-                status=$(docker inspect "$name" --format "{{.State.Health.Status}}")
-                if [ "$status" = "healthy" ]; then
-                  echo "$name is healthy."
-                else
-                  all_healthy=false
-                  break
-                fi
-              done
-              if $all_healthy; then
-                echo "All services with health checks are healthy."
-                break
-              fi
-              sleep 5
-            done
-          '
+      - name: Ensure services are healthy
+        run: ./.github/workflows/scripts/ensure-healthy-services.sh
+        timeout-minutes: 1
+
       - name: Wait for application to be ready
-        run: timeout 1m bash -c 'until [ "$(curl --insecure --silent --output /dev/null --write-out "%{http_code}" https://dhis2-127-0-0-1.nip.io/dhis-web-login/)" = "200" ]; do sleep 5; done'
+        run: |
+          until [ "$(curl --insecure --silent --output /dev/null --write-out "%{http_code}" https://dhis2-127-0-0-1.nip.io/dhis-web-login/)" = "200" ]; do
+            sleep 5
+          done
+        timeout-minutes: 1
 
       - name: Verify process isn't running as root
         run: |
