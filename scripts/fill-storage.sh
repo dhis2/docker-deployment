@@ -30,13 +30,13 @@ generate_files() {
         current_size=$((current_size + size))
 
         if (( file_index % 100 == 0 )); then
-            echo "Thread $thread_id: created $filename ($(numfmt --to=iec-i $size)), total: $(numfmt --to=iec-i $current_size)"
+            echo "Thread $thread_id: created $file_index files, total: $(numfmt --to=iec-i $current_size)"
         fi
         file_index=$((file_index + 1))
     done
 }
 
-echo "Generating ~${TARGET_SIZE} bytes across $THREADS threads..."
+echo "Generating ~$(numfmt --to=iec-i "$TARGET_SIZE") bytes across $THREADS threads..."
 for t in $(seq 1 "$THREADS"); do
     generate_files "$t" "$CHUNK_SIZE" &
 done

@@ -10,7 +10,6 @@ services:
       MIN_SIZE: 10240  # 10 * 1024 == 10 KB
       MAX_SIZE: 5242880  # 5 * 1024 * 1024 == 5 MB
       THREADS: 4
-      CHUNK_SIZE: 2684354560  # TARGET_SIZE / THREADS
       OUTDIR: "/opt/dhis2/files/generated_files"
     depends_on:
       app:
