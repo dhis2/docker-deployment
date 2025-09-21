@@ -9,6 +9,8 @@ x-loki-logging: &loki-logging
   options:
     # We're using the special DNS name host.docker.internal which resolves to the internal IP address used by the host, as the Loki Docker Driver is running on the host network and we need to send logs to it from the service containers
     loki-url: "http://host.docker.internal:3100/loki/api/v1/push"
+    loki-timeout: "1s"
+    loki-retries: "2"
 
 services:
   app:
