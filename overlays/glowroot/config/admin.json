@@ -1,0 +1,27 @@
+{
+  "general": {
+    "agentDisplayName": "DHIS2"
+  },
+  "web": {
+    "bindAddress": "0.0.0.0",
+    "port": 4000
+  },
+  "ui": {
+    "defaultTransactionType": "Web",
+    "defaultPercentiles": [50.0, 95.0, 99.0, 99.9],
+    "defaultGaugeNames": []
+  },
+  "gauges": [
+    {
+      "mbeanObjectName": "java.lang:type=Memory",
+      "mbeanAttributes": [
+        {
+          "name": "HeapMemoryUsage.used"
+        },
+        {
+          "name": "NonHeapMemoryUsage.used"
+        }
+      ]
+    }
+  ]
+}

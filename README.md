@@ -54,6 +54,14 @@ docker compose -f docker-compose.yml -f overlays/docker-compose.monitoring.yml u
 
 More details in the [Monitoring section](#monitoring-1)
 
+### Glowroot
+
+Glowroot can be enabled by launching the application with the following command
+
+```shell
+docker compose -f docker-compose.yml -f overlays/glowroot/docker-compose.yml up
+```
+
 ## Backup and Restore
 
 Backups are stored in the `./backups` directory.
