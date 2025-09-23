@@ -7,8 +7,9 @@ x-healthcheck-options: &healthcheck-options
 x-loki-logging: &loki-logging
   driver: loki
   options:
-    # We're using the special DNS name host.docker.internal which resolves to the internal IP address used by the host, as the Loki Docker Driver is running on the host network and we need to send logs to it from the service containers
-    loki-url: "http://host.docker.internal:3100/loki/api/v1/push"
+    loki-url: "http://localhost:3100/loki/api/v1/push"
+    loki-timeout: "1s"
+    loki-retries: "2"
 
 services:
   app:
@@ -84,9 +85,9 @@ services:
       - loki:/loki
     environment:
       LOKI_RETENTION_PERIOD: ${LOKI_RETENTION_PERIOD:-744h}
-    # Port is exposed as the Loki Docker Driver is running on the host network and we need to send logs to it from the service containers
+    # The Docker Logging Driver is running on the host network, and therefore we need to expose Loki on it
     ports:
-      - "127.0.0.1:3100:3100"
+      - "0.0.0.0:3100:3100"
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:3100/ready" ]
