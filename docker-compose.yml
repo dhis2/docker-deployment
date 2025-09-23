@@ -21,6 +21,10 @@ services:
       POSTGRES_DB_USERNAME: ${POSTGRES_DB_USERNAME}
       # -- Database password
       POSTGRES_DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
+    networks:
+      - frontend
+      - application
+      - database
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://127.0.0.1:8080/dhis-web-login/" ]
@@ -64,6 +68,8 @@ services:
       DHIS2_ADMIN_USERNAME: ${DHIS2_ADMIN_USERNAME}
       # -- DHIS2 admin password
       DHIS2_ADMIN_PASSWORD: ${DHIS2_ADMIN_PASSWORD}
+    networks:
+      - database
 
   database:
     <<: *database-image
@@ -83,6 +89,8 @@ services:
       POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
     ports:
       - "127.0.0.1:5432:5432"
+    networks:
+      - database
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB}" ]
@@ -130,6 +138,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    networks:
+      - frontend
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "traefik", "healthcheck" ]
@@ -167,6 +177,8 @@ services:
       POSTGRES_BACKUP_FORMAT: ${POSTGRES_BACKUP_FORMAT:-custom}
       # -- The `PGPASSWORD` environment variable is used by the `pg_dump` command`
       PGPASSWORD: ${POSTGRES_DB_PASSWORD}
+    networks:
+      - database
     entrypoint: [ "/bin/sh", "/backup-database.sh" ]
     profiles:
       - backup
@@ -182,6 +194,8 @@ services:
       BACKUP_TIMESTAMP: ${BACKUP_TIMESTAMP}
       # -- Directory to back up
       BACKUP_SOURCE_PATH: ${BACKUP_SOURCE_PATH:-/opt/dhis2/files}
+    networks:
+      - application
     entrypoint: [ "/bin/sh", "/backup-file-storage.sh" ]
     profiles:
       - backup
@@ -209,6 +223,8 @@ services:
       DB_RESTORE_FILE: ${DB_RESTORE_FILE}
       # -- Number of parallel jobs for pg_restore
       DB_RESTORE_NUMBER_OF_JOBS: ${DB_RESTORE_NUMBER_OF_JOBS:-4}
+    networks:
+      - database
     entrypoint: [ "/bin/sh", "/restore-database.sh" ]
     profiles:
       - restore
@@ -224,6 +240,8 @@ services:
       FILE_STORAGE_RESTORE_SOURCE_DIR: ${FILE_STORAGE_RESTORE_SOURCE_DIR}
       # -- Directory to restore to
       RESTORE_DESTINATION_PATH: ${RESTORE_DESTINATION_PATH:-/opt/dhis2/files}
+    networks:
+      - application
     entrypoint: [ "/bin/sh", "/restore-file-storage.sh" ]
     profiles:
       - restore
@@ -240,3 +258,9 @@ services:
 volumes:
   dhis2: { }
   postgres: { }
+
+networks:
+  frontend:
+  application:
+  database:
+  monitoring:
