@@ -119,6 +119,12 @@ services:
       TRAEFIK_PROVIDERS_FILE_FILENAME: /etc/traefik/dynamic.yml
       # -- Watch the provider file for changes
       TRAEFIK_PROVIDERS_FILE_WATCH: false
+      # -- Enable API
+      TRAEFIK_API: true
+      # -- Allow insecure API access
+      TRAEFIK_API_INSECURE: true
+      # -- Enable Prometheus metrics
+      TRAEFIK_METRICS_PROMETHEUS: true
       # -- ACME email
       TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL: ${LETSENCRYPT_ACME_EMAIL}
       # -- ACME storage file

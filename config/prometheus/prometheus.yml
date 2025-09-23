@@ -12,3 +12,7 @@ scrape_configs:
       # Username is hard coded since we can't use a secret here
       username: monitor
       password_file: /run/secrets/dhis2_monitor_password
+  - job_name: 'traefik'
+    static_configs:
+      - targets: ['traefik:8080']
+    metrics_path: '/metrics'
