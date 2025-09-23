@@ -153,6 +153,7 @@ services:
         condition: service_healthy
     volumes:
       - ./backups:/backups
+      - ./scripts/backup-database.sh:/backup-database.sh:ro
     environment:
       # -- Database hostname
       POSTGRES_HOST: database
@@ -166,16 +167,7 @@ services:
       POSTGRES_BACKUP_FORMAT: ${POSTGRES_BACKUP_FORMAT:-custom}
       # -- The `PGPASSWORD` environment variable is used by the `pg_dump` command`
       PGPASSWORD: ${POSTGRES_DB_PASSWORD}
-    command: >
-      /bin/sh -c "
-        set -o errexit
-
-        if [ \"$$POSTGRES_BACKUP_FORMAT\" = \"plain\" ]; then
-          pg_dump --host $$POSTGRES_HOST --username $$POSTGRES_USER --format plain --exclude-table \"analytics_*\" --exclude-table \"_*\" $$POSTGRES_DB --verbose | gzip > /backups/$$BACKUP_TIMESTAMP.sql.gz
-        else
-          pg_dump --host $$POSTGRES_HOST --username $$POSTGRES_USER --format $$POSTGRES_BACKUP_FORMAT --exclude-table \"analytics_*\" --exclude-table \"_*\" --file /backups/$$BACKUP_TIMESTAMP.pgc $$POSTGRES_DB --verbose
-        fi
-      "
+    entrypoint: [ "/bin/sh", "/backup-database.sh" ]
     profiles:
       - backup
 
@@ -184,19 +176,13 @@ services:
     volumes:
       - dhis2:/opt/dhis2:ro
       - ./backups:/backups
+      - ./scripts/backup-file-storage.sh:/backup-file-storage.sh:ro
     environment:
       # -- Backup timestamp. Used to name the backup directory and the backup file. Since those are created by different containers, we need to ensure the backup timestamp is the same for both containers.
       BACKUP_TIMESTAMP: ${BACKUP_TIMESTAMP}
       # -- Directory to back up
       BACKUP_SOURCE_PATH: ${BACKUP_SOURCE_PATH:-/opt/dhis2/files}
-    entrypoint: >
-      /bin/sh -c "
-        set -o errexit
-
-        rclone copy \"$$BACKUP_SOURCE_PATH\" \"/backups/file-storage-$${BACKUP_TIMESTAMP}\" --verbose --create-empty-src-dirs
-
-        echo 'File storage backup completed successfully'
-      "
+    entrypoint: [ "/bin/sh", "/backup-file-storage.sh" ]
     profiles:
       - backup
 
@@ -207,6 +193,7 @@ services:
         condition: service_healthy
     volumes:
       - ./backups:/backups:ro
+      - ./scripts/restore-database.sh:/restore-database.sh:ro
     environment:
       # -- Database hostname
       POSTGRES_HOST: database
@@ -222,40 +209,7 @@ services:
       DB_RESTORE_FILE: ${DB_RESTORE_FILE}
       # -- Number of parallel jobs for pg_restore
       DB_RESTORE_NUMBER_OF_JOBS: ${DB_RESTORE_NUMBER_OF_JOBS:-4}
-    command: >
-      /bin/sh -c "
-        set -o errexit
-
-        if [ -z \"$DB_RESTORE_FILE\" ]; then
-          echo \"Error: DB_RESTORE_FILE environment variable must be set\"
-          exit 1
-        fi
-
-        if [ ! -f \"/backups/$DB_RESTORE_FILE\" ]; then
-          echo \"Error: Restore file /backups/$DB_RESTORE_FILE not found\"
-          exit 1
-        fi
-
-        echo \"Restoring database from $DB_RESTORE_FILE\"
-
-        echo \"Waiting for database to be ready...\"
-        until pg_isready --host $$POSTGRES_HOST --username $$POSTGRES_USER; do
-          sleep 2
-        done
-
-        psql --host=\"$$POSTGRES_HOST\" --username=postgres --dbname=$$POSTGRES_DB --command=\"DROP SCHEMA public CASCADE; CREATE SCHEMA public;\"
-
-        if echo \"$$DB_RESTORE_FILE\" | grep -q \"\\.sql\\.gz$\"; then
-          gunzip --stdout /backups/þ$DB_RESTORE_FILE | psql --host $$POSTGRES_HOST --username $$POSTGRES_USER --dbname $$POSTGRES_DB --verbose
-        elif echo \"$$DB_RESTORE_FILE\" | grep -q \"\\.pgc$\"; then
-          pg_restore --no-password --host $$POSTGRES_HOST --username postgres --dbname $$POSTGRES_DB --jobs=$$DB_RESTORE_NUMBER_OF_JOBS --verbose --clean --if-exists /backups/$$DB_RESTORE_FILE
-        else
-          echo \"Error: Unsupported file format. Use .sql.gz for plain format or .pgc for custom format\"
-          exit 1
-        fi
-
-        echo \"Database restore completed successfully\"
-      "
+    entrypoint: [ "/bin/sh", "/restore-database.sh" ]
     profiles:
       - restore
 
@@ -264,32 +218,13 @@ services:
     volumes:
       - dhis2:/opt/dhis2
       - ./backups:/backups:ro
+      - ./scripts/restore-file-storage.sh:/restore-file-storage.sh:ro
     environment:
       # -- Directory to restore from
       FILE_STORAGE_RESTORE_SOURCE_DIR: ${FILE_STORAGE_RESTORE_SOURCE_DIR}
       # -- Directory to restore to
       RESTORE_DESTINATION_PATH: ${RESTORE_DESTINATION_PATH:-/opt/dhis2/files}
-    entrypoint: >
-      /bin/sh -c "
-        set -o errexit
-
-        if [ -z \"$$FILE_STORAGE_RESTORE_SOURCE_DIR\" ]; then
-          echo 'Error: FILE_STORAGE_RESTORE_SOURCE_DIR environment variable must be set'
-          exit 1
-        fi
-
-        # Add trailing slash to ensure content of the folder is copied rather than the folder itself
-        SRC=/backups/$$FILE_STORAGE_RESTORE_SOURCE_DIR/
-
-        if [ ! -d \"$$SRC\" ]; then
-          echo \"Error: Restore directory $$SRC not found\"
-          exit 1
-        fi
-
-        rclone copy \"$$SRC\" \"$$RESTORE_DESTINATION_PATH\" --verbose --create-empty-src-dirs
-
-        echo 'File storage restore completed successfully'
-      "
+    entrypoint: [ "/bin/sh", "/restore-file-storage.sh" ]
     profiles:
       - restore
 
