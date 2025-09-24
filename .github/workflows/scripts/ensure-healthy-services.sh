@@ -4,10 +4,7 @@ set -euo pipefail
 
 # Collect all services that define a healthcheck
 SERVICES=$(
-  docker compose -f docker-compose.yml \
-                 -f overlays/docker-compose.traefik-dashboard.yml \
-                 -f overlays/docker-compose.monitoring.yml \
-    config \
+  make config \
   | yq -o=json \
   | jq -r '.services | to_entries[] | select(.value.healthcheck) | .key'
 )

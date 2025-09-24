@@ -9,7 +9,7 @@ Docker production deployment of the DHIS2 application
 Generate a new `.env` file by executing the following command
 
 ```shell
-./scripts/generate_env.sh
+./scripts/generate-env.sh
 ```
 
 Potentially adjust the generated `.env` file to your needs. However, it's highly recommended not to change the generated values of the password variables.
@@ -41,7 +41,7 @@ Open http://dhis2-127-0-0-1.nip.io in your favourite browser.
 The Traefik dashboard can be enabled by launching the application with the following command
 
 ```shell
-docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml up
+docker compose -f docker-compose.yml -f overlays/traefik-dashboard/docker-compose.yml up
 ```
 
 ### Monitoring
@@ -49,7 +49,7 @@ docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboar
 The monitoring stack includes Grafana, Loki, and Prometheus for logs and metrics collection. It can be enabled by applying the monitoring overlay:
 
 ```shell
-docker compose -f docker-compose.yml -f overlays/docker-compose.monitoring.yml up
+docker compose -f docker-compose.yml -f overlays/monitoring/docker-compose.yml up
 ```
 
 More details in the [Monitoring section](#monitoring-1)
@@ -145,7 +145,7 @@ The Docker Loki Driver plugin is required
 Start the core application with monitoring:
 
 ```shell
-docker compose -f docker-compose.yml -f overlays/docker-compose.monitoring.yml up
+docker compose -f docker-compose.yml -f overlays/monitoring/docker-compose.yml up
 ```
 
 This enables:
@@ -195,4 +195,16 @@ Monitoring settings can be configured via environment variables in your `.env` f
 
 ```shell
 make init
+```
+
+### Start all services
+
+```shell
+make launch
+```
+
+### Clean all services
+
+```shell
+make clean
 ```
