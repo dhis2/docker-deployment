@@ -1,3 +1,4 @@
+# Monitoring
 x-healthcheck-options: &healthcheck-options
   interval: 10s
   timeout: 3s
@@ -20,9 +21,16 @@ services:
       MONITORING_HIBERNATE_ENABLED: on
       MONITORING_UPTIME_ENABLED: on
       MONITORING_CPU_ENABLED: on
+    networks:
+      - frontend
+      - application
+      - database
+      - monitoring
     logging: *loki-logging
 
   update-admin-password:
+    networks:
+      - database
     logging: *loki-logging
 
   create-monitoring-user:
@@ -44,9 +52,13 @@ services:
       DHIS2_ADMIN_PASSWORD: ${DHIS2_ADMIN_PASSWORD}
       DHIS2_MONITOR_USERNAME: ${DHIS2_MONITOR_USERNAME}
       DHIS2_MONITOR_PASSWORD: ${DHIS2_MONITOR_PASSWORD}
+    networks:
+      - application
     logging: *loki-logging
 
   database:
+    networks:
+      - database
     logging: *loki-logging
 
   grafana:
@@ -67,6 +79,9 @@ services:
       GF_SERVER_ROOT_URL: https://grafana.${HOSTNAME}
       GF_SERVER_SERVE_FROM_SUB_PATH: false
       DS_PROMETHEUS: prometheus
+    networks:
+      - frontend
+      - monitoring
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]
@@ -90,6 +105,8 @@ services:
     # The Docker Logging Driver is running on the host network, and therefore we need to expose Loki on it
     ports:
       - "0.0.0.0:3100:3100"
+    networks:
+      - monitoring
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:3100/ready" ]
@@ -105,6 +122,8 @@ services:
     image: busybox:1.37.0
     volumes:
       - loki:/loki
+    networks:
+      - monitoring
     command: [ "sh", "-c", "mkdir -p /loki/chunks /loki/rules /loki/wal /loki/boltdb-shipper-compactor && chown -R nobody:nobody /loki" ]
     user: root
 
@@ -117,6 +136,8 @@ services:
       - dhis2_monitor_password
     environment:
       PROMETHEUS_RETENTION_TIME: ${PROMETHEUS_RETENTION_TIME:-15d}
+    networks:
+      - monitoring
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
@@ -139,7 +160,7 @@ services:
     security_opt:
       - no-new-privileges:true
 
-  postgres_exporter:
+  postgres-exporter:
     image: quay.io/prometheuscommunity/postgres-exporter:${POSTGRES_EXPORTER_VERSION:-v0.17.1}
     environment:
       DATA_SOURCE_NAME: "postgresql://${POSTGRES_METRICS_USERNAME}:${POSTGRES_METRICS_PASSWORD}@database:5432/${POSTGRES_DB}?sslmode=disable"
@@ -159,6 +180,8 @@ services:
 
   traefik:
     logging: *loki-logging
+    networks:
+      - frontend
 
   node-exporter:
     image: prom/node-exporter:${NODE_EXPORTER_VERSION:-v1.6.1}
