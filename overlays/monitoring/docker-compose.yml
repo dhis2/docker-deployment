@@ -1,3 +1,4 @@
+# Monitoring
 x-healthcheck-options: &healthcheck-options
   interval: 10s
   timeout: 3s
@@ -20,9 +21,16 @@ services:
       MONITORING_HIBERNATE_ENABLED: on
       MONITORING_UPTIME_ENABLED: on
       MONITORING_CPU_ENABLED: on
+    networks:
+      - frontend
+      - application
+      - database
+      - monitoring
     logging: *loki-logging
 
   update-admin-password:
+    networks:
+      - database
     logging: *loki-logging
 
   create-monitoring-user:
@@ -44,16 +52,21 @@ services:
       DHIS2_ADMIN_PASSWORD: ${DHIS2_ADMIN_PASSWORD}
       DHIS2_MONITOR_USERNAME: ${DHIS2_MONITOR_USERNAME}
       DHIS2_MONITOR_PASSWORD: ${DHIS2_MONITOR_PASSWORD}
+    networks:
+      - application
     logging: *loki-logging
 
   database:
+    networks:
+      - database
     logging: *loki-logging
 
   grafana:
     image: grafana/grafana:${GRAFANA_VERSION:-10.0.0}
     volumes:
       - grafana:/var/lib/grafana
-      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./overlays/monitoring/config/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./overlays/monitoring/config/grafana/provisioning:/etc/grafana/provisioning:ro
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
       GF_SECURITY_ADMIN_USER: admin
@@ -65,6 +78,10 @@ services:
       GF_PATHS_PROVISIONING: /etc/grafana/provisioning
       GF_SERVER_ROOT_URL: https://grafana.${HOSTNAME}
       GF_SERVER_SERVE_FROM_SUB_PATH: false
+      DS_PROMETHEUS: prometheus
+    networks:
+      - frontend
+      - monitoring
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]
@@ -88,6 +105,8 @@ services:
     # The Docker Logging Driver is running on the host network, and therefore we need to expose Loki on it
     ports:
       - "0.0.0.0:3100:3100"
+    networks:
+      - monitoring
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:3100/ready" ]
@@ -103,6 +122,8 @@ services:
     image: busybox:1.37.0
     volumes:
       - loki:/loki
+    networks:
+      - monitoring
     command: [ "sh", "-c", "mkdir -p /loki/chunks /loki/rules /loki/wal /loki/boltdb-shipper-compactor && chown -R nobody:nobody /loki" ]
     user: root
 
@@ -110,11 +131,13 @@ services:
     image: prom/prometheus:${PROMETHEUS_VERSION:-v2.45.0}
     volumes:
       - prometheus:/prometheus
-      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./overlays/monitoring/config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     secrets:
       - dhis2_monitor_password
     environment:
       PROMETHEUS_RETENTION_TIME: ${PROMETHEUS_RETENTION_TIME:-15d}
+    networks:
+      - monitoring
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
@@ -137,8 +160,68 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:${POSTGRES_EXPORTER_VERSION:-v0.17.1}
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_METRICS_USERNAME}:${POSTGRES_METRICS_PASSWORD}@database:5432/${POSTGRES_DB}?sslmode=disable"
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:9187/metrics" ]
+      <<: *healthcheck-options
+    user: nobody:nobody
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    logging: *loki-logging
+
   traefik:
     logging: *loki-logging
+    networks:
+      - frontend
+
+  node-exporter:
+    image: prom/node-exporter:${NODE_EXPORTER_VERSION:-v1.6.1}
+    user: "65534:65534"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host)($$|/)'
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:9100/metrics" ]
+      <<: *healthcheck-options
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:${CADVISOR_VERSION:-v0.47.0}
+    privileged: true
+    command:
+      # For the sake of avoiding: "Unable to get btrfs mountpoint IDs: stat failed on /dev/mapper/luks-id with error: no such file or directory"
+      # https://github.com/google/cadvisor/issues/3357
+      - --disable_metrics=disk,referenced_memory
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:8080/metrics" ]
+      <<: *healthcheck-options
 
 volumes:
   loki: { }

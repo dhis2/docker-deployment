@@ -14,14 +14,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Configure environment
         run: |
-          ./scripts/generate_env.sh
+          ./scripts/generate-env.sh
           cat .env | sed /^#/d >> $GITHUB_ENV
 
           ./scripts/install-loki-driver.sh
 
       - name: Start services
         run: |
-          docker compose -f docker-compose.yml -f overlays/docker-compose.traefik-dashboard.yml -f overlays/docker-compose.monitoring.yml up -d
+          make launch COMPOSE_OPTS=-d
 
       - name: Ensure services are healthy
         run: ./.github/workflows/scripts/ensure-healthy-services.sh
