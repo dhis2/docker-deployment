@@ -1,6 +1,6 @@
 PRE_COMMIT_VERSION ?= 4.3.0
 
-.PHONY: init reinit check docs
+.PHONY: init reinit check docs launch clean config
 
 init:
 	@test -d .venv || python3 -m venv .venv
@@ -45,3 +45,14 @@ restore:
 docs:
 	mkdir -p ./docs
 	docker compose run --rm compose-docs > docs/environment-variables.md
+
+COMPOSE_CMD = docker compose -f docker-compose.yml -f overlays/traefik-dashboard/docker-compose.yml -f overlays/monitoring/docker-compose.yml -f overlays/glowroot/docker-compose.yml
+
+launch:
+	$(COMPOSE_CMD) up $(COMPOSE_OPTS)
+
+clean:
+	$(COMPOSE_CMD) down --remove-orphans --volumes
+
+config:
+	@$(COMPOSE_CMD) config

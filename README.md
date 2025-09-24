@@ -196,3 +196,15 @@ Monitoring settings can be configured via environment variables in your `.env` f
 ```shell
 make init
 ```
+
+### Start all services
+
+```shell
+make launch
+```
+
+### Clean all services
+
+```shell
+make clean
+```
