@@ -160,7 +160,7 @@ services:
     security_opt:
       - no-new-privileges:true
 
-  postgres_exporter:
+  postgres-exporter:
     image: quay.io/prometheuscommunity/postgres-exporter:${POSTGRES_EXPORTER_VERSION:-v0.17.1}
     environment:
       DATA_SOURCE_NAME: "postgresql://${POSTGRES_METRICS_USERNAME}:${POSTGRES_METRICS_PASSWORD}@database:5432/${POSTGRES_DB}?sslmode=disable"
