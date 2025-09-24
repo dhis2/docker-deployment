@@ -146,8 +146,8 @@ services:
       # -- Hostname
       HOSTNAME: ${HOSTNAME}
     ports:
-      - "80:80"
-      - "443:443"
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
     networks:
       - frontend
     restart: unless-stopped
