@@ -2,8 +2,9 @@
   "rules": {
     "no-version-field": 0,
     "require-project-name-field": 0,
+    "services-alphabetical-order": 0,
     "no-unbound-port-interfaces": [
-      1,
+      2,
       {
         "excludeServices": [
           "traefik"

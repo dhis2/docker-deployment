@@ -40,7 +40,7 @@ repos:
     rev: v1.37.1
     hooks:
       - id: yamllint
-        exclude: "(docker-)?compose.*\\.ya?ml$|^path/to/second\\.ya?ml$"
+        exclude: "(docker-)?compose.*\\.ya?ml$"
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.45.0
