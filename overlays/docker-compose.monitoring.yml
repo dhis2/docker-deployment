@@ -164,9 +164,12 @@ services:
     image: quay.io/prometheuscommunity/postgres-exporter:${POSTGRES_EXPORTER_VERSION:-v0.17.1}
     environment:
       DATA_SOURCE_NAME: "postgresql://${POSTGRES_METRICS_USERNAME}:${POSTGRES_METRICS_PASSWORD}@database:5432/${POSTGRES_DB}?sslmode=disable"
+    networks:
+      - database
+      - monitoring
     depends_on:
-      database:
-        condition: service_healthy
+      create-monitoring-user:
+        condition: service_completed_successfully
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:9187/metrics" ]
@@ -186,6 +189,8 @@ services:
   node-exporter:
     image: prom/node-exporter:${NODE_EXPORTER_VERSION:-v1.6.1}
     user: "65534:65534"
+    networks:
+      - monitoring
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -198,6 +203,7 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:9100/metrics" ]
       <<: *healthcheck-options
@@ -205,6 +211,8 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:${CADVISOR_VERSION:-v0.47.0}
     privileged: true
+    networks:
+      - monitoring
     command:
       # For the sake of avoiding: "Unable to get btrfs mountpoint IDs: stat failed on /dev/mapper/luks-id with error: no such file or directory"
       # https://github.com/google/cadvisor/issues/3357
@@ -219,6 +227,7 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:8080/metrics" ]
       <<: *healthcheck-options
