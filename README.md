@@ -9,7 +9,7 @@ Docker production deployment of the DHIS2 application
 Generate a new `.env` file by executing the following command
 
 ```shell
-./scripts/generate_env.sh
+./scripts/generate-env.sh
 ```
 
 Potentially adjust the generated `.env` file to your needs. However, it's highly recommended not to change the generated values of the password variables.
