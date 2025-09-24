@@ -16,3 +16,6 @@ scrape_configs:
     static_configs:
       - targets: ['traefik:8080']
     metrics_path: '/metrics'
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres_exporter:9187']
