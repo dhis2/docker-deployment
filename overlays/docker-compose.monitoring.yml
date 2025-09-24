@@ -66,6 +66,7 @@ services:
       GF_PATHS_PROVISIONING: /etc/grafana/provisioning
       GF_SERVER_ROOT_URL: https://grafana.${HOSTNAME}
       GF_SERVER_SERVE_FROM_SUB_PATH: false
+      DS_PROMETHEUS: prometheus
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]
