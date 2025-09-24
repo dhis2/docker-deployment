@@ -1,0 +1,30 @@
+services:
+  app:
+    deploy:
+      resources:
+        limits:
+          cpus: ${DHIS2_CPU_LIMITS}
+          memory: ${DHIS2_MEM_LIMITS}
+        reservations:
+          cpus: ${DHIS2_CPU_RESERVATIONS}
+          memory: ${DHIS2_MEM_RESERVATIONS}
+
+  database:
+    deploy:
+      resources:
+        limits:
+          cpus: ${DB_CPU_LIMITS}
+          memory: ${DB_MEM_LIMITS}
+        reservations:
+          cpus: ${DB_CPU_RESERVATIONS}
+          memory: ${DB_MEM_RESERVATIONS}
+
+  traefik:
+    deploy:
+      resources:
+        limits:
+          cpus: ${TRAEFIK_CPU_LIMITS}
+          memory: ${TRAEFIK_MEM_LIMITS}
+        reservations:
+          cpus: ${TRAEFIK_CPU_RESERVATIONS}
+          memory: ${TRAEFIK_MEM_RESERVATIONS}
