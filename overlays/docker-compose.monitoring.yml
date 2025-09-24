@@ -160,6 +160,46 @@ services:
   traefik:
     logging: *loki-logging
 
+  node-exporter:
+    image: prom/node-exporter:${NODE_EXPORTER_VERSION:-v1.6.1}
+    user: "65534:65534"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host)($$|/)'
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:9100/metrics" ]
+      <<: *healthcheck-options
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:${CADVISOR_VERSION:-v0.47.0}
+    privileged: true
+    command:
+      # For the sake of avoiding: "Unable to get btrfs mountpoint IDs: stat failed on /dev/mapper/luks-id with error: no such file or directory"
+      # https://github.com/google/cadvisor/issues/3357
+      - --disable_metrics=disk,referenced_memory
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:8080/metrics" ]
+      <<: *healthcheck-options
+
 volumes:
   loki: { }
   prometheus: { }
