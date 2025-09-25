@@ -7,6 +7,11 @@ init:
 	.venv/bin/python -m pip install "pre-commit==$(PRE_COMMIT_VERSION)"
 	.venv/bin/pre-commit install
 
+playWright:
+	@test -d .venv || python3 -m venv .venv
+	.venv/bin/python -m pip install playwright pytest
+	.venv/bin/playwright install
+
 reinit:
 	rm -rf .venv
 	$(MAKE) init
