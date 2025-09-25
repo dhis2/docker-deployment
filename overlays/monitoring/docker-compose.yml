@@ -1,4 +1,3 @@
-# Monitoring
 x-healthcheck-options: &healthcheck-options
   interval: 10s
   timeout: 3s
