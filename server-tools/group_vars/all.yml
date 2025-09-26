@@ -11,6 +11,8 @@ overlays: []
 
 repo_url: https://github.com/dhis2/docker-deployment
 
+repo_branch: master
+
 deploy_dir: /opt/dhis2
 
 allowed_ssh_users:

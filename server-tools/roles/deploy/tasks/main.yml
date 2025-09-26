@@ -22,15 +22,18 @@
 
 - name: Clone the repository
   command: git clone {{ repo_url }} {{ deploy_dir }}
-  args:
-    creates: "{{ deploy_dir }}/.git"
+  when: not git_repo.stat.exists
 
-- name: Set permissions of deploy dir
-  file:
-    path: "{{ deploy_dir }}"
-    group: "{{ docker_group }}"
-    mode: '0755'
-    recurse: yes
+- name: Checkout the specified branch
+  command: git checkout {{ repo_branch }}
+  args:
+    chdir: "{{ deploy_dir }}"
+
+- name: Pull latest changes
+  command: git pull
+  args:
+    chdir: "{{ deploy_dir }}"
+  when: git_repo.stat.exists
 
 - name: Generate .env file
   shell: |
@@ -44,8 +47,8 @@
 - name: Set .env permissions
   file:
     path: "{{ deploy_dir }}/.env"
-    group: "{{ docker_group }}"
-    mode: '0644'
+    owner: "{{ docker_user }}"
+    group: root
 
 - name: Set compose files
   set_fact:
