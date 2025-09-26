@@ -24,6 +24,9 @@
   command: git clone {{ repo_url }} {{ deploy_dir }}
   when: not git_repo.stat.exists
 
+- name: Add deploy directory to git safe directories
+  command: git config --global --add safe.directory {{ deploy_dir }}
+
 - name: Checkout the specified branch
   command: git checkout {{ repo_branch }}
   args:
