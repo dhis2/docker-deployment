@@ -14,7 +14,7 @@ reinit:
 check:
 	.venv/bin/pre-commit run --all-files
 
-BACKUP_TIMESTAMP := $(shell date +%Y-%m-%dT%H:%M:%S%z)
+BACKUP_TIMESTAMP := $(shell date +%Y-%m-%dT%H:%M:%S%Z)
 
 backup-database:
 	mkdir -p ./backups
