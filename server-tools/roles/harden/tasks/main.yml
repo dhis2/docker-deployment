@@ -110,10 +110,37 @@
   command: sysctl -p
 
 # Docker-specific hardening
-- name: Install AppArmor utils
+- name: Configure subuid for user namespace remapping
+  # Allocates UID range 100000-165535 for the user, enabling Docker to remap container UIDs
+  lineinfile:
+    path: /etc/subuid
+    line: "{{ docker_user }}:100000:65536"
+    create: yes
+
+- name: Configure subgid for user namespace remapping
+  # Allocates GID range 100000-165535 for the user, enabling Docker to remap container GIDs
+  lineinfile:
+    path: /etc/subgid
+    line: "{{ docker_user }}:100000:65536"
+    create: yes
+
+- name: Install AppArmor utils and profiles
   apt:
-    name: apparmor-utils
+    name:
+      - apparmor-utils
+      - apparmor-profiles
     state: present
+
+- name: Check if Docker AppArmor profile is loaded
+  shell: apparmor_status --profiled | grep -q docker
+  register: apparmor_check
+  failed_when: false
+  changed_when: false
+
+- name: Assert Docker AppArmor profile is loaded
+  assert:
+    that: apparmor_check.rc == 0
+    fail_msg: "Docker AppArmor profile is not loaded. Ensure AppArmor is configured for Docker security."
 
 - name: Configure Docker daemon for security
   copy:
@@ -126,8 +153,7 @@
         "log-opts": {
           "max-size": "10m",
           "max-file": "3"
-        },
-        "no-new-privileges": true
+        }
       }
     mode: '0644'
   notify: restart docker
