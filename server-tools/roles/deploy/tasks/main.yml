@@ -51,7 +51,16 @@
   file:
     path: "{{ deploy_dir }}/.env"
     owner: "{{ docker_user }}"
-    group: root
+    group: "root"
+
+- name: Create Traefik acme.json
+  file:
+    path: "{{ deploy_dir }}/traefik/acme.json"
+    state: touch
+    # Make sure this matches with the user running DHIS2
+    owner: "65534"
+    group: "65534"
+    mode: 0600
 
 - name: Install Loki Docker driver
   command: ./scripts/install-loki-driver.sh
