@@ -7,6 +7,7 @@ app_hostname: "{{ lookup('env', 'GEN_APP_HOSTNAME') | mandatory }}"
 letsencrypt_email: "{{ lookup('env', 'GEN_LETSENCRYPT_ACME_EMAIL') | mandatory }}"
 
 # List of overlays to enable (e.g., ['monitoring'])
+# Note that if you add or remove overlays, all services will be stopped and restarted, so there will be some downtime
 overlays: []
 
 repo_url: https://github.com/dhis2/docker-deployment
