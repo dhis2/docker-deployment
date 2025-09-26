@@ -132,7 +132,7 @@
     state: present
 
 - name: Check if Docker AppArmor profile is loaded
-  shell: apparmor_status --profiled | grep -q docker
+  shell: apparmor_status | grep -q docker
   register: apparmor_check
   failed_when: false
   changed_when: false
