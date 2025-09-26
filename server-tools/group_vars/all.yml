@@ -1,0 +1,23 @@
+# Configuration variables for the DHIS2 Docker deployment playbook
+
+# Application hostname (required for .env generation)
+app_hostname: "{{ lookup('env', 'GEN_APP_HOSTNAME') | mandatory }}"
+
+# Let's Encrypt ACME email (required for .env generation)
+letsencrypt_email: "{{ lookup('env', 'GEN_LETSENCRYPT_ACME_EMAIL') | mandatory }}"
+
+# List of overlays to enable (e.g., ['monitoring'])
+overlays: []
+
+repo_url: https://github.com/dhis2/docker-deployment
+
+deploy_dir: /opt/dhis2
+
+allowed_ssh_users:
+  - ubuntu
+
+docker_user: dhis2
+
+docker_group: docker
+
+docker_home: "/home/{{ docker_user }}"

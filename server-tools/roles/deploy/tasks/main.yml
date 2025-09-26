@@ -1,0 +1,101 @@
+- name: Check if deploy dir exists
+  stat:
+    path: "{{ deploy_dir }}"
+  register: dir_stat
+
+- name: Check if deploy dir is a git repo
+  stat:
+    path: "{{ deploy_dir }}/.git"
+  register: git_repo
+
+- name: Check deploy dir contents
+  find:
+    path: "{{ deploy_dir }}"
+    file_type: any
+  register: dir_contents
+  when: dir_stat.stat.exists
+
+- name: Fail if deploy dir exists, is not empty, and is not a git repo
+  fail:
+    msg: "Deploy directory {{ deploy_dir }} exists, is not empty, and is not a git repository. Please remove it manually or check for conflicts."
+  when: dir_stat.stat.exists and not git_repo.stat.exists and dir_contents.files | length > 0
+
+- name: Clone the repository
+  command: git clone {{ repo_url }} {{ deploy_dir }}
+  args:
+    creates: "{{ deploy_dir }}/.git"
+
+- name: Set permissions of deploy dir
+  file:
+    path: "{{ deploy_dir }}"
+    group: "{{ docker_group }}"
+    mode: '0755'
+    recurse: yes
+
+- name: Generate .env file
+  shell: |
+    export GEN_APP_HOSTNAME="{{ app_hostname }}"
+    export GEN_LETSENCRYPT_ACME_EMAIL="{{ letsencrypt_email }}"
+    ./scripts/generate-env.sh
+  args:
+    chdir: "{{ deploy_dir }}"
+    creates: "{{ deploy_dir }}/.env"
+
+- name: Set .env permissions
+  file:
+    path: "{{ deploy_dir }}/.env"
+    group: "{{ docker_group }}"
+    mode: '0644'
+
+- name: Set compose files
+  set_fact:
+    compose_files: "{{ ['-f docker-compose.yml'] + overlays | map('regex_replace', '^(.*)$', '-f docker-compose.\\1.yml') | list }}"
+
+- name: Create systemd service for dhis2
+  copy:
+    dest: /etc/systemd/system/dhis2.service
+    content: |
+      [Unit]
+      Description=DHIS2 Docker Compose Service
+      After=docker.service
+      Requires=docker.service
+
+      [Service]
+      Type=simple
+      User={{ docker_user }}
+      Group={{ docker_group }}
+      WorkingDirectory={{ deploy_dir }}
+      ExecStart=/usr/bin/docker compose {{ compose_files | join(' ') }} up
+      ExecStop=/usr/bin/docker compose {{ compose_files | join(' ') }} down
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+
+- name: Enable dhis2 service
+  systemd:
+    name: dhis2
+    enabled: yes
+
+- name: Start dhis2 service
+  systemd:
+    name: dhis2
+    state: started
+
+- name: Wait for services to be healthy
+  command: docker compose {{ compose_files | join(' ') }} ps
+  args:
+    chdir: "{{ deploy_dir }}"
+  register: compose_ps
+  until: compose_ps.stdout.find('Up') != -1
+  retries: 30
+  delay: 10
+
+- name: Verify all services are running
+  assert:
+    that: "'Exit' not in compose_ps.stdout"
+    fail_msg: "Some services failed to start"

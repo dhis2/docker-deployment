@@ -1,0 +1,167 @@
+# Adapted from https://github.com/dhis2-sre/microk8s-playbook/blob/master/playbooks/harden.yaml
+# Modified for Docker environment
+
+- name: Update and upgrade apt packages
+  apt:
+    update_cache: yes
+    upgrade: dist
+
+- name: Enable unattended-upgrades
+  lineinfile:
+    path: /etc/apt/apt.conf.d/20auto-upgrades
+    regexp: '^\s*\"(APT::Periodic::Unattended-Upgrade)\".*;'
+    line: '"APT::Periodic::Unattended-Upgrade" "1";'
+
+# SSH Hardening
+- name: Disable root login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PermitRootLogin'
+    line: 'PermitRootLogin no'
+    state: present
+
+- name: Disable password authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+    state: present
+
+- name: Allow specific SSH users
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    line: "AllowUsers {{ allowed_ssh_users | join(' ') }}"
+    state: present
+
+#- name: Restart SSH service
+#  service:
+#    name: sshd
+#    state: restarted
+
+# Minimize Attack Surface
+- name: Remove unnecessary packages
+  apt:
+    name:
+      - telnet
+      - ftp
+      - rsh-client
+      - nfs-common
+      - cups
+      - dnsutils
+    state: absent
+
+# Secure /tmp
+- name: Secure /tmp partition
+  mount:
+    path: /tmp
+    src: tmpfs
+    fstype: tmpfs
+    opts: "defaults,noexec,nosuid,nodev"
+    state: mounted
+
+# Logging and Monitoring
+- name: Install fail2ban
+  apt:
+    name: fail2ban
+    state: present
+
+- name: Restart fail2ban
+  service:
+    name: fail2ban
+    state: restarted
+
+- name: Set kernel parameters for hardening
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+  loop:
+    # Enables TCP SYN cookies to help prevent SYN flood attacks
+    - { key: "net.ipv4.tcp_syncookies", value: "1" }
+    # Enables reverse path filtering to mitigate IP spoofing
+    - { key: "net.ipv4.conf.all.rp_filter", value: "1" }
+    # Ensures all newly created interfaces also enforce IP spoofing prevention, complementing net.ipv4.conf.all.rp_filter
+    - { key: "net.ipv4.conf.default.rp_filter", value: "1" }
+    # Disables source routing, which is often exploited for attacks
+    - { key: "net.ipv4.conf.all.accept_source_route", value: "0" }
+    # Ignores ICMP echo requests sent to broadcast addresses to prevent smurf attacks
+    - { key: "net.ipv4.icmp_echo_ignore_broadcasts", value: "1" }
+    # Logs packets with invalid IP addresses for easier troubleshooting and detection of potential attacks
+    - { key: "net.ipv4.conf.all.log_martians", value: "1" }
+    # IP forwarding is required for proper network traffic forwarding in a multi-node setup
+    - { key: "net.ipv4.ip_forward", value: "1" }
+    # Ensures any newly added interfaces also reject source-routed packets by default, maintaining a secure baseline
+    - { key: "net.ipv4.conf.default.accept_source_route", value: "0" }
+    # Randomizes the memory address space of processes, making it significantly harder for attackers to predict addresses during exploitation attempts, such as buffer overflows
+    - { key: "kernel.randomize_va_space", value: "2" }
+    # Prevents sensitive information (like passwords or cryptographic keys) from being leaked through core dumps, which can be exploited by attackers to gain further system access
+    - { key: "fs.suid_dumpable", value: "0" }
+    # Disable IPv6
+    - { key: "net.ipv6.conf.all.disable_ipv6", value: "1" }
+    - { key: "net.ipv6.conf.default.disable_ipv6", value: "1" }
+    # Disabling ICMP redirects
+    - { key: "net.ipv4.conf.all.accept_redirects", value: "0" }
+    - { key: "net.ipv4.conf.default.accept_redirects", value: "0" }
+    # Prevent multiple kinds of attacks
+    - { key: "net.ipv4.conf.all.secure_redirects", value: "0" }
+    - { key: "net.ipv4.conf.default.secure_redirects", value: "0" }
+
+- name: Apply sysctl changes
+  command: sysctl -p
+
+# Docker-specific hardening
+- name: Install AppArmor utils
+  apt:
+    name: apparmor-utils
+    state: present
+
+- name: Configure Docker daemon for security
+  copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "userns-remap": "{{ docker_user }}",
+        "icc": false,
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "10m",
+          "max-file": "3"
+        },
+        "no-new-privileges": true
+      }
+    mode: '0644'
+  notify: restart docker
+
+- name: Restrict Docker socket permissions
+  file:
+    path: /var/run/docker.sock
+    owner: root
+    group: "{{ docker_group }}"
+    mode: '0660'
+
+- name: Install UFW
+  apt:
+    name: ufw
+    state: present
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+
+- name: Allow SSH
+  ufw:
+    rule: allow
+    name: OpenSSH
+
+# Allow Docker ports if needed, but since compose, perhaps allow 80,443
+- name: Allow HTTP and HTTPS
+  ufw:
+    rule: allow
+    port: 80
+    proto: tcp
+
+- name: Allow HTTPS
+  ufw:
+    rule: allow
+    port: 443
+    proto: tcp

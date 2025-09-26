@@ -1,0 +1,64 @@
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install required packages
+  apt:
+    name:
+      - git
+      - curl
+      - wget
+      - apt-transport-https
+      - ca-certificates
+      - gnupg
+      - lsb-release
+      - unattended-upgrades
+    state: present
+
+- name: Add Docker GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Add Docker repository
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+    state: present
+
+- name: Install Docker and Compose
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: present
+    update_cache: yes
+
+- name: Create Docker user
+  user:
+    name: "{{ docker_user }}"
+    system: yes
+    shell: /bin/bash
+    home: "{{ docker_home }}"
+    create_home: yes
+
+- name: Add user to docker group
+  user:
+    name: "{{ docker_user }}"
+    groups: "{{ docker_group }}"
+    append: yes
+
+- name: Ensure deploy directory exists
+  file:
+    path: "{{ deploy_dir }}"
+    state: directory
+    owner: "{{ docker_user }}"
+    group: "{{ docker_group }}"
+    mode: '0755'
+
+- name: Enable and start Docker service
+  service:
+    name: docker
+    state: started
+    enabled: yes
