@@ -55,7 +55,7 @@
 
 - name: Set compose files
   set_fact:
-    compose_files: "{{ ['-f docker-compose.yml'] + overlays | map('regex_replace', '^(.*)$', '-f docker-compose.\\1.yml') | list }}"
+    compose_files: "{{ ['-f docker-compose.yml'] + overlays | map('regex_replace', '^(.*)$', '-f overlays/\\1/docker-compose.yml') | list }}"
 
 - name: Create systemd service for dhis2
   copy:
