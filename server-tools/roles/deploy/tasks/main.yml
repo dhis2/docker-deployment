@@ -126,7 +126,7 @@
 - name: Start dhis2 service
   systemd:
     name: dhis2
-    state: restarted
+    state: started
   when: old_overlays != overlays
 
 - name: Wait for services to be healthy
