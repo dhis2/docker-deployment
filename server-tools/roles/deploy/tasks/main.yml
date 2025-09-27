@@ -84,9 +84,18 @@
   set_fact:
     old_overlays: "{{ (current_overlays_slurp.content | b64decode | from_json) if current_overlays_slurp is succeeded else [] }}"
 
+- debug:
+    msg: "old_overlays: {{ old_overlays }}, overlays: {{ overlays }}"
+
 - name: Set compose files
   set_fact:
     compose_files: "{{ ['-f docker-compose.yml'] + overlays | map('regex_replace', '^(.*)$', '-f overlays/\\1/docker-compose.yml') | list }}"
+
+- debug:
+    msg: "compose_files: {{ compose_files }}"
+
+- debug:
+    msg: "overlays changed: {{ old_overlays != overlays }}"
 
 - name: Stop dhis2 service when overlays changed
   systemd:
@@ -120,6 +129,13 @@
       [Install]
       WantedBy=multi-user.target
 
+- name: Show systemd service content
+  command: cat /etc/systemd/system/dhis2.service
+  register: systemd_content
+
+- debug:
+    msg: "{{ systemd_content.stdout }}"
+
 - name: Reload systemd daemon
   systemd:
     daemon_reload: yes
@@ -129,18 +145,48 @@
     name: dhis2
     enabled: yes
 
+- name: Find all overlay directories
+  shell: find overlays/ -name "docker-compose.yml" -o -name "docker-compose.yaml" | xargs dirname | sed 's|overlays/||' | sort | uniq
+  args:
+    chdir: "{{ deploy_dir }}"
+  register: all_overlays_raw
+
+- name: Set all overlays
+  set_fact:
+    all_overlays: "{{ all_overlays_raw.stdout_lines | select | list }}"
+
+- name: Set all compose files
+  set_fact:
+    all_compose_files: "{{ ['-f docker-compose.yml'] + all_overlays | map('regex_replace', '^(.*)$', '-f overlays/\\1/docker-compose.yml') | list }}"
+
+- debug:
+    msg: "all_overlays: {{ all_overlays }}, all_compose_files: {{ all_compose_files }}"
+
+- debug:
+    msg: "Running: docker compose {{ all_compose_files | join(' ') }} down"
+
+- name: Down all services
+  command: docker compose {{ all_compose_files | join(' ') }} down
+  args:
+    chdir: "{{ deploy_dir }}"
+
+- debug:
+    msg: "Starting: docker compose {{ compose_files | join(' ') }} up"
+
+- debug:
+    msg: "old_overlays: {{ old_overlays }}, overlays: {{ overlays }}, changed: {{ old_overlays != overlays }}"
+
 - name: Start dhis2 service
   systemd:
     name: dhis2
     state: started
-  when: old_overlays != overlays
 
 - name: Wait for services to be healthy
   command: docker compose {{ compose_files | join(' ') }} ps
   args:
     chdir: "{{ deploy_dir }}"
   register: compose_ps
-  until: compose_ps.stdout.find('Up') != -1
+  until: "'(healthy)' in compose_ps.stdout and 'starting' not in compose_ps.stdout"
   retries: 30
   delay: 10
 
