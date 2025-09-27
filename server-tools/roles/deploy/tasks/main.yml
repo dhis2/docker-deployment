@@ -27,6 +27,11 @@
 - name: Add deploy directory to git safe directories
   command: git config --global --add safe.directory {{ deploy_dir }}
 
+- name: Fetch all branches
+  command: git fetch --all
+  args:
+    chdir: "{{ deploy_dir }}"
+
 - name: Checkout the specified branch
   command: git checkout {{ repo_branch }}
   args:
@@ -63,6 +68,7 @@
     mode: 0600
 
 - name: Install Loki Docker driver
+  become: yes
   command: ./scripts/install-loki-driver.sh
   args:
     chdir: "{{ deploy_dir }}"
