@@ -18,6 +18,9 @@ jobs:
           cat .env | sed /^#/d >> $GITHUB_ENV
 
           ./scripts/install-loki-driver.sh
+        env:
+          GEN_APP_HOSTNAME: dhis2-127-0-0-1.nip.io
+          GEN_LETSENCRYPT_ACME_EMAIL: whatever@dhis2.org
 
       - name: Start services
         run: |

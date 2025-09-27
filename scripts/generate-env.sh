@@ -3,23 +3,28 @@
 LENGTH=32
 CHARSET='A-Za-z0-9_=.-'
 OUTPUT_FILE=".env"
-TEMPLATE_FILE=".env.example"
+TEMPLATE_FILE=".env.template"
 
 generate_password() {
-    local password=""
-    password+=$(LC_ALL=C tr -dc '[:upper:]' < /dev/urandom | head -c 1)
-    password+=$(LC_ALL=C tr -dc '[:lower:]' < /dev/urandom | head -c 1)
-    password+=$(LC_ALL=C tr -dc '0-9' < /dev/urandom | head -c 1)
-    password+=$(LC_ALL=C tr -dc '_=.-' < /dev/urandom | head -c 1)
-    local remaining=$((LENGTH - 4))
-    password+=$(LC_ALL=C tr -dc "$CHARSET" < /dev/urandom | head -c "$remaining")
-    echo "$password" | fold -w1 | shuf | tr -d '\n'
+  local password=""
+  password+=$(LC_ALL=C tr -dc '[:upper:]' < /dev/urandom | head -c 1)
+  password+=$(LC_ALL=C tr -dc '[:lower:]' < /dev/urandom | head -c 1)
+  password+=$(LC_ALL=C tr -dc '0-9' < /dev/urandom | head -c 1)
+  password+=$(LC_ALL=C tr -dc '_=.-' < /dev/urandom | head -c 1)
+  local remaining=$((LENGTH - 4))
+  password+=$(LC_ALL=C tr -dc "$CHARSET" < /dev/urandom | head -c "$remaining")
+  echo "$password" | fold -w1 | shuf | tr -d '\n'
 }
 
 if [ -f "$OUTPUT_FILE" ]; then
   echo "Error: An '$OUTPUT_FILE' file already exists." >&2
   exit 1
 fi
+
+# Validate required inputs for ungeneratable values
+: "${GEN_APP_HOSTNAME:?Environment variable GEN_APP_HOSTNAME must be set}"
+: "${GEN_LETSENCRYPT_ACME_EMAIL:?Environment variable GEN_LETSENCRYPT_ACME_EMAIL must be set}"
+
 
 if [ ! -f "$TEMPLATE_FILE" ]; then
   echo "Error: Template '$TEMPLATE_FILE' not found!" >&2
@@ -42,12 +47,20 @@ else
   SED_FLAGS=(-i '')
 fi
 
-sed "${SED_FLAGS[@]}" "s/^DHIS2_ADMIN_PASSWORD=.*/DHIS2_ADMIN_PASSWORD=$DHIS2_ADMIN_PASSWORD/" "$OUTPUT_FILE"
-sed "${SED_FLAGS[@]}" "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$POSTGRES_PASSWORD/" "$OUTPUT_FILE"
-sed "${SED_FLAGS[@]}" "s/^POSTGRES_DB_PASSWORD=.*/POSTGRES_DB_PASSWORD=$POSTGRES_DB_PASSWORD/" "$OUTPUT_FILE"
-sed "${SED_FLAGS[@]}" "s/^POSTGRES_METRICS_PASSWORD=.*/POSTGRES_METRICS_PASSWORD=$POSTGRES_METRICS_PASSWORD/" "$OUTPUT_FILE"
-sed "${SED_FLAGS[@]}" "s/^GRAFANA_ADMIN_PASSWORD=.*/GRAFANA_ADMIN_PASSWORD=$GRAFANA_ADMIN_PASSWORD/" "$OUTPUT_FILE"
-sed "${SED_FLAGS[@]}" "s/^DHIS2_MONITOR_PASSWORD=.*/DHIS2_MONITOR_PASSWORD=$DHIS2_MONITOR_PASSWORD/" "$OUTPUT_FILE"
+update_env_var() {
+  local key="$1"
+  local value="$2"
+  sed "${SED_FLAGS[@]}" "s|^${key}=.*|${key}=${value}|" "$OUTPUT_FILE"
+}
+
+update_env_var "DHIS2_ADMIN_PASSWORD" "$DHIS2_ADMIN_PASSWORD"
+update_env_var "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD"
+update_env_var "POSTGRES_DB_PASSWORD" "$POSTGRES_DB_PASSWORD"
+update_env_var "POSTGRES_METRICS_PASSWORD" "$POSTGRES_METRICS_PASSWORD"
+update_env_var "GRAFANA_ADMIN_PASSWORD" "$GRAFANA_ADMIN_PASSWORD"
+update_env_var "DHIS2_MONITOR_PASSWORD" "$DHIS2_MONITOR_PASSWORD"
+update_env_var "APP_HOSTNAME" "$GEN_APP_HOSTNAME"
+update_env_var "LETSENCRYPT_ACME_EMAIL" "$GEN_LETSENCRYPT_ACME_EMAIL"
 
 chmod u+rw,go-rwx "$OUTPUT_FILE"
 

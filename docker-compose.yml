@@ -144,7 +144,7 @@ services:
       # -- ACME DNS challenge
       TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_TLSCHALLENGE: true
       # -- Hostname
-      HOSTNAME: ${HOSTNAME}
+      APP_HOSTNAME: ${APP_HOSTNAME}
     ports:
       - "0.0.0.0:80:80"
       - "0.0.0.0:443:443"
