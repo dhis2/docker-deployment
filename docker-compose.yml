@@ -56,8 +56,7 @@ services:
     volumes:
       - ./scripts/update-admin-password.sh:/update-admin-password.sh:ro
     working_dir: /root
-    # TODO: There might be a better way to do this. But the && exit 0 || exit 1 is needed to make sure the container terminates'
-    entrypoint: [ "/bin/sh", "/update-admin-password.sh && exit 0 || exit 1" ]
+    entrypoint: [ "/bin/sh", "/update-admin-password.sh" ]
     environment:
       # -- Database hostname
       POSTGRES_HOST: database
