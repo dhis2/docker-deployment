@@ -10,7 +10,7 @@ This Ansible playbook automates the deployment of the DHIS2 Docker stack.
 - **Modularity**: Uses Ansible roles for easy extension and maintenance
 - **Idempotency**: Safe to run multiple times
 
-## Prerequisites
+## Prerequisites (recommendations)
 
 - Ansible installed on the control machine
 - Target server with Ubuntu 24.04
@@ -57,11 +57,6 @@ Edit `group_vars/all.yml` to customize:
 ## Security Notes
 
 - Docker is configured with user namespace remapping for least privilege
-- AppArmor is enabled where possible
+- AppArmor is enabled
 - UFW firewall allows only necessary ports
 - Secrets are handled via environment variables and .env file
-
-## Testing
-
-The playbook includes basic health checks for Docker Compose services. For thorough testing, monitor logs and service
-status post-deployment.
