@@ -37,7 +37,15 @@ Edit `group_vars/all.yml` to customize:
 
 2. Update the inventory file `inventory.ini` according to your needs
 
-3. Run the playbook:
+3. Copy your public SSH key to the target server
+
+    ```bash
+    ssh-copy-id ubuntu@<your server ip>
+    ```
+
+4. Store your user's sudo password in `./.ansible_become_pass`
+
+5. Run the playbook:
 
     ```bash
     make deployment
