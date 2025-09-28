@@ -35,28 +35,38 @@ Edit `group_vars/all.yml` to customize:
     export GEN_LETSENCRYPT_ACME_EMAIL=your.email@example.com
     ```
 
-2. Create an inventory file (e.g., `inventory.ini`):
-
-    ```ini
-    [servers]
-    your-server ansible_host=your-server-ip ansible_user=ubuntu
-    ```
+2. Update the inventory file `inventory.ini` according to your needs
 
 3. Run the playbook:
 
     ```bash
-    ansible-playbook -i inventory.ini site.yml --ask-become-pass
+    make deployment
     ```
 
 ## Roles
 
 - **bootstrap**: Installs Docker, creates users, sets up directories
+- **firewall**: Configures firewall rules for Docker and host-facing ports
 - **harden**: Applies security hardening (SSH, kernel, Docker config)
 - **deploy**: Clones repo, generates .env, runs docker-compose
 
 ## Security Notes
 
 - Docker is configured with user namespace remapping for least privilege
+- Firewall rules are configured to deny all by default and only allow SSH, HTTP, HTTPS and inter-container communication
+  only on default subnets
 - AppArmor is enabled
-- UFW firewall allows only necessary ports
+- Unattended-upgrades are enabled
 - Secrets are handled via environment variables and .env file
+
+The above is only a subset of the security hardening that is applied. For more information, see
+the [firewall](roles/firewall/tasks/main.yml) and [harden](roles/harden/tasks/main.yml) roles.
+
+### Firewall Management
+
+All firewall rules for Docker and host-facing ports are managed by the `firewall` role.
+See [roles/firewall/tasks/main.yml](roles/firewall/tasks/main.yml) for more details.
+
+⚠️ **Important:** Do **not** use UFW or other firewall frontends alongside this setup. Docker bypasses standard host
+chains (INPUT/OUTPUT), so UFW rules are ignored or may conflict. All host and container traffic should be managed
+exclusively through this Ansible role.
