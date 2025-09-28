@@ -4,5 +4,6 @@
 
   roles:
     - bootstrap
+    - firewall
     - harden
     - deploy

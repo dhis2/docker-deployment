@@ -12,9 +12,11 @@ overlays: []
 
 repo_url: https://github.com/dhis2/docker-deployment
 
-repo_branch: master
+repo_branch: chore/user-namespace-mode-for-privileged-container
 
 deploy_dir: /opt/dhis2
+
+firewall_allowed_ports: [22, 80, 443]
 
 allowed_ssh_users:
   - ubuntu

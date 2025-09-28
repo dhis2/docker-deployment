@@ -186,7 +186,8 @@
   args:
     chdir: "{{ deploy_dir }}"
   register: compose_ps
-  until: "'(healthy)' in compose_ps.stdout and 'starting' not in compose_ps.stdout"
+  # TODO: This doesn't work at all... if a container goes to unhealthy state this will pass
+  until: "'(healthy)' in compose_ps.stdout and 'starting' not in compose_ps.stdout and 'unhealthy' not in compose_ps.stdout"
   retries: 30
   delay: 10
 
