@@ -19,7 +19,12 @@ until pg_isready --host "$POSTGRES_HOST" --username "$POSTGRES_USER"; do
   sleep 2
 done
 
-psql --host "$POSTGRES_HOST" --username postgres --dbname "$POSTGRES_DB" --command "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+psql --host "$POSTGRES_HOST" --username postgres --dbname "$POSTGRES_DB" <<EOF
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+GRANT USAGE ON SCHEMA public TO public;
+GRANT CREATE ON SCHEMA public TO public;
+EOF
 
 if echo "$DB_RESTORE_FILE" | grep --quiet "\\.sql\\.gz$"; then
   gunzip --stdout "/backups/$DB_RESTORE_FILE" \
