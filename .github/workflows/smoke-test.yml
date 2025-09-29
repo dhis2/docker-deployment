@@ -14,7 +14,7 @@ jobs:
       - name: Configure environment
         run: |
           ./scripts/generate-env.sh
-          cat .env | sed /^#/d >> $GITHUB_ENV
+          cat .env | sed '/^#/d' >> $GITHUB_ENV
 
           ./scripts/install-loki-driver.sh
         env:
@@ -47,6 +47,11 @@ jobs:
           DHIS2_PID=$(docker compose exec -T app pgrep java | head -n 1)
           echo "DHIS2 process PID: $DHIS2_PID"
           [ "$DHIS2_PID" = "1" ]
+
+      - name: E2e test
+        run: |
+          make playwright
+          make test
 
       - name: Debug on failure
         if: failure()

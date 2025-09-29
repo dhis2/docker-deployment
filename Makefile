@@ -1,16 +1,22 @@
 PRE_COMMIT_VERSION ?= 4.3.0
 
-.PHONY: init reinit check docs launch clean config
+.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs launch clean config
 
 init:
 	@test -d .venv || python3 -m venv .venv
 	.venv/bin/python -m pip install "pre-commit==$(PRE_COMMIT_VERSION)"
 	.venv/bin/pre-commit install
 
-playWright:
+playwright:
 	@test -d .venv || python3 -m venv .venv
-	.venv/bin/python -m pip install playwright pytest
+	.venv/bin/python -m pip install playwright pytest pytest-playwright
 	.venv/bin/playwright install
+
+test:
+	DEBUG=pw:api .venv/bin/pytest -s
+
+test-ui:
+	DEBUG=pw:api .venv/bin/pytest --headed -s
 
 reinit:
 	rm -rf .venv
