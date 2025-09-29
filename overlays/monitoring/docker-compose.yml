@@ -211,6 +211,7 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:${CADVISOR_VERSION:-v0.47.0}
     privileged: true
+    userns_mode: "host"
     networks:
       - monitoring
     command:
