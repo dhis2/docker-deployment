@@ -42,6 +42,16 @@ docker compose up
 
 Open http://dhis2-127-0-0-1.nip.io in your favourite browser.
 
+## Postgresql configuration
+
+Custom configuration for Postgresql can be done by adding to the files in the `./config/postgresql/conf.d/` directory. If your configuration doesn't belong in either of the existing files, you can create a new file. However, it's advised not to make changes to the [postgresql.conf](config/postgresql/postgresql.conf) file.
+
+Any changes to these files won't take effect until the container is restarted or the below command is executed:
+
+```sql
+SELECT pg_reload_conf();
+```
+
 ## Overlays
 
 ### Traefik Dashboard
