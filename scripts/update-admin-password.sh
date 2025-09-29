@@ -18,5 +18,3 @@ export PGPASSWORD="$POSTGRES_PASSWORD"
 psql --host "$POSTGRES_HOST" --username postgres --dbname "$POSTGRES_DB" --command "UPDATE \"userinfo\" SET \"password\" = '$HASH' WHERE \"username\" = '$DHIS2_ADMIN_USERNAME';"
 
 rm bcrypt-tool.tar.gz bcrypt-tool
-
-exit 0
