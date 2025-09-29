@@ -218,6 +218,7 @@ services:
     volumes:
       - ./backups:/backups:ro
       - ./scripts/restore-database.sh:/restore-database.sh:ro
+      - ./scripts/fix-ownership.sh:/fix-ownership.sh:ro
     environment:
       # -- Database hostname
       POSTGRES_HOST: database
