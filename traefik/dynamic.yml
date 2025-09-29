@@ -1,7 +1,7 @@
 http:
   routers:
     app:
-      rule: 'Host(`{{env "HOSTNAME"}}`)'
+      rule: 'Host(`{{env "APP_HOSTNAME"}}`)'
       service: app
       entryPoints:
         - websecure
@@ -11,7 +11,7 @@ http:
         - security
 
     grafana:
-      rule: 'Host(`grafana.{{env "HOSTNAME"}}`)'
+      rule: 'Host(`grafana.{{env "APP_HOSTNAME"}}`)'
       service: grafana
       entryPoints:
         - websecure

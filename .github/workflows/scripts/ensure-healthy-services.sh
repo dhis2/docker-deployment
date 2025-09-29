@@ -3,19 +3,19 @@
 set -euo pipefail
 
 # Collect all services that define a healthcheck
-SERVICES=$(
+mapfile -t SERVICES < <(
   make config \
   | yq -o=json \
   | jq -r '.services | to_entries[] | select(.value.healthcheck) | .key'
 )
 
-echo "Services with health checks: $SERVICES"
+echo "Services with health checks: ${SERVICES[*]}"
 echo "Waiting for services with health checks to be healthy..."
 
 while true; do
   all_healthy=true
 
-  for service in $SERVICES; do
+  for service in "${SERVICES[@]}"; do
     name=$(docker compose ps --format "table {{.Name}}\t{{.Service}}" \
              | awk -v s="$service" '$2 == s {print $1}')
 

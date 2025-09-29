@@ -6,6 +6,13 @@ Docker production deployment of the DHIS2 application
 
 ### Configure Environment
 
+The following environment variables are required for setting up the environment
+
+```shell
+export GEN_APP_HOSTNAME=<the hostname of the application>
+export GEN_LETSENCRYPT_ACME_EMAIL=<your email address>
+```
+
 Generate a new `.env` file by executing the following command
 
 ```shell
@@ -34,6 +41,16 @@ docker compose up
 ```
 
 Open http://dhis2-127-0-0-1.nip.io in your favourite browser.
+
+## Postgresql configuration
+
+Custom configuration for Postgresql can be done by adding to the files in the `./config/postgresql/conf.d/` directory. If your configuration doesn't belong in either of the existing files, you can create a new file. However, it's advised not to make changes to the [postgresql.conf](config/postgresql/postgresql.conf) file.
+
+Any changes to these files won't take effect until the container is restarted or the below command is executed:
+
+```sql
+SELECT pg_reload_conf();
+```
 
 ## Overlays
 
@@ -212,7 +229,7 @@ DHIS2's built-in monitoring API is enabled, exposing health and performance metr
 ### Accessing Monitoring Services
 
 1. Start the services with monitoring overlay
-2. Open https://grafana.{HOSTNAME} in your browser (where `{HOSTNAME}` is defined in your `.env` file)
+2. Open https://grafana.{APP_HOSTNAME} in your browser (where `{APP_HOSTNAME}` is defined in your `.env` file)
 3. Login with:
     - Username: `admin`
     - Password: check your `.env` file for `GRAFANA_ADMIN_PASSWORD`
