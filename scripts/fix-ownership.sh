@@ -20,7 +20,6 @@ change_owner "SELECT tablename FROM pg_tables WHERE schemaname='public'" "TABLE"
 change_owner "SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema='public'" "SEQUENCE"
 change_owner "SELECT table_name FROM information_schema.views WHERE table_schema='public'" "VIEW"
 
-# default privileges for future objects
 exec_psql "ALTER DEFAULT PRIVILEGES FOR ROLE $POSTGRES_USER IN SCHEMA public GRANT ALL ON TABLES TO $POSTGRES_USER"
 exec_psql "ALTER DEFAULT PRIVILEGES FOR ROLE $POSTGRES_USER IN SCHEMA public GRANT ALL ON SEQUENCES TO $POSTGRES_USER"
 exec_psql "ALTER DEFAULT PRIVILEGES FOR ROLE $POSTGRES_USER IN SCHEMA public GRANT ALL ON FUNCTIONS TO $POSTGRES_USER"
