@@ -12,7 +12,7 @@ overlays: []
 
 repo_url: https://github.com/dhis2/docker-deployment
 
-repo_branch: chore/user-namespace-mode-for-privileged-container
+repo_branch: master
 
 deploy_dir: /opt/dhis2
 
