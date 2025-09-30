@@ -16,6 +16,10 @@ change_owner() {
   done
 }
 
+exec_psql "CREATE EXTENSION IF NOT EXISTS postgis"
+exec_psql "CREATE EXTENSION IF NOT EXISTS pg_trgm"
+exec_psql "CREATE EXTENSION IF NOT EXISTS btree_gin"
+
 change_owner "SELECT tablename FROM pg_tables WHERE schemaname='public'" "TABLE"
 change_owner "SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema='public'" "SEQUENCE"
 change_owner "SELECT table_name FROM information_schema.views WHERE table_schema='public'" "VIEW"
