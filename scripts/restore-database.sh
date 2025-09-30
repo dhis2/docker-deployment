@@ -31,7 +31,7 @@ if echo "$DB_RESTORE_FILE" | grep --quiet "\\.sql\\.gz$"; then
     | grep --invert-match --ignore-case 'ALTER .* OWNER' \
     | grep --invert-match --ignore-case 'GRANT ' \
     | grep --invert-match --ignore-case 'REVOKE ' \
-    | psql --host "$POSTGRES_HOST" --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" --echo-all
+    | psql --host "$POSTGRES_HOST" --username postgres --dbname "$POSTGRES_DB" --echo-all
 elif echo "$DB_RESTORE_FILE" | grep --quiet "\\.pgc$"; then
   pg_restore --no-password --host "$POSTGRES_HOST" --username postgres --dbname "$POSTGRES_DB" --jobs "$DB_RESTORE_NUMBER_OF_JOBS" --verbose --clean --if-exists --no-owner --no-acl "/backups/$DB_RESTORE_FILE"
 else
