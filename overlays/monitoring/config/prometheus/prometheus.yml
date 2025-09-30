@@ -5,7 +5,7 @@ global:
 scrape_configs:
   - job_name: 'dhis2'
     static_configs:
-      - targets: ['app:8080']
+      - targets: [ 'app:8080' ]
     metrics_path: '/api/metrics'
     basic_auth:
       # Username is hard coded since we can't use a secret here
@@ -13,14 +13,14 @@ scrape_configs:
       password_file: /run/secrets/dhis2_monitor_password
   - job_name: 'traefik'
     static_configs:
-      - targets: ['traefik:8080']
+      - targets: [ 'traefik:8080' ]
     metrics_path: '/metrics'
   - job_name: 'postgres'
     static_configs:
-      - targets: ['postgres_exporter:9187']
+      - targets: [ 'postgres_exporter:9187' ]
   - job_name: 'node-exporter'
     static_configs:
-      - targets: ['node-exporter:9100']
+      - targets: [ 'node-exporter:9100' ]
   - job_name: 'cadvisor'
     static_configs:
-      - targets: ['cadvisor:8080']
+      - targets: [ 'cadvisor:8080' ]
