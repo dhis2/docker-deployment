@@ -195,7 +195,7 @@ services:
       PGPASSWORD: ${POSTGRES_DB_PASSWORD}
     networks:
       - database
-    entrypoint: [ "/bin/sh", "/backup-database.sh" ]
+    entrypoint: [ "/bin/bash", "/backup-database.sh" ]
     profiles:
       - backup
 
@@ -242,7 +242,7 @@ services:
       DB_RESTORE_NUMBER_OF_JOBS: ${DB_RESTORE_NUMBER_OF_JOBS:-4}
     networks:
       - database
-    entrypoint: [ "/bin/sh", "/restore-database.sh" ]
+    entrypoint: [ "/bin/bash", "/restore-database.sh" ]
     profiles:
       - restore
 
