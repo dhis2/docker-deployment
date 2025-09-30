@@ -53,6 +53,17 @@ jobs:
           make playwright
           make test
 
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-screenshots
+          path: |
+            login-page.png
+            login-page-no-username.png
+            page-content.html
+          retention-days: 1
+
       - name: Debug on failure
         if: failure()
         run: |
