@@ -104,8 +104,13 @@ services:
       timeout: 5s
       retries: 3
     user: postgres
+    read_only: true
+    tmpfs:
+      - /var/run/postgresql
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
     command: >
       postgres
         -c config_file=/etc/postgresql/postgresql.conf
