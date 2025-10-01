@@ -273,5 +273,5 @@ networks:
 
 
 volumes:
-  dhis2: { }
-  postgres: { }
+  dhis2: {}
+  postgres: {}

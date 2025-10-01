@@ -24,4 +24,4 @@ services:
     user: root
 
 volumes:
-  glowroot-data: { }
+  glowroot-data: {}
