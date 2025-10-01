@@ -233,9 +233,9 @@ services:
       - no-new-privileges:true
 
 volumes:
-  loki: {}
-  prometheus: {}
-  grafana: {}
+  loki: { }
+  prometheus: { }
+  grafana: { }
 
 secrets:
   dhis2_monitor_password:

@@ -22,7 +22,7 @@ repos:
         language: node
         additional_dependencies: [ dclint@3.1.0 ]
         files: (docker-)?compose.*\.ya?ml$
-        args: [ "--fix", "--recursive", "--all-files" ]
+        args: [ "--fix", "--recursive" ]
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.11.0.1
