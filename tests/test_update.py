@@ -7,7 +7,7 @@ username = os.getenv("DHIS2_ADMIN_USERNAME")
 password = os.getenv("DHIS2_ADMIN_PASSWORD")
 
 def login_user(page: Page):
-    page.goto(URL)
+    page.goto(URL+"/login.html")
 
     page.wait_for_timeout(5000)
 
