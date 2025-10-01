@@ -22,6 +22,8 @@ services:
       APP_GID: ${APP_GID:-65534}
     command: [ "sh", "/tmp/glowroot-init.sh" ]
     user: root
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
   glowroot-data: { }

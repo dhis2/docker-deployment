@@ -52,6 +52,9 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    # We're installing a binary in the script, so root is required. And for the same reason, read_only isn't possible either. We could create a docker file and install it there...
+    #user: postgres
+    #read_only: true
     depends_on:
       app:
         condition: service_healthy
@@ -106,8 +109,13 @@ services:
       timeout: 5s
       retries: 3
     user: postgres
+    read_only: true
+    tmpfs:
+      - /var/run/postgresql
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
     command: >
       postgres
         -c config_file=/etc/postgresql/postgresql.conf
@@ -197,7 +205,7 @@ services:
       PGPASSWORD: ${POSTGRES_DB_PASSWORD}
     networks:
       - database
-    entrypoint: [ "/bin/sh", "/backup-database.sh" ]
+    entrypoint: [ "/bin/bash", "/backup-database.sh" ]
     profiles:
       - backup
 
@@ -244,7 +252,7 @@ services:
       DB_RESTORE_NUMBER_OF_JOBS: ${DB_RESTORE_NUMBER_OF_JOBS:-4}
     networks:
       - database
-    entrypoint: [ "/bin/sh", "/restore-database.sh" ]
+    entrypoint: [ "/bin/bash", "/restore-database.sh" ]
     profiles:
       - restore
 
