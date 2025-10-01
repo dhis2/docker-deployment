@@ -34,6 +34,9 @@ services:
 
   create-monitoring-user:
     image: alpine:3.22
+    # We're installing jq in the script, so root is required. And for the same reason, read_only isn't possible either. We could create a docker file and install it there...
+    #user: guest:405
+    #read_only: true
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -111,6 +114,7 @@ services:
       test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:3100/ready" ]
       <<: *healthcheck-options
     user: nobody:nobody
+    read_only: true
     cap_drop:
       - ALL
     security_opt:
@@ -125,6 +129,8 @@ services:
       - monitoring
     command: [ "sh", "-c", "mkdir -p /loki/chunks /loki/rules /loki/wal /loki/boltdb-shipper-compactor && chown -R nobody:nobody /loki" ]
     user: root
+    security_opt:
+      - no-new-privileges:true
 
   prometheus:
     image: prom/prometheus:${PROMETHEUS_VERSION:-v2.45.0}
@@ -174,6 +180,7 @@ services:
       test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:9187/metrics" ]
       <<: *healthcheck-options
     user: nobody:nobody
+    read_only: true
     cap_drop:
       - ALL
     security_opt:
@@ -189,6 +196,7 @@ services:
   node-exporter:
     image: prom/node-exporter:${NODE_EXPORTER_VERSION:-v1.6.1}
     user: "65534:65534"
+    read_only: true
     networks:
       - monitoring
     volumes:
@@ -211,6 +219,7 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:${CADVISOR_VERSION:-v0.47.0}
     privileged: true
+    userns_mode: "host"
     networks:
       - monitoring
     command:
