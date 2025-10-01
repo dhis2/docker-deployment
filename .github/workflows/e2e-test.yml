@@ -1,0 +1,62 @@
+---
+name: E2E Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  e2e-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure environment
+        run: |
+          ./scripts/generate-env.sh
+          cat .env | sed '/^#/d' >> $GITHUB_ENV
+
+          ./scripts/install-loki-driver.sh
+        env:
+          GEN_APP_HOSTNAME: dhis2-127-0-0-1.nip.io
+          GEN_LETSENCRYPT_ACME_EMAIL: whatever@dhis2.org
+
+      - name: Start services
+        run: |
+          make launch COMPOSE_OPTS=-d
+
+      - name: Test API
+        run: |
+          echo "System info"
+          curl --insecure --silent --show-error --write-out "%{http_code}" "https://dhis2-127-0-0-1.nip.io/api/system/info"
+
+          echo "Locales"
+          curl --insecure --silent --show-error --write-out "%{http_code}" --user "$DHIS2_ADMIN_USERNAME:$DHIS2_ADMIN_PASSWORD" "https://dhis2-127-0-0-1.nip.io/api/locales/ui"
+
+      - name: E2e test
+        run: |
+          make playwright
+          make test
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-screenshots
+          path: |
+            login-page.png
+            login-page-no-username.png
+            page-content.html
+          retention-days: 1
+
+      - name: Debug on failure
+        if: failure()
+        run: |
+          echo "=== Container Status ==="
+          docker compose ps -a
+          echo "=== App Logs (last 50 lines) ==="
+          docker compose logs app --tail=50
+          echo "=== Database Logs (last 20 lines) ==="
+          docker compose logs database --tail=20
