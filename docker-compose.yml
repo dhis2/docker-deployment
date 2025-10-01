@@ -1,5 +1,3 @@
-version: "3.9"
-
 x-database-image: &database-image
   image: postgis/postgis:${POSTGRES_VERSION:-16-master}
 
