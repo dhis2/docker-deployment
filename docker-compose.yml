@@ -70,11 +70,12 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
-
   database:
     volumes:
       - postgres:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d:ro
+      - ./config/postgresql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./config/postgresql/conf.d:/etc/postgresql/conf.d:ro
     environment:
       # -- Postgres user password
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -94,6 +95,10 @@ services:
       - "127.0.0.1:5432:5432"
     networks:
       - database
+    command: >
+      postgres
+        -c config_file=/etc/postgresql/postgresql.conf
+        -c hba_file=/var/lib/postgresql/data/pg_hba.conf
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB}" ]
@@ -102,8 +107,13 @@ services:
       retries: 3
     user: postgres
     <<: *database-image
+    cap_drop:
+      - ALL
+    read_only: true
     security_opt:
       - no-new-privileges:true
+    tmpfs:
+      - /var/run/postgresql
 
   traefik:
     image: traefik:v3.5
@@ -217,6 +227,7 @@ services:
     volumes:
       - ./backups:/backups:ro
       - ./scripts/restore-database.sh:/restore-database.sh:ro
+      - ./scripts/fix-ownership.sh:/fix-ownership.sh:ro
     environment:
       # -- Database hostname
       POSTGRES_HOST: database

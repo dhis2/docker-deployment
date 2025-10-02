@@ -54,7 +54,6 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
-
   database:
     networks:
       - database
@@ -113,6 +112,7 @@ services:
     user: nobody:nobody
     cap_drop:
       - ALL
+    read_only: true
     security_opt:
       - no-new-privileges:true
 
@@ -125,6 +125,8 @@ services:
       - monitoring
     command: [ "sh", "-c", "mkdir -p /loki/chunks /loki/rules /loki/wal /loki/boltdb-shipper-compactor && chown -R nobody:nobody /loki" ]
     user: root
+    security_opt:
+      - no-new-privileges:true
 
   prometheus:
     image: prom/prometheus:${PROMETHEUS_VERSION:-v2.45.0}
@@ -177,6 +179,7 @@ services:
     user: nobody:nobody
     cap_drop:
       - ALL
+    read_only: true
     security_opt:
       - no-new-privileges:true
 
@@ -231,6 +234,7 @@ services:
     privileged: true
     security_opt:
       - no-new-privileges:true
+    userns_mode: "host"
 
 volumes:
   loki: {}
