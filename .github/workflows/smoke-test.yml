@@ -1,11 +1,10 @@
----
 name: Docker Smoke Test
 
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   pull_request:
-    branches: [master]
+    branches: [ master ]
 
 jobs:
   smoke-test:
