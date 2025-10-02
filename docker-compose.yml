@@ -198,8 +198,8 @@ services:
       PGPASSWORD: ${POSTGRES_DB_PASSWORD}
     networks:
       - database
-    <<: *database-image
     entrypoint: [ "/bin/bash", "/backup-database.sh" ]
+    <<: *database-image
     profiles:
       - backup
 
@@ -245,8 +245,8 @@ services:
       DB_RESTORE_NUMBER_OF_JOBS: ${DB_RESTORE_NUMBER_OF_JOBS:-4}
     networks:
       - database
-    <<: *database-image
     entrypoint: [ "/bin/bash", "/restore-database.sh" ]
+    <<: *database-image
     profiles:
       - restore
 
