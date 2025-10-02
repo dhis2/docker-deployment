@@ -1,4 +1,3 @@
-# Monitoring
 x-healthcheck-options: &healthcheck-options
   interval: 10s
   timeout: 3s
@@ -35,6 +34,9 @@ services:
 
   create-monitoring-user:
     image: alpine:3.22
+    # We're installing jq in the script, so root is required. And for the same reason, read_only isn't possible either. We could create a docker file and install it there...
+    #user: guest:405
+    #read_only: true
     depends_on:
       update-admin-password:
         condition: service_completed_successfully
@@ -65,7 +67,7 @@ services:
     image: grafana/grafana:${GRAFANA_VERSION:-10.0.0}
     volumes:
       - grafana:/var/lib/grafana
-      - ./overlays/monitoring/config/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./overlays/monitoring/config/grafana/dashboards:/var/lib/grafana/dashboards:ro
       - ./overlays/monitoring/config/grafana/provisioning:/etc/grafana/provisioning:ro
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
@@ -76,7 +78,7 @@ services:
       GF_ANALYTICS_CHECK_FOR_UPDATES: false
       GF_LOG_LEVEL: warn
       GF_PATHS_PROVISIONING: /etc/grafana/provisioning
-      GF_SERVER_ROOT_URL: https://grafana.${HOSTNAME}
+      GF_SERVER_ROOT_URL: https://grafana.${APP_HOSTNAME}
       GF_SERVER_SERVE_FROM_SUB_PATH: false
       DS_PROMETHEUS: prometheus
     networks:
@@ -112,6 +114,7 @@ services:
       test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:3100/ready" ]
       <<: *healthcheck-options
     user: nobody:nobody
+    read_only: true
     cap_drop:
       - ALL
     security_opt:
@@ -126,6 +129,8 @@ services:
       - monitoring
     command: [ "sh", "-c", "mkdir -p /loki/chunks /loki/rules /loki/wal /loki/boltdb-shipper-compactor && chown -R nobody:nobody /loki" ]
     user: root
+    security_opt:
+      - no-new-privileges:true
 
   prometheus:
     image: prom/prometheus:${PROMETHEUS_VERSION:-v2.45.0}
@@ -176,6 +181,7 @@ services:
       <<: *healthcheck-options
     logging: *loki-logging
     user: nobody:nobody
+    read_only: true
     cap_drop:
       - ALL
     security_opt:
@@ -183,6 +189,7 @@ services:
 
   traefik:
     networks:
+      - monitoring
       - frontend
     logging: *loki-logging
 
@@ -203,6 +210,7 @@ services:
       test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:9100/metrics" ]
       <<: *healthcheck-options
     user: "65534:65534"
+    read_only: true
     cap_drop:
       - ALL
     security_opt:
@@ -210,6 +218,10 @@ services:
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:${CADVISOR_VERSION:-v0.47.0}
+    command:
+      # For the sake of avoiding: "Unable to get btrfs mountpoint IDs: stat failed on /dev/mapper/luks-id with error: no such file or directory"
+      # https://github.com/google/cadvisor/issues/3357
+      - --disable_metrics=disk,referenced_memory
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
@@ -228,6 +240,7 @@ services:
       <<: *healthcheck-options
     cap_drop:
       - ALL
+    userns_mode: "host"
     privileged: true
     security_opt:
       - no-new-privileges:true
