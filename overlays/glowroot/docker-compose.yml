@@ -1,14 +1,14 @@
 services:
   app:
+    depends_on:
+      glowroot-init:
+        condition: service_completed_successfully
     volumes:
       - glowroot-data:/opt/glowroot
     environment:
       JDK_JAVA_OPTIONS: "${JDK_JAVA_OPTIONS:-} -javaagent:/opt/glowroot/glowroot.jar"
     ports:
       - "127.0.0.1:4000:4000"
-    depends_on:
-      glowroot-init:
-        condition: service_completed_successfully
 
   glowroot-init:
     image: curlimages/curl:${CURL_VERSION:-8.10.1}
@@ -26,4 +26,4 @@ services:
       - no-new-privileges:true
 
 volumes:
-  glowroot-data: { }
+  glowroot-data: {}
