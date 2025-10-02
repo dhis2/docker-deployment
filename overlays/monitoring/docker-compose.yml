@@ -114,9 +114,9 @@ services:
       test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:3100/ready" ]
       <<: *healthcheck-options
     user: nobody:nobody
-    read_only: true
     cap_drop:
       - ALL
+    read_only: true
     security_opt:
       - no-new-privileges:true
 
@@ -181,9 +181,9 @@ services:
       <<: *healthcheck-options
     logging: *loki-logging
     user: nobody:nobody
-    read_only: true
     cap_drop:
       - ALL
+    read_only: true
     security_opt:
       - no-new-privileges:true
 
@@ -210,18 +210,14 @@ services:
       test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:9100/metrics" ]
       <<: *healthcheck-options
     user: "65534:65534"
-    read_only: true
     cap_drop:
       - ALL
+    read_only: true
     security_opt:
       - no-new-privileges:true
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:${CADVISOR_VERSION:-v0.47.0}
-    command:
-      # For the sake of avoiding: "Unable to get btrfs mountpoint IDs: stat failed on /dev/mapper/luks-id with error: no such file or directory"
-      # https://github.com/google/cadvisor/issues/3357
-      - --disable_metrics=disk,referenced_memory
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
@@ -240,10 +236,10 @@ services:
       <<: *healthcheck-options
     cap_drop:
       - ALL
-    userns_mode: "host"
     privileged: true
     security_opt:
       - no-new-privileges:true
+    userns_mode: "host"
 
 volumes:
   loki: {}
