@@ -11,14 +11,12 @@ change_owner() {
   local obj_type="$2"
   entities=$(exec_psql "$query")
   for entity in $entities; do
-      echo "Changing owner of $obj_type $entity to $POSTGRES_USER"
-      exec_psql "ALTER $obj_type \"$entity\" OWNER TO $POSTGRES_USER"
+    # The below seems to fix: /restore-database.sh: 59: Syntax error: Unterminated quoted string
+    entity=${entity//\"/\"\"}
+    echo "Changing owner of $obj_type $entity to $POSTGRES_USER"
+    exec_psql "ALTER $obj_type \"$entity\" OWNER TO $POSTGRES_USER"
   done
 }
-
-exec_psql "CREATE EXTENSION IF NOT EXISTS postgis"
-exec_psql "CREATE EXTENSION IF NOT EXISTS pg_trgm"
-exec_psql "CREATE EXTENSION IF NOT EXISTS btree_gin"
 
 change_owner "SELECT tablename FROM pg_tables WHERE schemaname='public'" "TABLE"
 change_owner "SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema='public'" "SEQUENCE"
