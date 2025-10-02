@@ -20,7 +20,7 @@ services:
       GLOWROOT_VERSION: ${GLOWROOT_VERSION:-0.14.0}
       APP_UID: ${APP_UID:-65534}
       APP_GID: ${APP_GID:-65534}
-    command: ["sh", "/tmp/glowroot-init.sh"]
+    command: [ "sh", "/tmp/glowroot-init.sh" ]
     user: root
     security_opt:
       - no-new-privileges:true

@@ -58,7 +58,7 @@ services:
     security_opt:
       - no-new-privileges:true
 
-database:
+  database:
     networks:
       - database
     logging: *loki-logging

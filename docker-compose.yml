@@ -71,7 +71,7 @@ services:
     security_opt:
       - no-new-privileges:true
 
-database:
+  database:
     volumes:
       - postgres:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d:ro
