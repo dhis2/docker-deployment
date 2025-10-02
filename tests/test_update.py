@@ -2,32 +2,19 @@ import os
 import pytest
 from playwright.sync_api import Page, expect
 
-URL = "https://" + os.getenv("APP_HOSTNAME")
+# We're using the Safe Login page (/login.html), as the regular login page isn't properly loaded within GHA for some unknown reason and the tests are failing
+URL = "https://" + os.getenv("APP_HOSTNAME") + "/login.html"
 username = os.getenv("DHIS2_ADMIN_USERNAME")
 password = os.getenv("DHIS2_ADMIN_PASSWORD")
 
 def login_user(page: Page):
-    page.goto(URL+"/login.html")
+    page.goto(URL)
 
     page.wait_for_timeout(5000)
 
-    page.screenshot(path="login-page.png")
-
-    try:
-        page.wait_for_selector('input[name="username"]', timeout=10000)
-    except Exception as e:
-        print(f"Failed to find username input: {e}")
-        page.screenshot(path="login-page-no-username.png")
-
-        with open("page-content.html", "w") as f:
-            f.write(page.content())
-        print("Page HTML saved to page-content.html")
-
-        raise
-
-    page.fill('input[name="username"]', username)
-    page.fill('input[name="password"]', password)
-    page.click('button[type="submit"]')
+    page.get_by_role("textbox", name="Username").fill(username)
+    page.get_by_role("textbox", name="Password").fill(password)
+    page.get_by_role("button", name="Log in").click()
     page.wait_for_url("**/dashboard#/**")
     expect(page).to_have_title("Dashboard | DHIS2")
 

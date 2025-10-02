@@ -45,18 +45,11 @@ services:
       - /usr/local/tomcat/work/Catalina/localhost/ROOT
 
   update-admin-password:
-    <<: *database-image
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
     depends_on:
       app:
         condition: service_healthy
     volumes:
       - ./scripts/update-admin-password.sh:/update-admin-password.sh:ro
-    working_dir: /root
-    entrypoint: [ "/bin/sh", "/update-admin-password.sh" ]
     environment:
       # -- Database hostname
       POSTGRES_HOST: database
@@ -70,9 +63,15 @@ services:
       DHIS2_ADMIN_PASSWORD: ${DHIS2_ADMIN_PASSWORD}
     networks:
       - database
+    entrypoint: [ "/bin/sh", "/update-admin-password.sh" ]
+    working_dir: /root
+    <<: *database-image
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
   database:
-    <<: *database-image
     volumes:
       - postgres:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d:ro
@@ -97,6 +96,10 @@ services:
       - "127.0.0.1:5432:5432"
     networks:
       - database
+    command: >
+      postgres
+        -c config_file=/etc/postgresql/postgresql.conf
+        -c hba_file=/var/lib/postgresql/data/pg_hba.conf
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB}" ]
@@ -104,12 +107,14 @@ services:
       timeout: 5s
       retries: 3
     user: postgres
+    <<: *database-image
+    cap_drop:
+      - ALL
+    read_only: true
     security_opt:
       - no-new-privileges:true
-    command: >
-      postgres
-        -c config_file=/etc/postgresql/postgresql.conf
-        -c hba_file=/var/lib/postgresql/data/pg_hba.conf
+    tmpfs:
+      - /var/run/postgresql
 
   traefik:
     image: traefik:v3.5
@@ -152,8 +157,8 @@ services:
       # -- Hostname
       APP_HOSTNAME: ${APP_HOSTNAME}
     ports:
-      - "80:80"
-      - "443:443"
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
     networks:
       - frontend
     restart: unless-stopped
@@ -173,7 +178,6 @@ services:
       - /tmp
 
   backup-database:
-    <<: *database-image
     depends_on:
       database:
         condition: service_healthy
@@ -195,12 +199,12 @@ services:
       PGPASSWORD: ${POSTGRES_DB_PASSWORD}
     networks:
       - database
-    entrypoint: [ "/bin/sh", "/backup-database.sh" ]
+    entrypoint: [ "/bin/bash", "/backup-database.sh" ]
+    <<: *database-image
     profiles:
       - backup
 
   backup-file-storage:
-    <<: *file-storage-image
     volumes:
       - dhis2:/opt/dhis2:ro
       - ./backups:/backups
@@ -213,11 +217,11 @@ services:
     networks:
       - application
     entrypoint: [ "/bin/sh", "/backup-file-storage.sh" ]
+    <<: *file-storage-image
     profiles:
       - backup
 
   restore-database:
-    <<: *database-image
     depends_on:
       database:
         condition: service_healthy
@@ -242,12 +246,12 @@ services:
       DB_RESTORE_NUMBER_OF_JOBS: ${DB_RESTORE_NUMBER_OF_JOBS:-4}
     networks:
       - database
-    entrypoint: [ "/bin/sh", "/restore-database.sh" ]
+    entrypoint: [ "/bin/bash", "/restore-database.sh" ]
+    <<: *database-image
     profiles:
       - restore
 
   restore-file-storage:
-    <<: *file-storage-image
     volumes:
       - dhis2:/opt/dhis2
       - ./backups:/backups:ro
@@ -260,6 +264,7 @@ services:
     networks:
       - application
     entrypoint: [ "/bin/sh", "/restore-file-storage.sh" ]
+    <<: *file-storage-image
     profiles:
       - restore
 
@@ -272,12 +277,13 @@ services:
     profiles:
       - docs
 
-volumes:
-  dhis2: { }
-  postgres: { }
-
 networks:
   frontend:
   application:
   database:
   monitoring:
+
+
+volumes:
+  dhis2: {}
+  postgres: {}

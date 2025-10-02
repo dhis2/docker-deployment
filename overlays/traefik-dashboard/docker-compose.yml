@@ -3,9 +3,7 @@ services:
     environment:
       # -- Enable dashboard
       TRAEFIK_API_DASHBOARD: true
-      # -- Allow insecure access to dashboard
+      # -- Allow insecure access to the dashboard
       TRAEFIK_API_INSECURE: true
     ports:
       - "127.0.0.1:8080:8080"
-    networks:
-      - frontend

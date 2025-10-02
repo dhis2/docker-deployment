@@ -11,8 +11,10 @@ change_owner() {
   local obj_type="$2"
   entities=$(exec_psql "$query")
   for entity in $entities; do
-      echo "Changing owner of $obj_type $entity to $POSTGRES_USER"
-      exec_psql "ALTER $obj_type \"$entity\" OWNER TO $POSTGRES_USER"
+    # The below seems to fix: /restore-database.sh: 59: Syntax error: Unterminated quoted string
+    entity=${entity//\"/\"\"}
+    echo "Changing owner of $obj_type $entity to $POSTGRES_USER"
+    exec_psql "ALTER $obj_type \"$entity\" OWNER TO $POSTGRES_USER"
   done
 }
 
