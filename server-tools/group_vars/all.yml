@@ -8,7 +8,7 @@ letsencrypt_email: "{{ lookup('env', 'GEN_LETSENCRYPT_ACME_EMAIL') | mandatory }
 
 # List of overlays to enable (e.g., ['monitoring'])
 # Note that if you add or remove overlays, all services will be stopped and restarted, so there will be some downtime
-overlays: []
+overlays: [ ]
 
 repo_url: https://github.com/dhis2/docker-deployment
 
@@ -16,7 +16,7 @@ repo_branch: master
 
 deploy_dir: /opt/dhis2
 
-firewall_allowed_ports: [22, 80, 443]
+firewall_allowed_ports: [ 22, 80, 443 ]
 
 allowed_ssh_users:
   - ubuntu

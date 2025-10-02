@@ -33,10 +33,10 @@
     line: "AllowUsers {{ allowed_ssh_users | join(' ') }}"
     state: present
 
-#- name: Restart SSH service
-#  service:
-#    name: sshd
-#    state: restarted
+# - name: Restart SSH service
+#   service:
+#     name: sshd
+#     state: restarted
 
 # Minimize Attack Surface
 - name: Remove unnecessary packages
@@ -77,34 +77,34 @@
     state: present
   loop:
     # Enables TCP SYN cookies to help prevent SYN flood attacks
-    - { key: "net.ipv4.tcp_syncookies", value: "1" }
+    - {key: "net.ipv4.tcp_syncookies", value: "1"}
     # Enables reverse path filtering to mitigate IP spoofing
-    - { key: "net.ipv4.conf.all.rp_filter", value: "1" }
+    - {key: "net.ipv4.conf.all.rp_filter", value: "1"}
     # Ensures all newly created interfaces also enforce IP spoofing prevention, complementing net.ipv4.conf.all.rp_filter
-    - { key: "net.ipv4.conf.default.rp_filter", value: "1" }
+    - {key: "net.ipv4.conf.default.rp_filter", value: "1"}
     # Disables source routing, which is often exploited for attacks
-    - { key: "net.ipv4.conf.all.accept_source_route", value: "0" }
+    - {key: "net.ipv4.conf.all.accept_source_route", value: "0"}
     # Ignores ICMP echo requests sent to broadcast addresses to prevent smurf attacks
-    - { key: "net.ipv4.icmp_echo_ignore_broadcasts", value: "1" }
+    - {key: "net.ipv4.icmp_echo_ignore_broadcasts", value: "1"}
     # Logs packets with invalid IP addresses for easier troubleshooting and detection of potential attacks
-    - { key: "net.ipv4.conf.all.log_martians", value: "1" }
+    - {key: "net.ipv4.conf.all.log_martians", value: "1"}
     # IP forwarding is required for proper network traffic forwarding in a multi-node setup
-    - { key: "net.ipv4.ip_forward", value: "1" }
+    - {key: "net.ipv4.ip_forward", value: "1"}
     # Ensures any newly added interfaces also reject source-routed packets by default, maintaining a secure baseline
-    - { key: "net.ipv4.conf.default.accept_source_route", value: "0" }
+    - {key: "net.ipv4.conf.default.accept_source_route", value: "0"}
     # Randomizes the memory address space of processes, making it significantly harder for attackers to predict addresses during exploitation attempts, such as buffer overflows
-    - { key: "kernel.randomize_va_space", value: "2" }
+    - {key: "kernel.randomize_va_space", value: "2"}
     # Prevents sensitive information (like passwords or cryptographic keys) from being leaked through core dumps, which can be exploited by attackers to gain further system access
-    - { key: "fs.suid_dumpable", value: "0" }
+    - {key: "fs.suid_dumpable", value: "0"}
     # Disable IPv6
-    - { key: "net.ipv6.conf.all.disable_ipv6", value: "1" }
-    - { key: "net.ipv6.conf.default.disable_ipv6", value: "1" }
+    - {key: "net.ipv6.conf.all.disable_ipv6", value: "1"}
+    - {key: "net.ipv6.conf.default.disable_ipv6", value: "1"}
     # Disabling ICMP redirects
-    - { key: "net.ipv4.conf.all.accept_redirects", value: "0" }
-    - { key: "net.ipv4.conf.default.accept_redirects", value: "0" }
+    - {key: "net.ipv4.conf.all.accept_redirects", value: "0"}
+    - {key: "net.ipv4.conf.default.accept_redirects", value: "0"}
     # Prevent multiple kinds of attacks
-    - { key: "net.ipv4.conf.all.secure_redirects", value: "0" }
-    - { key: "net.ipv4.conf.default.secure_redirects", value: "0" }
+    - {key: "net.ipv4.conf.all.secure_redirects", value: "0"}
+    - {key: "net.ipv4.conf.default.secure_redirects", value: "0"}
 
 - name: Apply sysctl changes
   command: sysctl -p
