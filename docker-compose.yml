@@ -269,11 +269,11 @@ services:
       - restore
 
   compose-docs:
-    image: tons/docker-compose-docs:1.0.1
+    image: tons/docker-compose-docs:2.1.0
     volumes:
       - .:/src:ro
     environment:
-      DOCKER_COMPOSE_FILE_PATHS: /src;/src/overlays
+      DOCKER_COMPOSE_FILE_GLOBS: /src/docker-compose.yml;/src/overlays/*/docker-compose.yml
     profiles:
       - docs
 
