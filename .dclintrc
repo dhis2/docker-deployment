@@ -2,14 +2,10 @@
   "rules": {
     "no-version-field": 0,
     "require-project-name-field": 0,
-    "no-unbound-port-interfaces": [
-      1,
-      {
-        "excludeServices": [
-          "traefik"
-        ]
-      }
-    ],
+    "services-alphabetical-order": 0,
+    "service-keys-order": 2,
+    "service-image-require-explicit-tag": 2,
+    "no-unbound-port-interfaces": 2,
     "require-quotes-in-ports": [
       2,
       {
