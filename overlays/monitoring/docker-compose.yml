@@ -35,8 +35,8 @@ services:
   create-monitoring-user:
     image: alpine:3.22
     # We're installing jq in the script, so root is required. And for the same reason, read_only isn't possible either. We could create a docker file and install it there...
-    #user: guest:405
-    #read_only: true
+    # user: guest:405
+    # read_only: true
     depends_on:
       update-admin-password:
         condition: service_completed_successfully

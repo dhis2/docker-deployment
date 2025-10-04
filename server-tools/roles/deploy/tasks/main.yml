@@ -1,0 +1,197 @@
+- name: Check if deploy dir exists
+  stat:
+    path: "{{ deploy_dir }}"
+  register: dir_stat
+
+- name: Check if deploy dir is a git repo
+  stat:
+    path: "{{ deploy_dir }}/.git"
+  register: git_repo
+
+- name: Check deploy dir contents
+  find:
+    path: "{{ deploy_dir }}"
+    file_type: any
+  register: dir_contents
+  when: dir_stat.stat.exists
+
+- name: Fail if deploy dir exists, is not empty, and is not a git repo
+  fail:
+    msg: "Deploy directory {{ deploy_dir }} exists, is not empty, and is not a git repository. Please remove it manually or check for conflicts."
+  when: dir_stat.stat.exists and not git_repo.stat.exists and dir_contents.files | length > 0
+
+- name: Clone the repository
+  command: git clone {{ repo_url }} {{ deploy_dir }}
+  when: not git_repo.stat.exists
+
+- name: Add deploy directory to git safe directories
+  command: git config --global --add safe.directory {{ deploy_dir }}
+
+- name: Fetch all branches
+  command: git fetch --all
+  args:
+    chdir: "{{ deploy_dir }}"
+
+- name: Checkout the specified branch
+  command: git checkout {{ repo_branch }}
+  args:
+    chdir: "{{ deploy_dir }}"
+
+- name: Pull latest changes
+  command: git pull
+  args:
+    chdir: "{{ deploy_dir }}"
+  when: git_repo.stat.exists
+
+- name: Generate .env file
+  shell: |
+    export GEN_APP_HOSTNAME="{{ app_hostname }}"
+    export GEN_LETSENCRYPT_ACME_EMAIL="{{ letsencrypt_email }}"
+    ./scripts/generate-env.sh
+  args:
+    chdir: "{{ deploy_dir }}"
+    creates: "{{ deploy_dir }}/.env"
+
+- name: Set .env permissions
+  file:
+    path: "{{ deploy_dir }}/.env"
+    owner: "{{ docker_user }}"
+    group: "root"
+
+- name: Create Traefik acme.json
+  file:
+    path: "{{ deploy_dir }}/traefik/acme.json"
+    state: touch
+    # Make sure this matches with the user running DHIS2
+    owner: "65534"
+    group: "65534"
+    mode: 0600
+
+- name: Install Loki Docker driver
+  become: yes
+  command: ./scripts/install-loki-driver.sh
+  args:
+    chdir: "{{ deploy_dir }}"
+  when: "'monitoring' in overlays"
+
+- name: Read current overlays
+  slurp:
+    src: "{{ deploy_dir }}/current_overlays.json"
+  register: current_overlays_slurp
+  ignore_errors: true
+
+- name: Set old overlays
+  set_fact:
+    old_overlays: "{{ (current_overlays_slurp.content | b64decode | from_json) if current_overlays_slurp is succeeded else [] }}"
+
+- debug:
+    msg: "old_overlays: {{ old_overlays }}, overlays: {{ overlays }}"
+
+- name: Set compose files
+  set_fact:
+    compose_files: "{{ ['-f docker-compose.yml'] + overlays | map('regex_replace', '^(.*)$', '-f overlays/\\1/docker-compose.yml') | list }}"
+
+- debug:
+    msg: "compose_files: {{ compose_files }}"
+
+- debug:
+    msg: "overlays changed: {{ old_overlays != overlays }}"
+
+- name: Stop dhis2 service when overlays changed
+  systemd:
+    name: dhis2
+    state: stopped
+  when: old_overlays != overlays
+
+- name: Write current overlays
+  copy:
+    dest: "{{ deploy_dir }}/current_overlays.json"
+    content: "{{ overlays | to_json }}"
+
+- name: Create systemd service for dhis2
+  copy:
+    dest: /etc/systemd/system/dhis2.service
+    content: |
+      [Unit]
+      Description=DHIS2 Docker Compose Service
+      After=docker.service
+      Requires=docker.service
+
+      [Service]
+      Type=simple
+      User={{ docker_user }}
+      Group={{ docker_group }}
+      WorkingDirectory={{ deploy_dir }}
+      ExecStart=/usr/bin/docker compose {{ compose_files | join(' ') }} up
+      ExecStop=/usr/bin/docker compose {{ compose_files | join(' ') }} down
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Show systemd service content
+  command: cat /etc/systemd/system/dhis2.service
+  register: systemd_content
+
+- debug:
+    msg: "{{ systemd_content.stdout }}"
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+
+- name: Enable dhis2 service
+  systemd:
+    name: dhis2
+    enabled: yes
+
+- name: Find all overlay directories
+  shell: find overlays/ -name "docker-compose.yml" -o -name "docker-compose.yaml" | xargs dirname | sed 's|overlays/||' | sort | uniq
+  args:
+    chdir: "{{ deploy_dir }}"
+  register: all_overlays_raw
+
+- name: Set all overlays
+  set_fact:
+    all_overlays: "{{ all_overlays_raw.stdout_lines | select | list }}"
+
+- name: Set all compose files
+  set_fact:
+    all_compose_files: "{{ ['-f docker-compose.yml'] + all_overlays | map('regex_replace', '^(.*)$', '-f overlays/\\1/docker-compose.yml') | list }}"
+
+- debug:
+    msg: "all_overlays: {{ all_overlays }}, all_compose_files: {{ all_compose_files }}"
+
+- debug:
+    msg: "Running: docker compose {{ all_compose_files | join(' ') }} down"
+
+- name: Down all services
+  command: docker compose {{ all_compose_files | join(' ') }} down
+  args:
+    chdir: "{{ deploy_dir }}"
+
+- debug:
+    msg: "Starting: docker compose {{ compose_files | join(' ') }} up"
+
+- debug:
+    msg: "old_overlays: {{ old_overlays }}, overlays: {{ overlays }}, changed: {{ old_overlays != overlays }}"
+
+- name: Start dhis2 service
+  systemd:
+    name: dhis2
+    state: started
+
+- name: Wait for services to be healthy
+  command: docker compose {{ compose_files | join(' ') }} ps
+  args:
+    chdir: "{{ deploy_dir }}"
+  register: compose_ps
+  # TODO: This doesn't work at all... if a container goes to unhealthy state this will pass
+  until: "'(healthy)' in compose_ps.stdout and 'starting' not in compose_ps.stdout and 'unhealthy' not in compose_ps.stdout"
+  retries: 30
+  delay: 10
+
+- name: Verify all services are running
+  assert:
+    that: "'Exit' not in compose_ps.stdout"
+    fail_msg: "Some services failed to start"

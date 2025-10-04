@@ -1,0 +1,87 @@
+# Firewall hardening for Docker (DOCKER-USER chain)
+#
+# Background:
+# By default, Docker bypasses the host firewall rules (like UFW/iptables INPUT),
+# because published container ports are handled in the NAT table before reaching
+# the usual chains. This means host-level firewall rules don’t get applied to
+# container traffic.
+#
+# See https://docs.docker.com/engine/network/packet-filtering-firewalls/ for more details
+#
+# To fix this, Docker provides the `DOCKER-USER` chain. Every packet goes
+# through this chain before hitting Docker’s own rules, so it’s the right place
+# to enforce global allow/deny policies.
+#
+# What this playbook does:
+#  1. Debug/print existing rules so we can see the current firewall state.
+#  2. Allow traffic between Docker containers (172.16.0.0/12 covers all
+#     default bridge subnets that Docker might create).
+#  3. Explicitly allow only the host-facing ports we want open
+#     (`firewall_allowed_ports`, e.g. 22, 80, 443).
+#  4. Drop all other traffic at the end (default deny).
+#  5. Save rules so they persist across reboots (`netfilter-persistent`).
+#
+# Effectively, this gives you a "default deny" firewall posture while still
+# allowing Docker containers to talk to each other and exposing only the
+# services you choose.
+
+- name: Debug existing DOCKER-USER rules
+  ansible.builtin.command: iptables -L DOCKER-USER -v
+  register: docker_user_rules
+  changed_when: false
+  become: true
+
+- name: Print existing DOCKER-USER rules
+  ansible.builtin.debug:
+    var: docker_user_rules.stdout_lines
+
+- name: Ensure Docker container subnet is allowed
+  ansible.builtin.iptables:
+    chain: DOCKER-USER
+    source: 172.16.0.0/12
+    jump: ACCEPT
+    state: present
+    comment: Allow all Docker containers. The 172.16.0.0/12 range covers all default Docker bridge networks (172.16.0.0–172.31.255.255) so future containers on new networks will automatically be allowed.
+    ip_version: ipv4
+  become: true
+
+- name: Allow host-facing ports
+  ansible.builtin.iptables:
+    chain: DOCKER-USER
+    protocol: tcp
+    destination_port: "{{ item }}"
+    jump: ACCEPT
+    state: present
+    comment: "Allow host port {{ item }}"
+    ip_version: ipv4
+  loop: "{{ firewall_allowed_ports }}"
+  become: true
+
+- name: Drop everything else
+  ansible.builtin.iptables:
+    chain: DOCKER-USER
+    jump: DROP
+    state: present
+    comment: "Default drop"
+    ip_version: ipv4
+  become: true
+
+- name: Ensure iptables-persistent is installed
+  ansible.builtin.package:
+    name: iptables-persistent
+    state: present
+  become: true
+
+- name: Save iptables rules
+  ansible.builtin.command: netfilter-persistent save
+  become: true
+
+- name: Show final DOCKER-USER rules
+  ansible.builtin.command: iptables -L DOCKER-USER -v --line-numbers
+  register: final_docker_user_rules
+  changed_when: false
+  become: true
+
+- name: Print final DOCKER-USER rules
+  ansible.builtin.debug:
+    var: final_docker_user_rules.stdout_lines

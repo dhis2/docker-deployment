@@ -1,0 +1,9 @@
+- name: Deploy DHIS2 Docker Stack
+  hosts: all
+  become: true
+
+  roles:
+    - bootstrap
+    - firewall
+    - harden
+    - deploy
