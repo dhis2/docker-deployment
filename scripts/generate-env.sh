@@ -1,9 +1,37 @@
 #!/usr/bin/env bash
 
-LENGTH=32
-CHARSET='A-Za-z0-9_=.-'
+REQUIRED_COMMANDS=("tr" "head" "fold" "shuf" "sed" "chmod" "cp")
+MISSING_COMMANDS=()
+
+for cmd in "${REQUIRED_COMMANDS[@]}"; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    MISSING_COMMANDS+=("$cmd")
+  fi
+done
+
+if [ ${#MISSING_COMMANDS[@]} -ne 0 ]; then
+  echo "Error: The following required commands are not available:" >&2
+  printf "  - %s\n" "${MISSING_COMMANDS[@]}" >&2
+  echo "" >&2
+  echo "Please install the missing commands and try again." >&2
+  exit 1
+fi
+
 OUTPUT_FILE=".env"
 TEMPLATE_FILE=".env.template"
+
+if [ -f "$OUTPUT_FILE" ]; then
+  echo "Error: An '$OUTPUT_FILE' file already exists." >&2
+  exit 1
+fi
+
+if [ ! -f "$TEMPLATE_FILE" ]; then
+  echo "Error: Template '$TEMPLATE_FILE' not found!" >&2
+  exit 1
+fi
+
+LENGTH=32
+CHARSET='A-Za-z0-9_=.-'
 
 generate_password() {
   local password=""
@@ -16,20 +44,9 @@ generate_password() {
   echo "$password" | fold -w1 | shuf | tr -d '\n'
 }
 
-if [ -f "$OUTPUT_FILE" ]; then
-  echo "Error: An '$OUTPUT_FILE' file already exists." >&2
-  exit 1
-fi
-
 # Validate required inputs for ungeneratable values
 : "${GEN_APP_HOSTNAME:?Environment variable GEN_APP_HOSTNAME must be set}"
 : "${GEN_LETSENCRYPT_ACME_EMAIL:?Environment variable GEN_LETSENCRYPT_ACME_EMAIL must be set}"
-
-
-if [ ! -f "$TEMPLATE_FILE" ]; then
-  echo "Error: Template '$TEMPLATE_FILE' not found!" >&2
-  exit 1
-fi
 
 DHIS2_ADMIN_PASSWORD=$(generate_password)
 POSTGRES_PASSWORD=$(generate_password)
