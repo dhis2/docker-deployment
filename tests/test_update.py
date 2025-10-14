@@ -7,31 +7,20 @@ username = os.getenv("DHIS2_ADMIN_USERNAME")
 password = os.getenv("DHIS2_ADMIN_PASSWORD")
 
 def login_user(page: Page):
+    from test_helpers import wait_for_app_ready
+    wait_for_app_ready(os.getenv("APP_HOSTNAME"))
+
     page.goto(URL+"/login.html")
 
-    page.wait_for_timeout(5000)
-
-    page.screenshot(path="login-page.png")
-
-    try:
-        page.wait_for_selector('input[name="username"]', timeout=10000)
-    except Exception as e:
-        print(f"Failed to find username input: {e}")
-        page.screenshot(path="login-page-no-username.png")
-
-        with open("page-content.html", "w") as f:
-            f.write(page.content())
-        print("Page HTML saved to page-content.html")
-
-        raise
-
-    page.fill('input[name="username"]', username)
-    page.fill('input[name="password"]', password)
-    page.click('button[type="submit"]')
+    page.get_by_role("textbox", name="Username").fill(username)
+    page.get_by_role("textbox", name="Password").fill(password)
+    page.get_by_role("button", name="Log in").click()
     page.wait_for_url("**/dashboard#/**")
     expect(page).to_have_title("Dashboard | DHIS2")
 
+@pytest.mark.order(3)
 def test_profile_update(page: Page):
+    print("\n=== Step 2a: Update user profile ===")
     login_user(page)
 
     page.get_by_title("Profile menu").click()
@@ -56,7 +45,10 @@ def test_profile_update(page: Page):
     expect(profile_picture).to_be_visible()
     expect(profile_picture).to_have_js_property('complete', True)
 
+
+@pytest.mark.order(3)
 def test_app_install(page: Page):
+    print("\n=== Step 2b: Install test app ===")
     login_user(page)
 
     page.get_by_title("Command palette").click()
