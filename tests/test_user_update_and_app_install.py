@@ -7,9 +7,6 @@ username = os.getenv("DHIS2_ADMIN_USERNAME")
 password = os.getenv("DHIS2_ADMIN_PASSWORD")
 
 def login_user(page: Page):
-    from test_helpers import wait_for_app_ready
-    wait_for_app_ready(os.getenv("APP_HOSTNAME"))
-
     page.goto(URL+"/login.html")
 
     page.get_by_role("textbox", name="Username").fill(username)
@@ -18,7 +15,7 @@ def login_user(page: Page):
     page.wait_for_url("**/dashboard#/**")
     expect(page).to_have_title("Dashboard | DHIS2")
 
-@pytest.mark.order(3)
+@pytest.mark.order(2)
 def test_profile_update(page: Page):
     print("\n=== Step 2a: Update user profile ===")
     login_user(page)
@@ -46,9 +43,9 @@ def test_profile_update(page: Page):
     expect(profile_picture).to_have_js_property('complete', True)
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(2)
 def test_app_install(page: Page):
-    print("\n=== Step 2b: Install test app ===")
+    print("\n=== Step 2b: Install app ===")
     login_user(page)
 
     page.get_by_title("Command palette").click()

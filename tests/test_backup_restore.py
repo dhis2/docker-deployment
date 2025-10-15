@@ -1,25 +1,20 @@
-import os
 import pytest
-import time
 from playwright.sync_api import Page, expect
-from test_update import login_user
+from test_user_update_and_app_install import login_user
 from test_helpers import (
-    run_make_command, wait_for_service, wait_for_app_ready,
-    ensure_backups_directory, assert_backup_files_exist
+    run_make_command, ensure_backups_directory, assert_backup_files_exist,
+    wait_for_service_healthy
 )
 
 
-@pytest.mark.order(2)
-def test_launch_services():
-    print("\n=== Step 1: Launch services ===")
+@pytest.mark.order(1)
+def test_launch_environment():
+    print("\n=== Step 1: Launch environment ===")
+
     run_make_command("launch COMPOSE_OPTS=-d")
 
-    wait_for_service("database")
-    wait_for_service("app")
-    wait_for_app_ready(os.getenv("APP_HOSTNAME"))
 
-
-@pytest.mark.order(4)
+@pytest.mark.order(3)
 def test_create_backup():
     print("\n=== Step 3: Create backup ===")
 
@@ -30,23 +25,21 @@ def test_create_backup():
     assert_backup_files_exist(backup_timestamp)
 
 
-@pytest.mark.order(5)
+@pytest.mark.order(4)
 def test_clean_environment():
     print("\n=== Step 4: Clean environment ===")
+
     run_make_command("clean")
 
 
-@pytest.mark.order(6)
+@pytest.mark.order(5)
 def test_launch_fresh_environment():
     print("\n=== Step 5: Launch fresh environment ===")
+
     run_make_command("launch COMPOSE_OPTS=-d")
 
-    wait_for_service("database")
-    wait_for_service("app")
-    wait_for_app_ready(os.getenv("APP_HOSTNAME"))
 
-
-@pytest.mark.order(7)
+@pytest.mark.order(6)
 def test_restore_from_backup():
     print("\n=== Step 6: Restore from backup ===")
 
@@ -58,12 +51,13 @@ def test_restore_from_backup():
         "BACKUP_TIMESTAMP": backup_timestamp,
     }
     run_make_command("restore", restore_env)
-    time.sleep(10)
 
 
-@pytest.mark.order(8)
+@pytest.mark.order(7)
 def test_verify_restored_data(page):
     print("\n=== Step 7: Verify restored data ===")
+
+    wait_for_service_healthy("app")
 
     login_user(page)
     verify_restored_profile(page)

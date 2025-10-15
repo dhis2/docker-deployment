@@ -1,7 +1,6 @@
 import os
 import pytest
-from playwright.sync_api import BrowserContext
-from test_helpers import get_backup_timestamp, cleanup_backups
+from test_helpers import get_backup_timestamp
 
 
 @pytest.fixture(scope="session")
@@ -27,13 +26,6 @@ def setup_test_environment():
 
     pytest.backup_timestamp = get_backup_timestamp()
     print(f"  BACKUP_TIMESTAMP: {pytest.backup_timestamp}")
-
-
-@pytest.fixture(scope="session", autouse=True)
-def cleanup_after_tests():
-    yield
-    if hasattr(pytest, 'backup_timestamp'):
-        cleanup_backups(pytest.backup_timestamp)
 
 
 def pytest_configure(config):
