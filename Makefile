@@ -1,11 +1,22 @@
 PRE_COMMIT_VERSION ?= 4.3.0
 
-.PHONY: init reinit check docs launch clean config
+.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs launch clean config
 
 init:
 	@test -d .venv || python3 -m venv .venv
 	.venv/bin/python -m pip install "pre-commit==$(PRE_COMMIT_VERSION)"
 	.venv/bin/pre-commit install
+
+playwright:
+	@test -d .venv || python3 -m venv .venv
+	.venv/bin/python -m pip install playwright pytest pytest-playwright pytest-order requests
+	.venv/bin/playwright install
+
+test:
+	DEBUG=pw:api .venv/bin/pytest --capture=no --exitfirst
+
+test-ui:
+	DEBUG=pw:api .venv/bin/pytest --headed --capture=no --exitfirst
 
 reinit:
 	rm -rf .venv
@@ -14,7 +25,7 @@ reinit:
 check:
 	.venv/bin/pre-commit run --all-files
 
-BACKUP_TIMESTAMP := $(shell date -u +%Y-%m-%d_%H-%M-%S_%Z)
+BACKUP_TIMESTAMP ?= $(shell date -u +%Y-%m-%d_%H-%M-%S_%Z)
 
 backup-database:
 	mkdir -p ./backups
