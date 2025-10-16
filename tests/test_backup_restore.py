@@ -1,47 +1,43 @@
 import pytest
 from playwright.sync_api import Page, expect
 from test_user_update_and_app_install import login_user
-from test_helpers import (
-    run_make_command, ensure_backups_directory, assert_backup_files_exist,
-    wait_for_service_healthy
-)
+from test_helpers import run_make_command, assert_backup_files_exist, wait_for_service_healthy
 
 
 @pytest.mark.order(1)
 def test_launch_environment():
-    print("\n=== Step 1: Launch environment ===")
+    print("\n=== Launch environment ===")
 
     run_make_command("launch COMPOSE_OPTS=-d")
 
 
 @pytest.mark.order(3)
 def test_create_backup():
-    print("\n=== Step 3: Create backup ===")
+    print("\n=== Create backup ===")
 
     backup_timestamp = pytest.backup_timestamp
 
-    ensure_backups_directory()
     run_make_command("backup", {"BACKUP_TIMESTAMP": backup_timestamp})
     assert_backup_files_exist(backup_timestamp)
 
 
 @pytest.mark.order(4)
 def test_clean_environment():
-    print("\n=== Step 4: Clean environment ===")
+    print("\n=== Clean environment ===")
 
     run_make_command("clean")
 
 
 @pytest.mark.order(5)
 def test_launch_fresh_environment():
-    print("\n=== Step 5: Launch fresh environment ===")
+    print("\n=== Launch fresh environment ===")
 
     run_make_command("launch COMPOSE_OPTS=-d")
 
 
 @pytest.mark.order(6)
 def test_restore_from_backup():
-    print("\n=== Step 6: Restore from backup ===")
+    print("\n=== Restore from backup ===")
 
     backup_timestamp = pytest.backup_timestamp
 
@@ -55,7 +51,7 @@ def test_restore_from_backup():
 
 @pytest.mark.order(7)
 def test_verify_restored_data(page):
-    print("\n=== Step 7: Verify restored data ===")
+    print("\n=== Verify restored data ===")
 
     wait_for_service_healthy("app")
 
@@ -65,8 +61,6 @@ def test_verify_restored_data(page):
 
 
 def verify_restored_profile(page: Page):
-    print("Verifying restored user profile...")
-
     page.get_by_title("Profile menu").click()
     page.get_by_role("menuitem", name="My profile").click()
     page.wait_for_url("**/user-profile#/**")
@@ -82,8 +76,6 @@ def verify_restored_profile(page: Page):
 
 
 def verify_restored_app(page: Page):
-    print("Verifying restored app installation...")
-
     page.get_by_title("Command palette").click()
     page.locator("#filter").fill("App Management")
     page.keyboard.press("Enter")

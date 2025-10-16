@@ -107,7 +107,3 @@ def verify_prometheus_labels(prometheus_labels: Dict[str, Any]) -> None:
     for expected_label in expected_labels:
         status = "Found" if expected_label in prometheus_label_names else "Expected"
         print(f"{status} Prometheus label: {expected_label}")
-
-
-def ensure_backups_directory() -> None:
-    Path("./backups").mkdir(exist_ok=True)

@@ -13,7 +13,7 @@ def browser_context_args(browser_context_args):
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_environment():
-    required_vars = ["APP_HOSTNAME", "DHIS2_ADMIN_USERNAME", "DHIS2_ADMIN_PASSWORD"]
+    required_vars = ["APP_HOSTNAME", "DHIS2_ADMIN_USERNAME", "DHIS2_ADMIN_PASSWORD", "DHIS2_VERSION"]
     missing_vars = [var for var in required_vars if not os.getenv(var)]
 
     if missing_vars:
@@ -21,6 +21,7 @@ def setup_test_environment():
 
     print(f"Test environment configured:")
     print(f"  APP_HOSTNAME: {os.getenv('APP_HOSTNAME')}")
+    print(f"  DHIS2_VERSION: {os.getenv('DHIS2_VERSION')}")
     print(f"  DHIS2_ADMIN_USERNAME: {os.getenv('DHIS2_ADMIN_USERNAME')}")
     print(f"  DHIS2_ADMIN_PASSWORD: {'*' * len(os.getenv('DHIS2_ADMIN_PASSWORD', ''))}")
 

@@ -7,7 +7,12 @@ username = os.getenv("DHIS2_ADMIN_USERNAME")
 password = os.getenv("DHIS2_ADMIN_PASSWORD")
 
 def login_user(page: Page):
-    page.goto(URL+"/login.html")
+    dhis2_version = int(os.getenv("DHIS2_VERSION"))
+
+    if dhis2_version >= 42:
+        page.goto(URL + "/login.html")
+    else:
+        page.goto(URL + "/")
 
     page.get_by_role("textbox", name="Username").fill(username)
     page.get_by_role("textbox", name="Password").fill(password)
@@ -17,7 +22,7 @@ def login_user(page: Page):
 
 @pytest.mark.order(2)
 def test_profile_update(page: Page):
-    print("\n=== Step 2a: Update user profile ===")
+    print("\n=== Update user profile ===")
     login_user(page)
 
     page.get_by_title("Profile menu").click()
@@ -45,7 +50,7 @@ def test_profile_update(page: Page):
 
 @pytest.mark.order(2)
 def test_app_install(page: Page):
-    print("\n=== Step 2b: Install app ===")
+    print("\n=== Install app ===")
     login_user(page)
 
     page.get_by_title("Command palette").click()
