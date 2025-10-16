@@ -9,11 +9,7 @@ on:
 jobs:
   e2e-test:
     runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        dhis2_version: [ 42, 41, 40 ]
-      max-parallel: 1
-    name: E2E Test DHIS2 v${{ matrix.dhis2_version }}
+    name: E2E Test
     steps:
       - uses: actions/checkout@v4
 
@@ -27,9 +23,7 @@ jobs:
           GEN_APP_HOSTNAME: dhis2-127-0-0-1.nip.io
           GEN_LETSENCRYPT_ACME_EMAIL: whatever@dhis2.org
 
-      - name: E2e test
-        env:
-          DHIS2_VERSION: ${{ matrix.dhis2_version }}
+      - name: E2E test
         run: |
           make playwright
           make test

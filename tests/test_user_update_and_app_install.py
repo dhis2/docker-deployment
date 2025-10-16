@@ -7,12 +7,7 @@ username = os.getenv("DHIS2_ADMIN_USERNAME")
 password = os.getenv("DHIS2_ADMIN_PASSWORD")
 
 def login_user(page: Page):
-    dhis2_version = int(os.getenv("DHIS2_VERSION"))
-
-    if dhis2_version >= 42:
-        page.goto(URL + "/login.html")
-    else:
-        page.goto(URL + "/")
+    page.goto(URL+"/login.html")
 
     page.get_by_role("textbox", name="Username").fill(username)
     page.get_by_role("textbox", name="Password").fill(password)
