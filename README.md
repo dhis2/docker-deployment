@@ -24,16 +24,6 @@ values of the password variables.
 
 Documentation for the environment variables can be found [here](docs/environment-variables.md).
 
-### Automatic Certificate Management Environment
-
-The acme file needs to be owned, only writable, by the same user running Traefik
-
-```shell
-touch ./traefik/acme.json
-sudo chown 65534:65534 ./traefik/acme.json
-sudo chmod 600 ./traefik/acme.json
-```
-
 ### Launch the application
 
 ```shell
