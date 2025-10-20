@@ -9,8 +9,8 @@ Docker production deployment of the DHIS2 application
 The following environment variables are required for setting up the environment
 
 ```shell
-export GEN_APP_HOSTNAME=<the hostname of the application>
-export GEN_LETSENCRYPT_ACME_EMAIL=<your email address>
+export GEN_APP_HOSTNAME=<the hostname of the application> # For local testing you can just use dhis2-127.0.0.1.nip.io
+export GEN_LETSENCRYPT_ACME_EMAIL=<your email address>    # Any valid email address will do
 ```
 
 Generate a new `.env` file by executing the following command
@@ -23,16 +23,6 @@ Potentially adjust the generated `.env` file to your needs. However, it's highly
 values of the password variables.
 
 Documentation for the environment variables can be found [here](docs/environment-variables.md).
-
-### Automatic Certificate Management Environment
-
-The acme file needs to be owned, only writable, by the same user running Traefik
-
-```shell
-touch ./traefik/acme.json
-sudo chown 65534:65534 ./traefik/acme.json
-sudo chmod 600 ./traefik/acme.json
-```
 
 ### Launch the application
 
