@@ -9,8 +9,8 @@ Docker production deployment of the DHIS2 application
 The following environment variables are required for setting up the environment
 
 ```shell
-export GEN_APP_HOSTNAME=<the hostname of the application>
-export GEN_LETSENCRYPT_ACME_EMAIL=<your email address>
+export GEN_APP_HOSTNAME=<the hostname of the application> # For local testing you can just use dhis2-127.0.0.1.nip.io
+export GEN_LETSENCRYPT_ACME_EMAIL=<your email address>    # Any valid email address will do
 ```
 
 Generate a new `.env` file by executing the following command
