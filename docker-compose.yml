@@ -293,6 +293,7 @@ networks:
   database:
   monitoring:
 
+
 volumes:
   dhis2: {}
   postgres: {}
