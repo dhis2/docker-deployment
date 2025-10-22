@@ -116,11 +116,21 @@ services:
     tmpfs:
       - /var/run/postgresql
 
+  traefik-init:
+    image: alpine:3.22
+    volumes:
+      - cert:/cert:rw
+      - ./scripts/init-cert.sh:/init-cert.sh:ro
+    command: [ "/init-cert.sh" ]
+
   traefik:
     image: traefik:v3.5
+    depends_on:
+      traefik-init:
+        condition: service_completed_successfully
     volumes:
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
-      - ./traefik/acme.json:/cert/acme.json:rw
+      - cert:/cert:rw
     environment:
       # -- Log level
       TRAEFIK_LOG_LEVEL: ${LOG_LEVEL:-INFO}
@@ -287,3 +297,4 @@ networks:
 volumes:
   dhis2: {}
   postgres: {}
+  cert: {}
