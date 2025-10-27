@@ -254,3 +254,11 @@ make launch
 ```shell
 make clean
 ```
+
+### Run end-to-end tests
+
+```shell
+make test
+```
+
+Note that the environment needs to be "fresh" for the end-to-end tests' expectations to succeed, so it's advised to run `make clean` beforehand.
