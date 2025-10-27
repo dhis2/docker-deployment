@@ -23,8 +23,6 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
 - [Contributing to this project](#contributing-to-this-project)
 - [Further Documentation](#further-documentation)
 
-
-
 ## Deployment For Local Development and Testing
 
 This section is for users who want to quickly set up and test the DHIS2 application on their local machine.
@@ -63,7 +61,6 @@ Open `http://dhis2-127-0-0-1.nip.io` in your favorite browser.
 > **Note**
 > The first time you launch the application, it will initialise with a blank database. *The default admin credentials are available in the `.env` file.* If you have an existing database, you can restore it following the [Backup and Restore](#backup-and-restore) section, under Advanced Usage, below.
 
-
 ## Deployment For Production Implementations
 
 This section is for users planning to deploy DHIS2 in a production environment.
@@ -72,10 +69,10 @@ This section is for users planning to deploy DHIS2 in a production environment.
 
 Before deploying to production, ensure you have:
 
-*   A dedicated host or virtual machine with Docker and Docker Compose installed.
-*   A fully qualified domain name (FQDN) for your DHIS2 instance.
-*   A valid email address for Let's Encrypt certificate management.
-*   Appropriate firewall rules configured for ports 80 and 443.
+- A dedicated host or virtual machine with Docker and Docker Compose installed.
+- A fully qualified domain name (FQDN) for your DHIS2 instance.
+- A valid email address for Let's Encrypt certificate management.
+- Appropriate firewall rules configured for ports 80 and 443.
 
 ### Configure Environment
 
@@ -99,14 +96,15 @@ For production, carefully review and configure all environment variables in your
 ### Launch the application
 
 Once the environment is configured, launch the application using Docker Compose:
+
 ```shell
 docker compose up
 ```
+
 Open `https://<your-domain.com>` in your favorite browser.
 
 > **Note**
 > The first time you launch the application, it will initialise with a blank database. *The default admin credentials are available in the `.env` file.* If you have an existing database, you can restore it following the [Backup and Restore](#backup-and-restore) section, under Advanced Usage, below.
-
 
 ## Advanced Usage
 
@@ -126,7 +124,6 @@ SELECT pg_reload_conf();
 
 Deployments can benefit from additional services provided by compose overlays.
 
-
 #### Traefik Dashboard
 
 To enable the Traefik dashboard for local monitoring of your reverse proxy, launch the application with the following command:
@@ -134,7 +131,6 @@ To enable the Traefik dashboard for local monitoring of your reverse proxy, laun
 ```shell
 docker compose -f docker-compose.yml -f overlays/traefik-dashboard/docker-compose.yml up
 ```
-
 
 #### Glowroot
 
@@ -158,13 +154,16 @@ make backup
 
 This command will create two files in the `./backups` directory: one for the database and one for the file storage.
 
-*   **Backup Database**: The database can be backed up in `custom` (default) or `plain` format, controlled by the `POSTGRES_BACKUP_FORMAT` environment variable.
+- **Backup Database**: The database can be backed up in `custom` (default) or `plain` format, controlled by the `POSTGRES_BACKUP_FORMAT` environment variable.
+
     ```shell
     make backup-database
     ```
+
     This creates a file in `./backups` named `$TIMESTAMP.pgc` (custom) or `$TIMESTAMP.sql.gz` (plain). Consult the [PostgreSQL documentation](https://www.postgresql.org/docs/current/app-pgdump.html) for more details.
 
-*   **Backup File Storage**:
+- **Backup File Storage**:
+
     ```shell
     make backup-file-storage
     ```
@@ -179,12 +178,14 @@ A complete restore of both database and file storage can be done by executing:
 make restore
 ```
 
-*   **Restore Database**: Set the `DB_RESTORE_FILE` environment variable to the backup file name.
+- **Restore Database**: Set the `DB_RESTORE_FILE` environment variable to the backup file name.
+
     ```shell
     make restore-database
     ```
 
-*   **Restore File Storage**: Set the `FILE_STORAGE_RESTORE_SOURCE_DIR` environment variable to the backup directory name.
+- **Restore File Storage**: Set the `FILE_STORAGE_RESTORE_SOURCE_DIR` environment variable to the backup directory name.
+
     ```shell
     make restore-file-storage
     ```
@@ -211,9 +212,9 @@ docker compose -f docker-compose.yml -f overlays/monitoring/docker-compose.yml u
 
 This deploys:
 
-*   **Grafana**: A web-based monitoring and visualization platform with preloaded dashboards for Traefik, PostgreSQL, and server/host data.
-*   **Prometheus**: Collects metrics from the DHIS2 application (`/api/metrics`), Postgres Exporter, Traefik, Node Exporter, cAdvisor, and Prometheus itself. Data is stored locally for 15 days (default).
-*   **Loki**: Aggregates all container logs (DHIS2, PostgreSQL, Traefik) via the Docker Loki Driver plugin. Logs are indexed by labels for efficiency.
+- **Grafana**: A web-based monitoring and visualization platform with preloaded dashboards for Traefik, PostgreSQL, and server/host data.
+- **Prometheus**: Collects metrics from the DHIS2 application (`/api/metrics`), Postgres Exporter, Traefik, Node Exporter, cAdvisor, and Prometheus itself. Data is stored locally for 15 days (default).
+- **Loki**: Aggregates all container logs (DHIS2, PostgreSQL, Traefik) via the Docker Loki Driver plugin. Logs are indexed by labels for efficiency.
 
 #### DHIS2 Monitoring
 
@@ -221,19 +222,19 @@ DHIS2's built-in monitoring API is enabled, exposing health and performance metr
 
 #### Accessing Monitoring Services
 
-1.  Start services with the monitoring overlay (as shown above).
-2.  Open `https://grafana.{APP_HOSTNAME}` in your browser (where `{APP_HOSTNAME}` is from your `.env` file).
-3.  Login with:
-    *   Username: `admin`
-    *   Password: Check your `.env` file for `GRAFANA_ADMIN_PASSWORD`.
+1. Start services with the monitoring overlay (as shown above).
+2. Open `https://grafana.{APP_HOSTNAME}` in your browser (where `{APP_HOSTNAME}` is from your `.env` file).
+3. Login with:
+    - Username: `admin`
+    - Password: Check your `.env` file for `GRAFANA_ADMIN_PASSWORD`.
 
 #### Configuration
 
 Monitoring settings can be configured via environment variables in your `.env` file:
 
-*   `GRAFANA_ADMIN_PASSWORD`: Grafana admin password (auto-generated).
-*   `PROMETHEUS_RETENTION_TIME`: Prometheus data retention (default: `15d`).
-*   `LOKI_RETENTION_PERIOD`: Loki log retention (default: `744h` = 31 days).
+- `GRAFANA_ADMIN_PASSWORD`: Grafana admin password (auto-generated).
+- `PROMETHEUS_RETENTION_TIME`: Prometheus data retention (default: `15d`).
+- `LOKI_RETENTION_PERIOD`: Loki log retention (default: `744h` = 31 days).
 
 ## Contributing to this project
 
@@ -241,8 +242,8 @@ This section is for developers who want to contribute to this project.
 
 ### Prerequisites
 
-*   Python 3.11+
-*   Make
+- Python 3.11+
+- Make
 
 To initialize the development environment:
 
@@ -270,5 +271,5 @@ make clean
 
 For more in-depth information, please refer to the following:
 
-*   [Environment Variables](docs/environment-variables.md)
-*   [PostgreSQL Documentation](https://www.postgresql.org/docs/current/app-pgdump.html)
+- [Environment Variables](docs/environment-variables.md)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/current/app-pgdump.html)
