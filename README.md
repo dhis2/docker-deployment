@@ -2,7 +2,7 @@
 
 This repository provides a Docker-based deployment for the DHIS2 application, designed for both local development/testing and secure production implementations. It leverages Docker Compose to orchestrate DHIS2, PostgreSQL, Traefik (as a reverse proxy), and an optional monitoring stack. Facilities are also provided for backup and restore of the database and file storage.
 
-### Table of contents
+## Table of contents
 
 - [Deployment For Local Development and Testing](#deployment-for-local-development-and-testing)
 - [Deployment For Production Implementations](#deployment-for-production-implementations)
