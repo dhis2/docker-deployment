@@ -12,7 +12,7 @@ reinit:
 	$(MAKE) init
 
 install-loki-driver:
-	./scripts/install-loki-driver.sh
+	docker plugin ls --format '{{.Name}}' | grep -q 'loki:latest' || ./scripts/install-loki-driver.sh
 	docker plugin ls
 
 check:
