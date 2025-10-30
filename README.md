@@ -237,6 +237,7 @@ Monitoring settings can be configured via environment variables in your `.env` f
 ### Prerequisites
 
 - Python 3.11+
+- Pip
 - Make
 
 ```shell
