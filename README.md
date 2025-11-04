@@ -113,6 +113,14 @@ A backup of the file storage can be created by executing the following command
 make backup-file-storage
 ```
 
+#### Backup Timestamp
+
+By default, backups are automatically named with a timestamp in the format `YYYY-MM-DD_HH-MM-SS_UTC`. You can override this by setting the `BACKUP_TIMESTAMP` environment variable when running backup commands:
+
+```shell
+BACKUP_TIMESTAMP=<custom-backup-timestamp> make backup
+```
+
 ### Restore
 
 The restore process relies on the `DB_RESTORE_FILE` and `FILE_STORAGE_RESTORE_SOURCE_DIR` environment variables to be
