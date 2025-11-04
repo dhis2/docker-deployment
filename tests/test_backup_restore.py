@@ -6,15 +6,11 @@ from test_helpers import run_make_command, assert_backup_files_exist, wait_for_s
 
 @pytest.mark.order(1)
 def test_launch_environment():
-    print("\n=== Launch environment ===")
-
     run_make_command("launch COMPOSE_OPTS=-d")
 
 
 @pytest.mark.order(3)
 def test_create_backup():
-    print("\n=== Create backup ===")
-
     backup_timestamp = pytest.backup_timestamp
 
     run_make_command("backup", {"BACKUP_TIMESTAMP": backup_timestamp})
@@ -23,22 +19,16 @@ def test_create_backup():
 
 @pytest.mark.order(4)
 def test_clean_environment():
-    print("\n=== Clean environment ===")
-
     run_make_command("clean")
 
 
 @pytest.mark.order(5)
 def test_launch_fresh_environment():
-    print("\n=== Launch fresh environment ===")
-
     run_make_command("launch COMPOSE_OPTS=-d")
 
 
 @pytest.mark.order(6)
 def test_restore_from_backup():
-    print("\n=== Restore from backup ===")
-
     backup_timestamp = pytest.backup_timestamp
 
     restore_env = {
@@ -51,8 +41,6 @@ def test_restore_from_backup():
 
 @pytest.mark.order(7)
 def test_verify_restored_data(page):
-    print("\n=== Verify restored data ===")
-
     wait_for_service_healthy("app")
 
     login_user(page)

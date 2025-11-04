@@ -16,11 +16,7 @@ def test_loki_labels():
     expected_labels = {"container_name", "service", "compose_project"}
     actual_labels = set(loki_labels.data)
 
-    missing_labels = expected_labels - actual_labels
-    assert not missing_labels, f"Missing required Loki labels: {missing_labels}"
-
-    print(f"Loki has {len(actual_labels)} labels")
-    print(f"All required labels present: {expected_labels}")
+    assert expected_labels <= actual_labels
 
 
 @pytest.mark.order(9)
@@ -32,11 +28,7 @@ def test_prometheus_labels():
     expected_labels = {"__name__", "instance", "job"}
     actual_labels = set(prometheus_labels.data)
 
-    missing_labels = expected_labels - actual_labels
-    assert not missing_labels, f"Missing required Prometheus labels: {missing_labels}"
-
-    print(f"Prometheus has {len(actual_labels)} labels")
-    print(f"All required labels present: {expected_labels}")
+    assert expected_labels <= actual_labels
 
 @dataclass
 class LabelsResponse:

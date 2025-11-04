@@ -17,7 +17,6 @@ def login_user(page: Page):
 
 @pytest.mark.order(2)
 def test_profile_update(page: Page):
-    print("\n=== Update user profile ===")
     login_user(page)
 
     page.get_by_title("Profile menu").click()
@@ -45,7 +44,6 @@ def test_profile_update(page: Page):
 
 @pytest.mark.order(2)
 def test_app_install(page: Page):
-    print("\n=== Install app ===")
     login_user(page)
 
     page.get_by_title("Command palette").click()
