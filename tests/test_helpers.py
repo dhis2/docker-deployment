@@ -1,10 +1,7 @@
 import subprocess
 import time
-import requests
 import os
-import json
-from typing import Optional, Dict, Any
-from pathlib import Path
+from typing import Optional, Dict, Any, List
 
 
 def run_make_command(command: str, env_vars: Optional[Dict[str, str]] = None, check: bool = True) -> subprocess.CompletedProcess:
@@ -55,53 +52,3 @@ def assert_backup_files_exist(timestamp: str) -> None:
 
     assert os.path.exists(db_path), f"Database backup not found: {db_path}"
     assert os.path.isdir(fs_path), f"File storage backup not found: {fs_path}"
-
-
-def get_loki_labels() -> Dict[str, Any]:
-    response = requests.get("http://localhost:3100/loki/api/v1/labels", timeout=10)
-    response.raise_for_status()
-    return response.json()
-
-
-def get_prometheus_labels() -> Dict[str, Any]:
-    result = subprocess.run([
-        "docker", "compose", "exec", "-T", "prometheus",
-        "wget", "-qO-", "http://localhost:9090/api/v1/labels"
-    ], capture_output=True, text=True, timeout=30)
-
-    if result.returncode != 0:
-        raise Exception(f"Prometheus command failed: {result.stderr}")
-
-    return json.loads(result.stdout)
-
-
-def verify_loki_labels(loki_labels: Dict[str, Any]) -> None:
-    print("Verifying Loki labels...")
-
-    assert "data" in loki_labels, "Loki response should contain 'data' field"
-
-    loki_label_count = len(loki_labels["data"])
-    print(f"Loki has {loki_label_count} labels")
-
-    expected_labels = ["container_name", "service", "compose_project"]
-    loki_label_names = loki_labels["data"]
-
-    for expected_label in expected_labels:
-        status = "Found" if expected_label in loki_label_names else "Expected"
-        print(f"{status} Loki label: {expected_label}")
-
-
-def verify_prometheus_labels(prometheus_labels: Dict[str, Any]) -> None:
-    print("Verifying Prometheus labels...")
-
-    assert "data" in prometheus_labels, "Prometheus response should contain 'data' field"
-
-    prometheus_label_count = len(prometheus_labels["data"])
-    print(f"Prometheus has {prometheus_label_count} labels")
-
-    expected_labels = ["__name__", "instance", "job"]
-    prometheus_label_names = prometheus_labels["data"]
-
-    for expected_label in expected_labels:
-        status = "Found" if expected_label in prometheus_label_names else "Expected"
-        print(f"{status} Prometheus label: {expected_label}")
