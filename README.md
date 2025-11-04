@@ -269,4 +269,8 @@ make clean
 make test
 ```
 
-Note that the environment needs to be "fresh" for the end-to-end tests' expectations to succeed, so it's advised to run `make clean` beforehand.
+Note that the environment needs to be "fresh" for the end-to-end tests' expectations to succeed, so it's advised to clean the environment beforehand.
+
+```shell
+make clean && make test
+```
