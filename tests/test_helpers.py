@@ -9,7 +9,7 @@ def run_make_command(command: str, env_vars: Optional[Dict[str, str]] = None, ch
     if env_vars:
         env.update(env_vars)
 
-    cmd_parts = ["make"] + command.split()
+    cmd_parts = ["make", "--no-print-directory"] + command.split()
     print(f"Running: {' '.join(cmd_parts)}")
 
     result = subprocess.run(cmd_parts, env=env, capture_output=True, text=True)
