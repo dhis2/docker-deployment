@@ -4,7 +4,6 @@ import subprocess
 import requests
 from dataclasses import dataclass
 from typing import List, Dict, Any
-from test_helpers import get_loki_labels, get_prometheus_labels
 
 
 @pytest.mark.order(8)
