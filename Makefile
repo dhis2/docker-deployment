@@ -1,6 +1,6 @@
 PRE_COMMIT_VERSION ?= 4.3.0
 
-.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs launch clean config
+.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs launch clean config get-backup-timestamp
 
 init:
 	@test -d .venv || python3 -m venv .venv
@@ -26,6 +26,9 @@ check:
 	.venv/bin/pre-commit run --all-files
 
 BACKUP_TIMESTAMP ?= $(shell date -u +%Y-%m-%d_%H-%M-%S_%Z)
+
+get-backup-timestamp:
+	@echo $(BACKUP_TIMESTAMP)
 
 backup-database:
 	mkdir -p ./backups

@@ -45,9 +45,7 @@ def wait_for_service_healthy(service_name: str, max_attempts: int = 30, check_in
 
 
 def get_backup_timestamp() -> str:
-    result = subprocess.run([
-        "date", "-u", "+%Y-%m-%d_%H-%M-%S_%Z"
-    ], capture_output=True, text=True, check=True)
+    result = run_make_command("get-backup-timestamp", check=True)
     return result.stdout.strip()
 
 
