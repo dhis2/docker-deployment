@@ -8,11 +8,9 @@ from typing import List, Dict, Any
 
 @pytest.mark.order(8)
 def test_loki_labels():
-    print("\n=== Testing Loki Labels ===")
-
     loki_labels = get_loki_labels()
 
-    expected_labels = {"container_name", "service", "compose_project"}
+    expected_labels = {"container_name", "compose_service", "compose_project"}
     actual_labels = set(loki_labels.data)
 
     assert expected_labels <= actual_labels
@@ -20,8 +18,6 @@ def test_loki_labels():
 
 @pytest.mark.order(9)
 def test_prometheus_labels():
-    print("\n=== Testing Prometheus Labels ===")
-
     prometheus_labels = get_prometheus_labels()
 
     expected_labels = {"__name__", "instance", "job"}
