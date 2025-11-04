@@ -7,15 +7,14 @@ init:
 	.venv/bin/python -m pip install "pre-commit==$(PRE_COMMIT_VERSION)"
 	.venv/bin/pre-commit install
 
-playwright:
-	@test -d .venv || python3 -m venv .venv
+playwright: init
 	.venv/bin/python -m pip install playwright pytest pytest-playwright pytest-order requests
 	.venv/bin/playwright install
 
-test:
+test: playwright
 	DEBUG=pw:api .venv/bin/pytest --capture=no --exitfirst
 
-test-ui:
+test-ui: playwright
 	DEBUG=pw:api .venv/bin/pytest --headed --capture=no --exitfirst
 
 reinit:
