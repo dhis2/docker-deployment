@@ -1,4 +1,5 @@
 import os
+
 import pytest
 from playwright.sync_api import Page, expect
 
@@ -6,14 +7,16 @@ URL = "https://" + os.getenv("APP_HOSTNAME")
 USERNAME = os.getenv("DHIS2_ADMIN_USERNAME")
 PASSWORD = os.getenv("DHIS2_ADMIN_PASSWORD")
 
+
 def login_user(page: Page):
-    page.goto(URL+"/login.html")
+    page.goto(URL + "/login.html")
 
     page.get_by_role("textbox", name="Username").fill(USERNAME)
     page.get_by_role("textbox", name="Password").fill(PASSWORD)
     page.get_by_role("button", name="Log in").click()
     page.wait_for_url("**/dashboard#/**")
     expect(page).to_have_title("Dashboard | DHIS2")
+
 
 @pytest.mark.order(2)
 def test_profile_update(page: Page):
