@@ -1,8 +1,10 @@
 import os
+
 import pytest
 from playwright.sync_api import Page, expect
-from test_user_update_and_app_install import login_user
+
 from test_helpers import run_make_command, wait_for_service_healthy
+from test_user_update_and_app_install import login_user
 
 
 @pytest.mark.order(1)
@@ -11,13 +13,11 @@ def test_launch_environment():
 
 
 @pytest.mark.order(4)
-def test_create_backup():
-    backup_timestamp = pytest.backup_timestamp
-
-    run_make_command("backup", {"BACKUP_TIMESTAMP": backup_timestamp})
-
+def test_create_backup(backup_timestamp: str):
     db_path = f"./backups/{backup_timestamp}.pgc"
     fs_path = f"./backups/file-storage-{backup_timestamp}"
+
+    run_make_command("backup", {"BACKUP_TIMESTAMP": backup_timestamp})
 
     assert os.path.exists(db_path), f"Database backup not found: {db_path}"
     assert os.path.isdir(fs_path), f"File storage backup not found: {fs_path}"
@@ -34,9 +34,7 @@ def test_launch_fresh_environment():
 
 
 @pytest.mark.order(7)
-def test_restore_from_backup(page: Page):
-    backup_timestamp = pytest.backup_timestamp
-
+def test_restore_from_backup(page: Page, backup_timestamp: str):
     restore_env = {
         "DB_RESTORE_FILE": f"{backup_timestamp}.pgc",
         "FILE_STORAGE_RESTORE_SOURCE_DIR": f"file-storage-{backup_timestamp}",

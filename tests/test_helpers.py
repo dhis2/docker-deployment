@@ -1,6 +1,6 @@
+import os
 import subprocess
 import time
-import os
 from typing import Optional, Dict
 
 
@@ -38,8 +38,3 @@ def wait_for_service_healthy(service_name: str, max_attempts: int = 30, check_in
         time.sleep(check_interval)
 
     raise Exception(f"{service_name} failed to become healthy after {max_attempts} attempts")
-
-
-def get_backup_timestamp() -> str:
-    result = run_make_command("get-backup-timestamp", check=True)
-    return result.stdout.strip()
