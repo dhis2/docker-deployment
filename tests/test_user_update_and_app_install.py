@@ -42,7 +42,7 @@ def test_profile_update(page: Page):
     expect(profile_picture).to_have_js_property('complete', True)
 
 
-@pytest.mark.order(2)
+@pytest.mark.order(3)
 def test_app_install(page: Page):
     login_user(page)
 

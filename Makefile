@@ -8,7 +8,7 @@ init:
 	.venv/bin/pre-commit install
 
 playwright: init
-	.venv/bin/python -m pip install playwright pytest pytest-playwright pytest-order requests
+	.venv/bin/python -m pip install playwright pytest pytest-playwright pytest-order requests pydantic
 	.venv/bin/playwright install
 
 test: playwright

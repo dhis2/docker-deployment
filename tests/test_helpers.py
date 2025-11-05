@@ -1,7 +1,7 @@
 import subprocess
 import time
 import os
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict
 
 
 def run_make_command(command: str, env_vars: Optional[Dict[str, str]] = None, check: bool = True) -> subprocess.CompletedProcess:
@@ -10,7 +10,6 @@ def run_make_command(command: str, env_vars: Optional[Dict[str, str]] = None, ch
         env.update(env_vars)
 
     cmd_parts = ["make", "--no-print-directory"] + command.split()
-    print(f"Running: {' '.join(cmd_parts)}")
 
     result = subprocess.run(cmd_parts, env=env, capture_output=True, text=True)
 
@@ -44,11 +43,3 @@ def wait_for_service_healthy(service_name: str, max_attempts: int = 30, check_in
 def get_backup_timestamp() -> str:
     result = run_make_command("get-backup-timestamp", check=True)
     return result.stdout.strip()
-
-
-def assert_backup_files_exist(timestamp: str) -> None:
-    db_path = f"./backups/{timestamp}.pgc"
-    fs_path = f"./backups/file-storage-{timestamp}"
-
-    assert os.path.exists(db_path), f"Database backup not found: {db_path}"
-    assert os.path.isdir(fs_path), f"File storage backup not found: {fs_path}"
