@@ -21,6 +21,10 @@ reinit:
 	rm -rf .venv
 	$(MAKE) init
 
+install-loki-driver:
+	docker plugin ls --format '{{.Name}}' | grep -q 'loki:latest' || ./scripts/install-loki-driver.sh
+	docker plugin ls
+
 check:
 	.venv/bin/pre-commit run --all-files
 
@@ -61,7 +65,7 @@ docs:
 
 COMPOSE_CMD = docker compose -f docker-compose.yml -f overlays/traefik-dashboard/docker-compose.yml -f overlays/monitoring/docker-compose.yml -f overlays/glowroot/docker-compose.yml
 
-launch:
+launch: install-loki-driver
 	$(COMPOSE_CMD) up $(COMPOSE_OPTS)
 
 clean:
