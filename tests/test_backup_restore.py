@@ -1,15 +1,15 @@
 import os
-
 import pytest
 from playwright.sync_api import Page, expect
-
-from test_helpers import run_make_command, wait_for_service_healthy
+from test_helpers import assert_no_services_unhealthy, assert_no_services_running, run_make_command, wait_for_service_healthy
 from test_user_update_and_app_install import login_user
 
 
 @pytest.mark.order(1)
 def test_launch_environment():
     run_make_command("launch COMPOSE_OPTS=-d")
+
+    assert_no_services_unhealthy()
 
 
 @pytest.mark.order(4)
@@ -27,10 +27,14 @@ def test_create_backup(backup_timestamp: str):
 def test_clean_environment():
     run_make_command("clean")
 
+    assert_no_services_running()
+
 
 @pytest.mark.order(6)
 def test_launch_fresh_environment():
     run_make_command("launch COMPOSE_OPTS=-d")
+
+    assert_no_services_unhealthy()
 
 
 @pytest.mark.order(7)

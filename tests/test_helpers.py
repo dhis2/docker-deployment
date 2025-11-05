@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import time
@@ -38,3 +39,25 @@ def wait_for_service_healthy(service_name: str, max_attempts: int = 30, check_in
         time.sleep(check_interval)
 
     raise Exception(f"{service_name} failed to become healthy after {max_attempts} attempts")
+
+
+def get_services() -> list[dict]:
+    result = subprocess.run(
+        ["docker", "compose", "ps", "--format", "json"],
+        capture_output=True,
+        text=True,
+        check=True
+    )
+    return [json.loads(line) for line in result.stdout.strip().split("\n") if line]
+
+
+def assert_no_services_unhealthy() -> None:
+    services = get_services()
+    unhealthy = [service["Service"] for service in services if service.get("Health") == "unhealthy"]
+    assert not unhealthy, f"Unhealthy services: {(unhealthy)}"
+
+
+def assert_no_services_running() -> None:
+    services = get_services()
+    running = [s["Service"] for s in services if s.get("State") == "running"]
+    assert not running, f"Services still running: {running}"

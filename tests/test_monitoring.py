@@ -25,6 +25,7 @@ def test_prometheus_labels():
 
     assert expected_labels <= actual_labels
 
+
 class Labels(BaseModel):
     data: List[str]
 
