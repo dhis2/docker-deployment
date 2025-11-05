@@ -1,7 +1,8 @@
+import os
 import pytest
 from playwright.sync_api import Page, expect
 from test_user_update_and_app_install import login_user
-from test_helpers import run_make_command, assert_backup_files_exist, wait_for_service_healthy
+from test_helpers import run_make_command, wait_for_service_healthy
 
 
 @pytest.mark.order(1)
@@ -9,26 +10,31 @@ def test_launch_environment():
     run_make_command("launch COMPOSE_OPTS=-d")
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(4)
 def test_create_backup():
     backup_timestamp = pytest.backup_timestamp
 
     run_make_command("backup", {"BACKUP_TIMESTAMP": backup_timestamp})
-    assert_backup_files_exist(backup_timestamp)
+
+    db_path = f"./backups/{backup_timestamp}.pgc"
+    fs_path = f"./backups/file-storage-{backup_timestamp}"
+
+    assert os.path.exists(db_path), f"Database backup not found: {db_path}"
+    assert os.path.isdir(fs_path), f"File storage backup not found: {fs_path}"
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(5)
 def test_clean_environment():
     run_make_command("clean")
 
 
-@pytest.mark.order(5)
+@pytest.mark.order(6)
 def test_launch_fresh_environment():
     run_make_command("launch COMPOSE_OPTS=-d")
 
 
-@pytest.mark.order(6)
-def test_restore_from_backup():
+@pytest.mark.order(7)
+def test_restore_from_backup(page: Page):
     backup_timestamp = pytest.backup_timestamp
 
     restore_env = {
@@ -38,9 +44,6 @@ def test_restore_from_backup():
     }
     run_make_command("restore", restore_env)
 
-
-@pytest.mark.order(7)
-def test_verify_restored_data(page):
     wait_for_service_healthy("app")
 
     login_user(page)

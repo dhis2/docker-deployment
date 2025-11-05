@@ -2,8 +2,8 @@ import pytest
 import json
 import subprocess
 import requests
-from dataclasses import dataclass
-from typing import List, Dict, Any
+from pydantic import BaseModel
+from typing import List
 
 
 @pytest.mark.order(8)
@@ -25,24 +25,17 @@ def test_prometheus_labels():
 
     assert expected_labels <= actual_labels
 
-@dataclass
-class LabelsResponse:
+class Labels(BaseModel):
     data: List[str]
 
-    @classmethod
-    def from_dict(cls, response_dict: Dict[str, Any]) -> "LabelsResponse":
-        if "data" not in response_dict:
-            raise ValueError("Response missing required 'data' field")
-        return cls(data=response_dict["data"])
 
-
-def get_loki_labels() -> LabelsResponse:
+def get_loki_labels() -> Labels:
     response = requests.get("http://localhost:3100/loki/api/v1/labels", timeout=10)
     response.raise_for_status()
-    return LabelsResponse.from_dict(response.json())
+    return Labels.model_validate(response.json())
 
 
-def get_prometheus_labels() -> LabelsResponse:
+def get_prometheus_labels() -> Labels:
     result = subprocess.run([
         "docker", "compose", "exec", "-T", "prometheus",
         "wget", "-qO-", "http://localhost:9090/api/v1/labels"
@@ -51,4 +44,4 @@ def get_prometheus_labels() -> LabelsResponse:
     if result.returncode != 0:
         raise Exception(f"Prometheus command failed: {result.stderr}")
 
-    return LabelsResponse.from_dict(json.loads(result.stdout))
+    return Labels.model_validate(json.loads(result.stdout))
