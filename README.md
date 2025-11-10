@@ -243,6 +243,7 @@ This section is for developers who want to contribute to this project.
 ### Prerequisites
 
 - Python 3.11+
+- Pip
 - Make
 
 To initialize the development environment:
