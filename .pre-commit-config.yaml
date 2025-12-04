@@ -59,3 +59,9 @@ repos:
       - id: check-symlinks
       - id: check-added-large-files
         args: [ --maxkb, "1000" ]
+
+  - repo: https://github.com/thlorenz/doctoc
+    rev: v2.2.0
+    hooks:
+      - id: doctoc
+        args: [ --update-only ]

@@ -4,8 +4,16 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
 
 ## Table of contents
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
 - [Deployment For Local Development and Testing](#deployment-for-local-development-and-testing)
-- [Deployment For Production Implementations](#deployment-for-production-implementations)
+  - [Configure Environment](#configure-environment)
+  - [Launch the application](#launch-the-application)
+- [Deployment For Production](#deployment-for-production)
+  - [Deployment Prerequisites](#deployment-prerequisites)
+  - [Configure Environment](#configure-environment-1)
+  - [Launch the application](#launch-the-application-1)
 - [Advanced Usage](#advanced-usage)
   - [PostgreSQL Configuration](#postgresql-configuration)
   - [Additional Services (Overlays)](#additional-services-overlays)
@@ -21,7 +29,12 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
     - [Accessing Monitoring Services](#accessing-monitoring-services)
     - [Configuration](#configuration)
 - [Contributing to this project](#contributing-to-this-project)
+  - [Prerequisites](#prerequisites-1)
+  - [Start all services](#start-all-services)
+  - [Clean all services](#clean-all-services)
 - [Further Documentation](#further-documentation)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Deployment For Local Development and Testing
 
@@ -61,7 +74,7 @@ Open `http://dhis2-127-0-0-1.nip.io` in your favorite browser.
 > **Note**
 > The first time you launch the application, it will initialise with a blank database. *The default admin credentials are available in the `.env` file.* If you have an existing database, you can restore it following the [Backup and Restore](#backup-and-restore) section, under Advanced Usage, below.
 
-## Deployment For Production Implementations
+## Deployment For Production
 
 This section is for users planning to deploy DHIS2 in a production environment.
 
