@@ -21,7 +21,7 @@ services:
       - type: tmpfs
         target: /usr/local/tomcat/temp
         tmpfs:
-          size: 0
+          size: 1
       - type: tmpfs
         target: /usr/local/tomcat/logs
         tmpfs:
@@ -29,7 +29,7 @@ services:
       - type: tmpfs
         target: /usr/local/tomcat/work/Catalina/localhost/ROOT
         tmpfs:
-          size: 0
+          size: 1
     environment:
       # -- Name of the database to use
       POSTGRES_DB: ${POSTGRES_DB:-dhis}
