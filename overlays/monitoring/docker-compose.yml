@@ -139,7 +139,7 @@ services:
     configs:
       - source: prometheus
         target: /etc/prometheus/prometheus.yml
-        mode: 0444
+        mode: 444
     secrets:
       - dhis2_monitor_password
     environment:
