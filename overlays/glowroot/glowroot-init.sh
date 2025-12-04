@@ -4,6 +4,9 @@ set -e
 
 if [ ! -f /opt/glowroot/glowroot.jar ]; then
   curl --location "https://github.com/glowroot/glowroot/releases/download/v$GLOWROOT_VERSION/glowroot-$GLOWROOT_VERSION-dist.zip" --output /tmp/glowroot.zip
+
+  echo "${EXPECTED_SHA}  /tmp/glowroot.zip" | sha256sum -c
+
   unzip -q /tmp/glowroot.zip -d /tmp/
 
   # Pick only what we need
