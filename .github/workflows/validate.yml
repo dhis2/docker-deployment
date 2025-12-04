@@ -16,3 +16,7 @@ jobs:
 
       - name: Validate
         run: make check
+
+      - name: Diff on failure
+        if: failure()
+        run: git diff
