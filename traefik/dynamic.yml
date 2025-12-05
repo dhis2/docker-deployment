@@ -39,6 +39,7 @@ http:
         stsPreload: true
         referrerPolicy: "strict-origin-when-cross-origin"
         frameDeny: true
+        contentTypeNosniff: true
 
   services:
     app:
