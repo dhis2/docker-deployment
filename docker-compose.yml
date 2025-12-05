@@ -92,8 +92,6 @@ services:
       POSTGRES_METRICS_USERNAME: ${POSTGRES_METRICS_USERNAME}
       # -- Metrics user password
       POSTGRES_METRICS_PASSWORD: ${POSTGRES_METRICS_PASSWORD}
-    ports:
-      - "127.0.0.1:5432:5432"
     networks:
       - database
     command: >
