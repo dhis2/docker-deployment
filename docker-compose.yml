@@ -92,8 +92,6 @@ services:
       POSTGRES_METRICS_USERNAME: ${POSTGRES_METRICS_USERNAME}
       # -- Metrics user password
       POSTGRES_METRICS_PASSWORD: ${POSTGRES_METRICS_PASSWORD}
-    ports:
-      - "127.0.0.1:5432:5432"
     networks:
       - database
     command: >
@@ -153,9 +151,9 @@ services:
       # -- Watch the provider file for changes
       TRAEFIK_PROVIDERS_FILE_WATCH: false
       # -- Enable API
-      TRAEFIK_API: true
+      TRAEFIK_API: false
       # -- Allow insecure API access
-      TRAEFIK_API_INSECURE: true
+      TRAEFIK_API_INSECURE: false
       # -- Enable Prometheus metrics
       TRAEFIK_METRICS_PROMETHEUS: true
       # -- ACME email
