@@ -10,6 +10,16 @@ http:
       middlewares:
         - security
 
+    glowroot:
+      rule: 'Host(`glowroot.{{env "APP_HOSTNAME"}}`)'
+      service: glowroot
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - security
+
     grafana:
       rule: 'Host(`grafana.{{env "APP_HOSTNAME"}}`)'
       service: grafana
@@ -29,12 +39,18 @@ http:
         stsPreload: true
         referrerPolicy: "strict-origin-when-cross-origin"
         frameDeny: true
+        contentTypeNosniff: true
 
   services:
     app:
       loadBalancer:
         servers:
           - url: "http://app:8080"
+
+    glowroot:
+      loadBalancer:
+        servers:
+          - url: "http://app:4000"
 
     grafana:
       loadBalancer:
