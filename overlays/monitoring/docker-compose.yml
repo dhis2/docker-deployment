@@ -106,7 +106,7 @@ services:
       LOKI_RETENTION_PERIOD: ${LOKI_RETENTION_PERIOD:-744h}
     # The Docker Logging Driver is running on the host network, and therefore we need to expose Loki on it
     ports:
-      - "0.0.0.0:3100:3100"
+      - "127.0.0.1:3100:3100"
     networks:
       - monitoring
     restart: unless-stopped
