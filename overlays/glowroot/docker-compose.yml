@@ -15,7 +15,8 @@ services:
       - ./overlays/glowroot/config/admin.json:/tmp/admin.json:ro
       - ./overlays/glowroot/glowroot-init.sh:/tmp/glowroot-init.sh:ro
     environment:
-      GLOWROOT_VERSION: ${GLOWROOT_VERSION:-0.14.0}
+      GLOWROOT_VERSION: ${GLOWROOT_VERSION:-0.14.4}
+      EXPECTED_SHA: ${EXPECTED_SHA:-3b9db6b0fc0903233c5e17b6cfa7b022ef8ba6d71ae7d39a9fff6f637608f20c}
       APP_UID: ${APP_UID:-65534}
       APP_GID: ${APP_GID:-65534}
     command: [ "sh", "/tmp/glowroot-init.sh" ]
