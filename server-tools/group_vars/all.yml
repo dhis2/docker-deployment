@@ -26,3 +26,6 @@ docker_user: dhis2
 docker_group: docker
 
 docker_home: "/home/{{ docker_user }}"
+
+# Enable deployment of DHIS2
+enable_deploy: true
