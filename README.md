@@ -51,6 +51,7 @@ Open [http://dhis2-127-0-0-1.nip.io](http://dhis2-127-0-0-1.nip.io) in your favo
 
 > **Note**
 > Your browser will warn you that the certificate is not trusted. This is expected, as it is a self-signed certificate.
+<!-- markdownlint-disable MD028 -->
 
 > **Note**
 > The default admin credentials are available in the `.env` file.
