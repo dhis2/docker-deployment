@@ -46,10 +46,20 @@ Open http://dhis2-127-0-0-1.nip.io in your favourite browser.
 
 Custom configuration for Postgresql can be done by adding to the files in the `./config/postgresql/conf.d/` directory. If your configuration doesn't belong in either of the existing files, you can create a new file. However, it's advised not to make changes to the [postgresql.conf](config/postgresql/postgresql.conf) file.
 
-Any changes to these files won't take effect until the container is restarted or the below command is executed:
+Some postgresql configuration parameters can be applied by reloading the configuration.  Others will only take effect when the database is restarted. The detailed description of each configuration option (on postgresql v16) is avalable [here](https://www.postgresql.org/docs/16/runtime-config.html).  The documentation for each setting generally indicates whether the setting requires a restart in order to take effect.
+  
+A configuration reload can be triggered by executing the following SQL command:
 
 ```sql
 SELECT pg_reload_conf();
+```
+
+If you need to restart the database server, it is safest to stop the application container first, restart the database, then start the application again.  This will mean some minutes of downtime for your users so it is best to co-ordinate such operations with users or execute during quiet times of the day.  A typical sequence might look like:
+
+```bash
+docker stop docker-deployment-app-1
+docker restart docker-deployment-database-1
+docker start docker-deployment-app-1 
 ```
 
 ## Overlays
