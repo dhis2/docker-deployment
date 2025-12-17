@@ -57,9 +57,9 @@ SELECT pg_reload_conf();
 If you need to restart the database server, it is safest to stop the application container first, restart the database, then start the application again.  This will mean some minutes of downtime for your users so it is best to co-ordinate such operations with users or execute during quiet times of the day.  A typical sequence might look like:
 
 ```bash
-docker stop docker-deployment-app-1
-docker restart docker-deployment-database-1
-docker start docker-deployment-app-1 
+docker compose stop app
+docker compose restart database
+docker compose start app
 ```
 
 ## Overlays
