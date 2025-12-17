@@ -7,13 +7,11 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [Deployment For Local Development and Testing](#deployment-for-local-development-and-testing)
-  - [Configure Environment](#configure-environment)
-  - [Launch the application](#launch-the-application)
+- [Quick Start](#quick-start)
 - [Deployment For Production](#deployment-for-production)
   - [Deployment Prerequisites](#deployment-prerequisites)
-  - [Configure Environment](#configure-environment-1)
-  - [Launch the application](#launch-the-application-1)
+  - [Configure Environment](#configure-environment)
+  - [Launch the application](#launch-the-application)
 - [Advanced Usage](#advanced-usage)
   - [PostgreSQL Configuration](#postgresql-configuration)
   - [Additional Services (Overlays)](#additional-services-overlays)
@@ -36,43 +34,27 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-## Deployment For Local Development and Testing
+## Quick Start
 
 This section is for users who want to quickly set up and test the DHIS2 application on their local machine.
 
-### Configure Environment
-
-The following environment variables are required to configure the application.
-
 ```shell
-# The following hostname is a convenient representation of the local machine's IP address.
-export GEN_APP_HOSTNAME=dhis2-127-0-0-1.nip.io
-# A valid email address is required for Let's Encrypt certificate management.
-export GEN_LETSENCRYPT_ACME_EMAIL=your@email.com
+git clone https://github.com/dhis2/docker-deployment.git && \
+  cd docker-deployment && \
+  export GEN_APP_HOSTNAME=dhis2-127-0-0-1.nip.io && \
+  export GEN_LETSENCRYPT_ACME_EMAIL=whatever@dhis2.org && \
+  ./scripts/generate-env.sh && \
+  make launch
 ```
 
-Generate a new `.env` file by executing the following command:
-
-```shell
-./scripts/generate-env.sh
-```
-
-You can adjust the generated `.env` file to your specific needs. However, it is recommended not to change the generated values of the password variables for consistency.
-
-Detailed documentation for all environment variables can be found [here](docs/environment-variables.md).
-
-### Launch the application
-
-Once the environment is configured, launch the application using Docker Compose:
-
-```shell
-docker compose up
-```
-
-Open `http://dhis2-127-0-0-1.nip.io` in your favorite browser.
+Open [http://dhis2-127-0-0-1.nip.io](http://dhis2-127-0-0-1.nip.io) in your favorite browser.
 
 > **Note**
-> The first time you launch the application, it will initialise with a blank database. *The default admin credentials are available in the `.env` file.* If you have an existing database, you can restore it following the [Backup and Restore](#backup-and-restore) section, under Advanced Usage, below.
+> Your browser will warn you that the certificate is not trusted. This is expected, as it is a self-signed certificate.
+<!-- markdownlint-disable MD028 -->
+
+> **Note**
+> The default admin credentials are available in the `.env` file.
 
 ## Deployment For Production
 
