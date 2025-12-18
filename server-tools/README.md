@@ -61,8 +61,7 @@ Edit `group_vars/all.yml` to customize:
 ## Security Notes
 
 - Docker is configured with user namespace remapping for least privilege
-- Firewall rules are configured to deny all by default and only allow SSH, HTTP, HTTPS and inter-container communication
-  only on default subnets
+- Firewall rules are configured to deny all by default and only allow SSH, HTTP, HTTPS and inter-container communication only on default subnets
 - AppArmor is enabled
 - Unattended-upgrades are enabled
 - Secrets are handled via environment variables and .env file
