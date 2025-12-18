@@ -55,14 +55,17 @@ POSTGRES_METRICS_PASSWORD=$(generate_password)
 GRAFANA_ADMIN_PASSWORD=$(generate_password)
 DHIS2_MONITOR_PASSWORD=$(generate_password)
 
-cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
-
 # Detect GNU vs BSD sed
 if sed --version >/dev/null 2>&1; then
   SED_FLAGS=(-i)
 else
   SED_FLAGS=(-i '')
 fi
+
+cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
+
+# Remove the first line beginning with "# NOTE!!!:" and any leading blank lines
+sed "${SED_FLAGS[@]}" -e '/^# NOTE!!!:/d' -e '/./,$!d' "$OUTPUT_FILE"
 
 update_env_var() {
   local key="$1"

@@ -6,4 +6,5 @@
     - bootstrap
     - firewall
     - harden
-    - deploy
+    - role: deploy
+      when: enable_deploy | default(false) | bool

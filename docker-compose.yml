@@ -14,6 +14,22 @@ services:
       - dhis2:/opt/dhis2/
       #- ./config/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
       - ./config/dhis2/dhis.conf:/opt/dhis2/dhis.conf:ro
+      - type: tmpfs
+        target: /tmp
+        tmpfs:
+          size: 1000000
+      - type: tmpfs
+        target: /usr/local/tomcat/temp
+        tmpfs:
+          size: 1
+      - type: tmpfs
+        target: /usr/local/tomcat/logs
+        tmpfs:
+          size: 1000000
+      - type: tmpfs
+        target: /usr/local/tomcat/work/Catalina/localhost/ROOT
+        tmpfs:
+          size: 1
     environment:
       # -- Name of the database to use
       POSTGRES_DB: ${POSTGRES_DB:-dhis}
@@ -38,11 +54,6 @@ services:
     read_only: true
     security_opt:
       - no-new-privileges:true
-    tmpfs:
-      - /tmp
-      - /usr/local/tomcat/temp
-      - /usr/local/tomcat/logs
-      - /usr/local/tomcat/work/Catalina/localhost/ROOT
 
   update-admin-password:
     depends_on:
@@ -92,8 +103,6 @@ services:
       POSTGRES_METRICS_USERNAME: ${POSTGRES_METRICS_USERNAME}
       # -- Metrics user password
       POSTGRES_METRICS_PASSWORD: ${POSTGRES_METRICS_PASSWORD}
-    ports:
-      - "127.0.0.1:5432:5432"
     networks:
       - database
     command: >
@@ -153,9 +162,9 @@ services:
       # -- Watch the provider file for changes
       TRAEFIK_PROVIDERS_FILE_WATCH: false
       # -- Enable API
-      TRAEFIK_API: true
+      TRAEFIK_API: false
       # -- Allow insecure API access
-      TRAEFIK_API_INSECURE: true
+      TRAEFIK_API_INSECURE: false
       # -- Enable Prometheus metrics
       TRAEFIK_METRICS_PROMETHEUS: true
       # -- ACME email
@@ -292,7 +301,6 @@ networks:
   application:
   database:
   monitoring:
-
 
 volumes:
   dhis2: {}

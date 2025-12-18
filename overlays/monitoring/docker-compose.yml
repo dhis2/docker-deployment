@@ -106,7 +106,7 @@ services:
       LOKI_RETENTION_PERIOD: ${LOKI_RETENTION_PERIOD:-744h}
     # The Docker Logging Driver is running on the host network, and therefore we need to expose Loki on it
     ports:
-      - "0.0.0.0:3100:3100"
+      - "127.0.0.1:3100:3100"
     networks:
       - monitoring
     restart: unless-stopped
@@ -136,7 +136,10 @@ services:
     image: prom/prometheus:${PROMETHEUS_VERSION:-v2.45.0}
     volumes:
       - prometheus:/prometheus
-      - ./overlays/monitoring/config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    configs:
+      - source: prometheus
+        target: /etc/prometheus/prometheus.yml
+        mode: 444
     secrets:
       - dhis2_monitor_password
     environment:
@@ -148,9 +151,7 @@ services:
       - "--storage.tsdb.path=/prometheus"
       - "--web.console.libraries=/etc/prometheus/console_libraries"
       - "--web.console.templates=/etc/prometheus/consoles"
-      - "--storage.tsdb.retention.time=15d"
       - "--web.enable-lifecycle"
-      - "--web.enable-admin-api"
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:9090/-/healthy" ]
@@ -249,3 +250,32 @@ volumes:
 secrets:
   dhis2_monitor_password:
     environment: DHIS2_MONITOR_PASSWORD
+
+configs:
+  prometheus:
+    content: |
+      global:
+        scrape_interval: 15s
+        evaluation_interval: 15s
+
+      scrape_configs:
+        - job_name: 'dhis2'
+          static_configs:
+            - targets: [ 'app:8080' ]
+          metrics_path: '/api/metrics'
+          basic_auth:
+            username: ${DHIS2_MONITOR_USERNAME}
+            password_file: /run/secrets/dhis2_monitor_password
+        - job_name: 'traefik'
+          static_configs:
+            - targets: [ 'traefik:8080' ]
+          metrics_path: '/metrics'
+        - job_name: 'postgres'
+          static_configs:
+            - targets: [ 'postgres-exporter:9187' ]
+        - job_name: 'node-exporter'
+          static_configs:
+            - targets: [ 'node-exporter:9100' ]
+        - job_name: 'cadvisor'
+          static_configs:
+            - targets: [ 'cadvisor:8080' ]
