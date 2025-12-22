@@ -21,7 +21,7 @@ services:
       - type: tmpfs
         target: /usr/local/tomcat/temp
         tmpfs:
-          size: 1
+          size: 100000000
       - type: tmpfs
         target: /usr/local/tomcat/logs
         tmpfs:
