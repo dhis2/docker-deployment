@@ -24,6 +24,15 @@ jobs:
           GEN_LETSENCRYPT_ACME_EMAIL: whatever@dhis2.org
 
       - name: E2E test
+        id: e2e-test
         run: |
           make playwright
           make test
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-screenshots
+          path: test-results/
+          retention-days: 1
