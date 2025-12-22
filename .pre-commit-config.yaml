@@ -60,6 +60,18 @@ repos:
       - id: check-added-large-files
         args: [ --maxkb, "1000" ]
 
+  - repo: local
+    hooks:
+      - id: textlint
+        name: textlint
+        entry: npx textlint --fix --config .textlintrc.yml
+        language: node
+        additional_dependencies:
+          - textlint@latest
+          - textlint-rule-doubled-spaces@latest
+        files: \.md$
+        pass_filenames: true
+
   - repo: https://github.com/thlorenz/doctoc
     rev: v2.2.0
     hooks:
