@@ -19,6 +19,7 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
     - [Glowroot](#glowroot)
   - [Backup and Restore](#backup-and-restore)
     - [Backup](#backup)
+    - [Backup Timestamp](#backup-timestamp)
     - [Restore](#restore)
   - [Monitoring](#monitoring)
     - [Prerequisites](#prerequisites)
@@ -30,6 +31,7 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
   - [Prerequisites](#prerequisites-1)
   - [Start all services](#start-all-services)
   - [Clean all services](#clean-all-services)
+  - [Run end-to-end tests](#run-end-to-end-tests)
 - [Further Documentation](#further-documentation)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -163,6 +165,14 @@ This command will create two files in the `./backups` directory: one for the dat
     make backup-file-storage
     ```
 
+#### Backup Timestamp
+
+By default, backups are automatically named with a timestamp in the format `YYYY-MM-DD_HH-MM-SS_UTC`. You can override this by setting the `BACKUP_TIMESTAMP` environment variable when running backup commands:
+
+```shell
+BACKUP_TIMESTAMP=<custom-backup-timestamp> make backup
+```
+
 #### Restore
 
 The restore process relies on the `DB_RESTORE_FILE` and `FILE_STORAGE_RESTORE_SOURCE_DIR` environment variables, which must be set to the path of the backup file/directory to restore (without the `./backups` prefix).
@@ -261,6 +271,18 @@ To stop and remove all services and their associated data:
 
 ```shell
 make clean
+```
+
+### Run end-to-end tests
+
+```shell
+make test
+```
+
+Note that the environment needs to be "fresh" for the end-to-end tests' expectations to succeed, so it's advised to clean the environment beforehand.
+
+```shell
+make clean && make test
 ```
 
 ## Further Documentation
