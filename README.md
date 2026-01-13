@@ -9,10 +9,10 @@
 >
 > - The primary limitation is overall maturity — more real-world testing and validation are required.
 > - Several useful features are currently missing, but many have practical workarounds for experienced operators.
->   - Does not yet support multiple DHIS2 environments on the same server out of the box.
+> - Does not yet support multiple DHIS2 environments on the same server out of the box.
 >   - Requires specific DNS configuration (FQDN and routing).
->   - Direct database access and advanced operations require technical knowledge.
->   - PostgreSQL tuning and optimisation will be needed per deployment.
+> - Direct database access and advanced operations require technical knowledge.
+> - Tuning and optimisation (postgresql, DHIS2 and container resource allocation) is needed per deployment
 >
 > We explicitly do NOT recommend using this for production at this time because of the project's current maturity level. With continued development, testing (**with feedback from the community**), and configuration, the project is intended to meet production requirements.
 
