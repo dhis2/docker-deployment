@@ -1,5 +1,21 @@
 # Docker Deployment
 
+> [!CAUTION]
+> **Ready for public testing — NOT yet recommended for production or critical data**
+>
+> This project is available for public testing and evaluation, but it remains immature and is not recommended for production use yet. The implementation has been designed to meet production standards, however it needs additional testing, stabilization, and a small set of features before we can recommend it for critical data.
+>
+> Key points:
+>
+> - The primary limitation is overall maturity — more real-world testing and validation are required.
+> - Does not yet support multiple DHIS2 environments on the same server out of the box.
+> - Direct database access and advanced operations require technical knowledge.
+> - Tuning and optimisation (postgresql, DHIS2 and container resource allocation) is needed per deployment
+>
+> We explicitly do NOT recommend using this for production at this time because of the project's current maturity level. With continued development, testing (**with feedback from the community**), and configuration, the project is intended to meet production requirements.
+
+## Overview
+
 This repository provides a Docker-based deployment for the DHIS2 application, designed for both local development/testing and secure production implementations. It leverages Docker Compose to orchestrate DHIS2, PostgreSQL, Traefik (as a reverse proxy), and an optional monitoring stack. Facilities are also provided for backup and restore of the database and file storage.
 
 ## Table of contents
@@ -51,11 +67,11 @@ git clone https://github.com/dhis2/docker-deployment.git && \
 
 Open [http://dhis2-127-0-0-1.nip.io](http://dhis2-127-0-0-1.nip.io) in your favorite browser.
 
-> **Note**
+> [!NOTE]
 > Your browser will warn you that the certificate is not trusted. This is expected, as it is a self-signed certificate.
 <!-- markdownlint-disable MD028 -->
 
-> **Note**
+> [!NOTE]
 > The default admin credentials are available in the `.env` file.
 
 ## Deployment For Production
@@ -100,7 +116,7 @@ docker compose up
 
 Open `https://<your-domain.com>` in your favorite browser.
 
-> **Note**
+> [!NOTE]
 > The first time you launch the application, it will initialise with a blank database. *The default admin credentials are available in the `.env` file.* If you have an existing database, you can restore it following the [Backup and Restore](#backup-and-restore) section, under Advanced Usage, below.
 
 ## Advanced Usage
