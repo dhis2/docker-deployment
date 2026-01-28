@@ -1,5 +1,5 @@
 x-database-image: &database-image
-  image: postgis/postgis:${POSTGRES_VERSION:-16-master}
+  image: ${POSTGRES_IMAGE:-postgis/postgis:16-master}
 
 x-file-storage-image: &file-storage-image
   image: rclone/rclone:${RCLONE_VERSION:-1.68}
@@ -12,12 +12,13 @@ services:
         condition: service_healthy
     volumes:
       - dhis2:/opt/dhis2/
-      #- ./config/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
+      - ./config/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
       - ./config/dhis2/dhis.conf:/opt/dhis2/dhis.conf:ro
+      - ./tools/healthcheck-${ARCH:-amd64}:/opt/dhis2/healthcheck:ro
       - type: tmpfs
         target: /tmp
         tmpfs:
-          size: 1000000
+          size: 300000000
       - type: tmpfs
         target: /usr/local/tomcat/temp
         tmpfs:
@@ -43,7 +44,7 @@ services:
       - database
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://127.0.0.1:8080/dhis-web-login/" ]
+      test: [ "CMD", "/opt/dhis2/healthcheck", "http://localhost:8080/api/ping" ]
       interval: 10s
       timeout: 3s
       retries: 3
