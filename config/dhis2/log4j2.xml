@@ -6,9 +6,13 @@
             docker compose logs -f web | grep org.hisp.dhis.monitoring.metrics
          Show timestamps:
             docker compose logs -t -f web
+
+         OpenTelemetry trace context is automatically injected into MDC by the Java agent.
+         The trace_id and span_id can be used to correlate logs with traces in Grafana Tempo.
     -->
     <Properties>
-        <Property name="layout">%-5level %c [%t] %msg%n</Property>
+        <!-- Log pattern includes OpenTelemetry trace context for correlation with Tempo -->
+        <Property name="layout">* %-5p %d{ISO8601} trace_id=%X{trace_id} span_id=%X{span_id} %m (%c{1} [%t]) %X{sessionId} %X{xRequestID}%n</Property>
     </Properties>
 
     <Appenders>
