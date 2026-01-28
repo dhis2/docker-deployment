@@ -65,7 +65,7 @@ services:
       - otel:/otel
     environment:
       OTEL_VERSION: ${OTEL_VERSION:-2.11.0}
-      OTEL_JAR_SHA256: ${OTEL_JAR_SHA256:-a11c4f41f6c88f17fc3144f27b8a5be260db095edadd0c497a96490d42552aa8}
+      OTEL_JAR_SHA256: ${OTEL_JAR_SHA256:-4cff4ab46179260a61fc0d884f3f170cfbd9d2962dd260be2cff31262d0c7618}
     networks:
       - monitoring
     command:
