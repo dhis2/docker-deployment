@@ -87,7 +87,7 @@ To update to a new version:
 
 Those overrides were added to handle DHIS2's high trace volume. During testing, we hit this error:
 
-```
+```shell
 LIVE_TRACES_EXCEEDED: max live traces exceeded for tenant single-tenant: 
 per-user traces limit (local: 10000 global: 0 actual local: 10000) exceeded
 ```
