@@ -1,17 +1,25 @@
-# Healthcheck Binaries
+# Healthcheck Binary
 
-Lightweight static binaries for Docker container health checks. These work in minimal/distroless images that lack curl, wget, or bash.
+Lightweight static binary for Docker container health checks. Works in minimal/distroless images that lack curl, wget, or bash.
 
 ## Source
 
-These binaries are from: <https://github.com/netroms/simple_healthcheck>
+The binary is from: <https://github.com/netroms/simple_healthcheck>
 
-## Binaries
+## Download at Runtime
 
-| File | Architecture |
-|------|--------------|
-| `healthcheck-amd64` | Linux x86_64 (Intel/AMD) |
-| `healthcheck-arm64` | Linux ARM64 (Apple Silicon, AWS Graviton) |
+The healthcheck binary is downloaded at container startup by the `healthcheck-init` service. This avoids storing large binary files in the repository.
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ARCH` | `amd64` | CPU architecture (`amd64` or `arm64`) |
+| `HEALTHCHECK_VERSION` | `1.0.0` | Version to download |
+| `HEALTHCHECK_SHA256_AMD64` | (see docker-compose.yml) | SHA256 for amd64 binary |
+| `HEALTHCHECK_SHA256_ARM64` | (see docker-compose.yml) | SHA256 for arm64 binary |
+
+The `ARCH` variable is auto-detected by `scripts/generate-env.sh`.
 
 ## Usage
 
@@ -37,19 +45,17 @@ healthcheck [options] <url>
 
 ## Docker Compose Integration
 
-The binary is mounted into the DHIS2 container based on architecture:
+The binary is downloaded to a volume and mounted into the DHIS2 container:
 
 ```yaml
-volumes:
-  - ./tools/healthcheck-${ARCH:-amd64}:/opt/dhis2/healthcheck:ro
-
 healthcheck:
-  test: [ "CMD", "/opt/dhis2/healthcheck", "http://localhost:8080/api/ping" ]
+  test: [ "CMD", "/opt/dhis2/healthcheck-bin/healthcheck", "http://localhost:8080/api/ping" ]
 ```
-
-The `ARCH` variable is auto-detected by `scripts/generate-env.sh`.
 
 ## Updating
 
-To update the binaries, download the latest release from:
-<https://github.com/netroms/simple_healthcheck/releases>
+To update to a new version:
+
+1. Find the latest release at <https://github.com/netroms/simple_healthcheck/releases>
+2. Get the SHA256 checksums for both architectures
+3. Update `HEALTHCHECK_VERSION` and the SHA256 variables in your `.env` file or docker-compose.yml
