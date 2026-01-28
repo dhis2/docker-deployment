@@ -82,3 +82,37 @@ To update to a new version:
 1. Find the latest release at <https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases>
 2. Download the JAR and compute its SHA256: `sha256sum opentelemetry-javaagent.jar`
 3. Update `OTEL_VERSION` and `OTEL_JAR_SHA256` in your `.env` file or the docker-compose overlay
+
+## Tempo default overrides
+
+Those overrides were added to handle DHIS2's high trace volume. During testing, we hit this error:
+
+```
+LIVE_TRACES_EXCEEDED: max live traces exceeded for tenant single-tenant: 
+per-user traces limit (local: 10000 global: 0 actual local: 10000) exceeded
+```
+
+**Why DHIS2 generates so many traces:**
+- The OpenTelemetry agent instruments *every* HTTP request, SQL query, and Hibernate operation
+- DHIS2 startup alone runs hundreds of database migrations and initialization queries
+- Each API request can trigger dozens of SQL queries, each becoming a span
+- Background jobs (schedulers, analytics) continuously generate traces
+
+**What each setting does:**
+
+| Setting | Default | Our Value | Why |
+|---------|---------|-----------|-----|
+| `max_traces_per_user` | 10,000 | 100,000 | DHIS2 easily exceeds 10k concurrent traces during startup |
+| `ingestion_rate_limit_bytes` | 15MB/s | 30MB/s | Higher throughput for trace data ingestion |
+| `ingestion_burst_size_bytes` | 20MB | 50MB | Allow spikes during startup/heavy load |
+| `max_bytes_per_trace` | 5MB | 50MB | Complex requests with many SQL queries can create large traces |
+| `metrics_generator_processors` | none | service-graphs, span-metrics | Enables RED metrics and service dependency graphs in Grafana |
+
+**For production**, you might want to tune these based on your actual usage, or add sampling to reduce trace volume:
+
+```yaml
+# In JAVA_TOOL_OPTIONS, add sampling to reduce volume:
+-Dotel.traces.sampler=parentbased_traceidratio
+-Dotel.traces.sampler.arg=0.1  # Sample 10% of traces
+```
+
