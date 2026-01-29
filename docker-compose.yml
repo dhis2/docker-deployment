@@ -166,6 +166,9 @@ services:
     depends_on:
       traefik-init:
         condition: service_completed_successfully
+      # Prevent Traefik from starting if the DHIS2 administrator password isn't updated!
+      update-admin-password:
+        condition: service_completed_successfully
     volumes:
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
       - cert:/cert:rw
