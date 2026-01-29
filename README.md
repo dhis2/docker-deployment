@@ -57,11 +57,14 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
 This section is for users who want to quickly set up and test the DHIS2 application on their local machine.
 
 ```shell
+# The first two lines will check out the repository in your current folder
 git clone https://github.com/dhis2/docker-deployment.git && \
-  cd docker-deployment && \
+  cd docker-deployment
+# the next three lines will set the environment to run the compose file (start here if you are alread in the repository folder).
   export GEN_APP_HOSTNAME=dhis2-127-0-0-1.nip.io && \
   export GEN_LETSENCRYPT_ACME_EMAIL=whatever@dhis2.org && \
-  ./scripts/generate-env.sh && \
+  ./scripts/generate-env.sh
+# the last line will launch DHIS2 and services (start here if you've already set the environment.
   make launch
 ```
 
