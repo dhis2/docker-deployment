@@ -33,6 +33,7 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
   - [Additional Services (Overlays)](#additional-services-overlays)
     - [Traefik Dashboard](#traefik-dashboard)
     - [Glowroot](#glowroot)
+    - [Profiling (Tracing with Tempo)](#profiling-tracing-with-tempo)
   - [Backup and Restore](#backup-and-restore)
     - [Backup](#backup)
     - [Backup Timestamp](#backup-timestamp)
@@ -152,6 +153,18 @@ Glowroot is an APM (Application Performance Monitoring) tool that can be enabled
 ```shell
 docker compose -f docker-compose.yml -f overlays/glowroot/docker-compose.yml up
 ```
+
+#### Profiling (Tracing with Tempo)
+
+The profiling overlay adds distributed tracing capabilities using Grafana Tempo and OpenTelemetry. This allows you to trace requests through the DHIS2 application, providing insights into performance bottlenecks and request flows.
+
+> **Note:** The profiling overlay requires the monitoring overlay to be enabled first.
+
+```shell
+docker compose -f docker-compose.yml -f overlays/monitoring/docker-compose.yml -f overlays/profiling/docker-compose.yml up
+```
+
+For detailed configuration and usage, see the [Profiling Overlay README](overlays/profiling/README.md).
 
 ### Backup and Restore
 

@@ -63,7 +63,7 @@ docs:
 	mkdir -p ./docs
 	docker compose run --rm compose-docs > docs/environment-variables.md
 
-COMPOSE_CMD = docker compose -f docker-compose.yml -f overlays/traefik-dashboard/docker-compose.yml -f overlays/monitoring/docker-compose.yml -f overlays/glowroot/docker-compose.yml
+COMPOSE_CMD = docker compose -f docker-compose.yml -f overlays/traefik-dashboard/docker-compose.yml -f overlays/monitoring/docker-compose.yml -f overlays/profiling/docker-compose.yml -f overlays/glowroot/docker-compose.yml
 
 launch: install-loki-driver
 	$(COMPOSE_CMD) up $(COMPOSE_OPTS)
