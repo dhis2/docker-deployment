@@ -1,0 +1,86 @@
+x-healthcheck-options: &healthcheck-options
+  interval: 10s
+  timeout: 3s
+  retries: 3
+  start_period: 30s
+
+services:
+  app:
+    depends_on:
+      otel-init:
+        condition: service_completed_successfully
+      tempo:
+        condition: service_healthy
+    volumes:
+      - otel:/otel:ro
+      - ./config/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
+    environment:
+      # OpenTelemetry Java Agent configuration
+      # Using JAVA_TOOL_OPTIONS to append to existing JVM args rather than replacing CATALINA_OPTS
+      # Note: Must include all JAVA_TOOL_OPTIONS here as overlay replaces (not merges) env vars
+      JAVA_TOOL_OPTIONS: >-
+        -Dlog4j2.configurationFile=/opt/dhis2/log4j2.xml -javaagent:/otel/opentelemetry-javaagent.jar -Dotel.service.name=dhis2 -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://tempo:4318 -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.instrumentation.jdbc.enabled=true -Dotel.instrumentation.hibernate.enabled=true
+
+  grafana:
+    volumes:
+      - ./overlays/profiling/config/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+
+  # This is needed to avoid permission issues with the tempo container when running as non-root user
+  tempo-init:
+    image: busybox:1.37.0
+    volumes:
+      - tempo:/var/tempo
+    networks:
+      - monitoring
+    command: [ "sh", "-c", "mkdir -p /var/tempo/traces /var/tempo/wal /var/tempo/generator/wal && chown -R nobody:nobody /var/tempo" ]
+    user: root
+    security_opt:
+      - no-new-privileges:true
+
+  tempo:
+    image: grafana/tempo:${TEMPO_VERSION:-2.3.1}
+    depends_on:
+      tempo-init:
+        condition: service_completed_successfully
+    volumes:
+      - tempo:/var/tempo
+      - ./overlays/profiling/config/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+    networks:
+      - monitoring
+    command: [ "-config.file=/etc/tempo/tempo.yml" ]
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:3200/ready" ]
+      <<: *healthcheck-options
+    user: nobody:nobody
+    cap_drop:
+      - ALL
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+
+  # Downloads the OpenTelemetry Java Agent JAR for DHIS2 instrumentation
+  otel-init:
+    image: curlimages/curl:${CURL_VERSION:-8.10.1}
+    volumes:
+      - otel:/otel
+    environment:
+      OTEL_VERSION: ${OTEL_VERSION:-2.11.0}
+      OTEL_JAR_SHA256: ${OTEL_JAR_SHA256:-4cff4ab46179260a61fc0d884f3f170cfbd9d2962dd260be2cff31262d0c7618}
+    networks:
+      - monitoring
+    command:
+      - sh
+      - -c
+      - |
+        if [ ! -f /otel/opentelemetry-javaagent.jar ]; then
+          curl -L -o /otel/opentelemetry-javaagent.jar "https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v$${OTEL_VERSION}/opentelemetry-javaagent.jar"
+          echo "$${OTEL_JAR_SHA256}  /otel/opentelemetry-javaagent.jar" | sha256sum -c -
+        fi
+    user: root
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  tempo: {}
+  otel: {}
