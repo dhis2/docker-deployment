@@ -1,23 +1,52 @@
 x-database-image: &database-image
-  image: postgis/postgis:${POSTGRES_VERSION:-16-master}
+  image: ${POSTGRES_IMAGE:-postgis/postgis:16-master}
 
 x-file-storage-image: &file-storage-image
   image: rclone/rclone:${RCLONE_VERSION:-1.68}
 
 services:
+  healthcheck-init:
+    image: curlimages/curl:${CURL_VERSION:-8.10.1}
+    volumes:
+      - healthcheck:/healthcheck
+    environment:
+      ARCH: ${ARCH:-amd64}
+      HEALTHCHECK_VERSION: ${HEALTHCHECK_VERSION:-1.0.0}
+      HEALTHCHECK_SHA256_AMD64: ${HEALTHCHECK_SHA256_AMD64:-d4542505894c0f5e1692ea282fecf75290a3893538a165d571e4c1a15724eb1b}
+      HEALTHCHECK_SHA256_ARM64: ${HEALTHCHECK_SHA256_ARM64:-df6382f871f02f48fac81893500aa8578ae21fb985819f6a19af21918c352f92}
+    command:
+      - sh
+      - -c
+      - |
+        if [ ! -f /healthcheck/healthcheck ]; then
+          if [ "$${ARCH}" = "arm64" ]; then
+            EXPECTED_SHA="$${HEALTHCHECK_SHA256_ARM64}"
+          else
+            EXPECTED_SHA="$${HEALTHCHECK_SHA256_AMD64}"
+          fi
+          curl -sL -o /healthcheck/healthcheck "https://github.com/netroms/simple_healthcheck/releases/download/v$${HEALTHCHECK_VERSION}/healthcheck-$${ARCH}"
+          echo "$${EXPECTED_SHA}  /healthcheck/healthcheck" | sha256sum -c -
+          chmod +x /healthcheck/healthcheck
+        fi
+    user: root
+    security_opt:
+      - no-new-privileges:true
+
   app:
     image: dhis2/core:${DHIS2_VERSION:-42}
     depends_on:
       database:
         condition: service_healthy
+      healthcheck-init:
+        condition: service_completed_successfully
     volumes:
       - dhis2:/opt/dhis2/
-      #- ./config/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
       - ./config/dhis2/dhis.conf:/opt/dhis2/dhis.conf:ro
+      - healthcheck:/opt/dhis2/healthcheck-bin:ro
       - type: tmpfs
         target: /tmp
         tmpfs:
-          size: 1000000
+          size: 300000000
       - type: tmpfs
         target: /usr/local/tomcat/temp
         tmpfs:
@@ -43,7 +72,7 @@ services:
       - database
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://127.0.0.1:8080/dhis-web-login/" ]
+      test: [ "CMD", "/opt/dhis2/healthcheck-bin/healthcheck", "http://localhost:8080/api/ping" ]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -309,3 +338,4 @@ volumes:
   dhis2: {}
   postgres: {}
   cert: {}
+  healthcheck: {}

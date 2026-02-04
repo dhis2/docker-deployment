@@ -44,6 +44,17 @@ generate_password() {
   echo "$password" | fold -w1 | shuf | tr -d '\n'
 }
 
+# Detect CPU architecture for healthcheck binary
+detect_arch() {
+  local arch
+  arch=$(uname -m)
+  case "$arch" in
+    x86_64)        echo "amd64" ;;
+    aarch64|arm64) echo "arm64" ;;
+    *)             echo "amd64" ;;  # fallback to amd64
+  esac
+}
+
 # Validate required inputs for ungeneratable values
 : "${GEN_APP_HOSTNAME:?Environment variable GEN_APP_HOSTNAME must be set}"
 : "${GEN_LETSENCRYPT_ACME_EMAIL:?Environment variable GEN_LETSENCRYPT_ACME_EMAIL must be set}"
@@ -54,6 +65,7 @@ POSTGRES_DB_PASSWORD=$(generate_password)
 POSTGRES_METRICS_PASSWORD=$(generate_password)
 GRAFANA_ADMIN_PASSWORD=$(generate_password)
 DHIS2_MONITOR_PASSWORD=$(generate_password)
+ARCH=$(detect_arch)
 
 # Detect GNU vs BSD sed
 if sed --version >/dev/null 2>&1; then
@@ -81,6 +93,7 @@ update_env_var "GRAFANA_ADMIN_PASSWORD" "$GRAFANA_ADMIN_PASSWORD"
 update_env_var "DHIS2_MONITOR_PASSWORD" "$DHIS2_MONITOR_PASSWORD"
 update_env_var "APP_HOSTNAME" "$GEN_APP_HOSTNAME"
 update_env_var "LETSENCRYPT_ACME_EMAIL" "$GEN_LETSENCRYPT_ACME_EMAIL"
+update_env_var "ARCH" "$ARCH"
 
 chmod u+rw,go-rwx "$OUTPUT_FILE"
 
