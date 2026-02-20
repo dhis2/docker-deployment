@@ -35,6 +35,17 @@
   ansible.builtin.debug:
     var: docker_user_rules.stdout_lines
 
+- name: Allow established/related traffic in DOCKER-USER chain
+  ansible.builtin.iptables:
+    chain: DOCKER-USER
+    table: filter
+    ctstate: ESTABLISHED,RELATED
+    jump: ACCEPT
+    action: insert
+    rule_num: 1
+    comment: "Allow established/related container traffic"
+  become: true
+
 - name: Ensure Docker container subnet is allowed
   ansible.builtin.iptables:
     chain: DOCKER-USER
