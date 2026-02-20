@@ -88,6 +88,7 @@ services:
       - ./init-scripts:/docker-entrypoint-initdb.d:ro
       - ./config/postgresql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ./config/postgresql/conf.d:/etc/postgresql/conf.d:ro
+      - ./config/postgresql/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
     environment:
       # -- Postgres user password
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -108,7 +109,7 @@ services:
     command: >
       postgres
         -c config_file=/etc/postgresql/postgresql.conf
-        -c hba_file=/var/lib/postgresql/data/pg_hba.conf
+        -c hba_file=/etc/postgresql/pg_hba.conf
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB}" ]
