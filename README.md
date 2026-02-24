@@ -23,6 +23,7 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+
 - [Quick Start](#quick-start)
 - [Deployment For Production](#deployment-for-production)
   - [Deployment Prerequisites](#deployment-prerequisites)
@@ -50,7 +51,7 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
   - [Clean all services](#clean-all-services)
   - [Run end-to-end tests](#run-end-to-end-tests)
 - [Further Documentation](#further-documentation)
-- [Community & Discussions](#community)
+- [Community & Discussions](#community--discussions)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -71,7 +72,6 @@ Open [http://dhis2-127-0-0-1.nip.io](http://dhis2-127-0-0-1.nip.io) in your favo
 
 > [!NOTE]
 > Your browser will warn you that the certificate is not trusted. This is expected, as it is a self-signed certificate.
-
 <!-- markdownlint-disable MD028 -->
 
 > [!NOTE]
@@ -120,7 +120,7 @@ docker compose up
 Open `https://<your-domain.com>` in your favorite browser.
 
 > [!NOTE]
-> The first time you launch the application, it will initialise with a blank database. _The default admin credentials are available in the `.env` file._ If you have an existing database, you can restore it following the [Backup and Restore](#backup-and-restore) section, under Advanced Usage, below.
+> The first time you launch the application, it will initialise with a blank database. *The default admin credentials are available in the `.env` file.* If you have an existing database, you can restore it following the [Backup and Restore](#backup-and-restore) section, under Advanced Usage, below.
 
 ## Advanced Usage
 
@@ -184,17 +184,17 @@ This command will create two files in the `./backups` directory: one for the dat
 
 - **Backup Database**: The database can be backed up in `custom` (default) or `plain` format, controlled by the `POSTGRES_BACKUP_FORMAT` environment variable.
 
-  ```shell
-  make backup-database
-  ```
+    ```shell
+    make backup-database
+    ```
 
-  This creates a file in `./backups` named `$TIMESTAMP.pgc` (custom) or `$TIMESTAMP.sql.gz` (plain). Consult the [PostgreSQL documentation](https://www.postgresql.org/docs/current/app-pgdump.html) for more details.
+    This creates a file in `./backups` named `$TIMESTAMP.pgc` (custom) or `$TIMESTAMP.sql.gz` (plain). Consult the [PostgreSQL documentation](https://www.postgresql.org/docs/current/app-pgdump.html) for more details.
 
 - **Backup File Storage**:
 
-  ```shell
-  make backup-file-storage
-  ```
+    ```shell
+    make backup-file-storage
+    ```
 
 #### Backup Timestamp
 
@@ -216,15 +216,15 @@ make restore
 
 - **Restore Database**: Set the `DB_RESTORE_FILE` environment variable to the backup file name.
 
-  ```shell
-  make restore-database
-  ```
+    ```shell
+    make restore-database
+    ```
 
 - **Restore File Storage**: Set the `FILE_STORAGE_RESTORE_SOURCE_DIR` environment variable to the backup directory name.
 
-  ```shell
-  make restore-file-storage
-  ```
+    ```shell
+    make restore-file-storage
+    ```
 
 ### Monitoring
 
@@ -261,8 +261,8 @@ DHIS2's built-in monitoring API is enabled, exposing health and performance metr
 1. Start services with the monitoring overlay (as shown above).
 2. Open `https://grafana.{APP_HOSTNAME}` in your browser (where `{APP_HOSTNAME}` is from your `.env` file).
 3. Login with:
-   - Username: `admin`
-   - Password: Check your `.env` file for `GRAFANA_ADMIN_PASSWORD`.
+    - Username: `admin`
+    - Password: Check your `.env` file for `GRAFANA_ADMIN_PASSWORD`.
 
 #### Configuration
 
@@ -323,8 +323,7 @@ For more in-depth information, please refer to the following:
 - [Environment Variables](docs/environment-variables.md)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/current/app-pgdump.html)
 
-## Community
-
+## Community & Discussions
 > [!TIP]
 >
 > ### 🤝 Join the Discussion
