@@ -324,6 +324,7 @@ For more in-depth information, please refer to the following:
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/current/app-pgdump.html)
 
 ## Community & Discussions
+
 > [!TIP]
 >
 > ### 🤝 Join the Discussion
