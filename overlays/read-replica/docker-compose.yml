@@ -1,0 +1,121 @@
+services:
+  # Configure the primary database for replication
+  database:
+    environment:
+      # -- Replication username
+      POSTGRES_REPLICATION_USERNAME: ${POSTGRES_REPLICATION_USERNAME:-replication}
+      # -- Replication user password
+      POSTGRES_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD}
+
+  # Create the replication user and pg_hba.conf entry on the primary
+  replication-init:
+    image: postgis/postgis:${POSTGRES_VERSION:-16-master}
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ./overlays/read-replica/scripts/create-replication-user.sh:/create-replication-user.sh:ro
+    environment:
+      POSTGRES_HOST: database
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_REPLICATION_USERNAME: ${POSTGRES_REPLICATION_USERNAME:-replication}
+      POSTGRES_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD}
+    networks:
+      - database
+    entrypoint: [ "/bin/bash", "/create-replication-user.sh" ]
+    user: postgres
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # Configure DHIS2 to use the read replica
+  app:
+    depends_on:
+      database:
+        condition: service_healthy
+      database-replica:
+        condition: service_healthy
+    volumes:
+      - ./overlays/read-replica/config/dhis2/dhis.conf:/opt/dhis2/dhis.conf:ro
+
+  # Initialize the replica from the primary using pg_basebackup
+  replica-init:
+    image: postgis/postgis:${POSTGRES_VERSION:-16-master}
+    depends_on:
+      replication-init:
+        condition: service_completed_successfully
+    volumes:
+      - postgres-replica:/var/lib/postgresql/data
+      - ./overlays/read-replica/scripts/replica-entrypoint.sh:/replica-entrypoint.sh:ro
+    environment:
+      POSTGRES_REPLICATION_USERNAME: ${POSTGRES_REPLICATION_USERNAME:-replication}
+      PGPASSWORD: ${POSTGRES_REPLICATION_PASSWORD}
+    networks:
+      - database
+    entrypoint: [ "/bin/bash", "/replica-entrypoint.sh" ]
+    user: postgres
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # Reinitialize the replica (e.g. after a database restore)
+  # Usage: docker compose run --rm reinit-replica
+  reinit-replica:
+    image: postgis/postgis:${POSTGRES_VERSION:-16-master}
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - postgres-replica:/var/lib/postgresql/data
+      - ./overlays/read-replica/scripts/replica-entrypoint.sh:/replica-entrypoint.sh:ro
+    environment:
+      POSTGRES_REPLICATION_USERNAME: ${POSTGRES_REPLICATION_USERNAME:-replication}
+      PGPASSWORD: ${POSTGRES_REPLICATION_PASSWORD}
+      FORCE_REINIT: "true"
+    networks:
+      - database
+    entrypoint: [ "/bin/bash", "/replica-entrypoint.sh" ]
+    user: postgres
+    cap_drop:
+      - ALL
+    profiles:
+      - restore
+    security_opt:
+      - no-new-privileges:true
+
+  # The read replica database
+  database-replica:
+    image: postgis/postgis:${POSTGRES_VERSION:-16-master}
+    depends_on:
+      replica-init:
+        condition: service_completed_successfully
+    volumes:
+      - postgres-replica:/var/lib/postgresql/data
+      - ./config/postgresql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./config/postgresql/conf.d:/etc/postgresql/conf.d:ro
+    networks:
+      - database
+    command: >
+      postgres
+        -c config_file=/etc/postgresql/postgresql.conf
+        -c hba_file=/var/lib/postgresql/data/pg_hba.conf
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB:-dhis}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    user: postgres
+    cap_drop:
+      - ALL
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /var/run/postgresql
+
+volumes:
+  postgres-replica: {}
