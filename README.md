@@ -33,6 +33,7 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
   - [Additional Services (Overlays)](#additional-services-overlays)
     - [Traefik Dashboard](#traefik-dashboard)
     - [Glowroot](#glowroot)
+    - [Profiling (Tracing with Tempo)](#profiling-tracing-with-tempo)
   - [Backup and Restore](#backup-and-restore)
     - [Backup](#backup)
     - [Backup Timestamp](#backup-timestamp)
@@ -57,11 +58,14 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
 This section is for users who want to quickly set up and test the DHIS2 application on their local machine.
 
 ```shell
+# The first two lines will check out the repository in your current folder
 git clone https://github.com/dhis2/docker-deployment.git && \
-  cd docker-deployment && \
+  cd docker-deployment
+# the next three lines will set the environment to run the compose file (start here if you are alread in the repository folder).
   export GEN_APP_HOSTNAME=dhis2-127-0-0-1.nip.io && \
   export GEN_LETSENCRYPT_ACME_EMAIL=whatever@dhis2.org && \
-  ./scripts/generate-env.sh && \
+  ./scripts/generate-env.sh
+# the last line will launch DHIS2 and services (start here if you've already set the environment.
   make launch
 ```
 
@@ -152,6 +156,18 @@ Glowroot is an APM (Application Performance Monitoring) tool that can be enabled
 ```shell
 docker compose -f docker-compose.yml -f overlays/glowroot/docker-compose.yml up
 ```
+
+#### Profiling (Tracing with Tempo)
+
+The profiling overlay adds distributed tracing capabilities using Grafana Tempo and OpenTelemetry. This allows you to trace requests through the DHIS2 application, providing insights into performance bottlenecks and request flows.
+
+> **Note:** The profiling overlay requires the monitoring overlay to be enabled first.
+
+```shell
+docker compose -f docker-compose.yml -f overlays/monitoring/docker-compose.yml -f overlays/profiling/docker-compose.yml up
+```
+
+For detailed configuration and usage, see the [Profiling Overlay README](overlays/profiling/README.md).
 
 ### Backup and Restore
 
