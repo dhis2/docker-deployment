@@ -1,0 +1,50 @@
+server:
+  http_listen_port: 3200
+  grpc_server_max_recv_msg_size: 52428800  # 50 MB
+  grpc_server_max_send_msg_size: 52428800  # 50 MB
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+ingester:
+  trace_idle_period: 10s
+  max_block_bytes: 100_000_000
+  max_block_duration: 5m
+compactor:
+  compaction:
+    compaction_window: 1h
+    max_block_bytes: 100_000_000
+    block_retention: 1h
+    compacted_block_retention: 10m
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/tempo/traces
+    wal:
+      path: /var/tempo/wal
+    pool:
+      max_workers: 100
+      queue_depth: 10000
+querier:
+  frontend_worker:
+    frontend_address: tempo:9095
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+  storage:
+    path: /var/tempo/generator/wal
+    remote_write: [ ]
+overrides:
+  ingestion_rate_limit_bytes: 30000000
+  ingestion_burst_size_bytes: 50000000
+  max_traces_per_user: 100000
+  max_bytes_per_trace: 50000000
+  metrics_generator_processors:
+    - service-graphs
+    - span-metrics
