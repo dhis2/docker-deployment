@@ -37,6 +37,8 @@ services:
       POSTGRES_DB_USERNAME: ${POSTGRES_DB_USERNAME}
       # -- Database password
       POSTGRES_DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      # -- Enable system audit logging
+      SYSTEM_AUDIT_ENABLED: ${SYSTEM_AUDIT_ENABLED:-off}
     networks:
       - frontend
       - application
