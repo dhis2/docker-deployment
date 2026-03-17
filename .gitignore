@@ -18,5 +18,5 @@ Thumbs.db
 # Ansible
 .ansible/
 
-traefik/cert/acme.json
+traefik/acme.json
 backups/

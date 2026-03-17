@@ -58,17 +58,9 @@
     owner: "{{ docker_user }}"
     group: "root"
 
-- name: Create Traefik certificate directory
-  file:
-    path: "{{ deploy_dir }}/traefik/cert"
-    state: directory
-    owner: "65534"
-    group: "65534"
-    mode: 0700
-
 - name: Create Traefik acme.json
   file:
-    path: "{{ deploy_dir }}/traefik/cert/acme.json"
+    path: "{{ deploy_dir }}/traefik/acme.json"
     state: touch
     owner: "65534"
     group: "65534"
