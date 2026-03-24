@@ -15,7 +15,6 @@ Thumbs.db
 # IDE
 .vscode/
 
-# Ansible
 .ansible/
 
 traefik/acme.json

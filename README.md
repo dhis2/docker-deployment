@@ -231,8 +231,6 @@ make restore
 
 ### Let's Encrypt Certificate Management
 
-Traefik uses Let's Encrypt ACME and stores certificate data at `./traefik/cert/acme.json` on the host filesystem.
-
 #### Production vs Staging
 
 - **Production (default):** trusted certificates with standard Let's Encrypt rate limits.
