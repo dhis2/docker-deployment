@@ -57,7 +57,16 @@
     src: tmpfs
     fstype: tmpfs
     opts: "defaults,noexec,nosuid,nodev"
-    state: mounted
+    state: present
+
+- name: Mount or remount /tmp with secure options
+  raw: |
+    if mountpoint -q /tmp; then
+      mount -o remount,defaults,noexec,nosuid,nodev /tmp
+    else
+      mount -t tmpfs -o defaults,noexec,nosuid,nodev tmpfs /tmp
+    fi
+  changed_when: false
 
 # Logging and Monitoring
 - name: Install fail2ban
