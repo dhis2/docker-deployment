@@ -33,7 +33,7 @@
 
 | Variable | Description | Default Value |
 |----------|-------------|---------------|
-| `POSTGRES_VERSION` |  | `16-master` |
+| `POSTGRES_IMAGE` |  | `postgis/postgis:16-master` |
 
 ### Service: database
 
@@ -52,7 +52,7 @@
 
 | Variable | Description | Default Value |
 |----------|-------------|---------------|
-| `POSTGRES_VERSION` |  | `16-master` |
+| `POSTGRES_IMAGE` |  | `postgis/postgis:16-master` |
 
 ### Service: traefik
 
@@ -82,7 +82,7 @@
 
 | Variable | Description | Default Value |
 |----------|-------------|---------------|
-| `POSTGRES_VERSION` |  | `16-master` |
+| `POSTGRES_IMAGE` |  | `postgis/postgis:16-master` |
 
 ### Service: backup-file-storage
 
@@ -116,7 +116,7 @@
 
 | Variable | Description | Default Value |
 |----------|-------------|---------------|
-| `POSTGRES_VERSION` |  | `16-master` |
+| `POSTGRES_IMAGE` |  | `postgis/postgis:16-master` |
 
 ### Service: restore-file-storage
 
