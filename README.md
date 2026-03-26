@@ -23,6 +23,7 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+
 - [Quick Start](#quick-start)
 - [Deployment For Production](#deployment-for-production)
   - [Deployment Prerequisites](#deployment-prerequisites)
@@ -50,6 +51,7 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
   - [Clean all services](#clean-all-services)
   - [Run end-to-end tests](#run-end-to-end-tests)
 - [Further Documentation](#further-documentation)
+- [Community & Discussions](#community--discussions)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -323,3 +325,15 @@ For more in-depth information, please refer to the following:
 
 - [Environment Variables](docs/environment-variables.md)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/current/app-pgdump.html)
+
+## Community & Discussions
+
+> [!TIP]
+>
+> ### 🤝 Join the Discussion
+>
+> For troubleshooting, configuration help, and community, please use the **DHIS2 Community of Practice**:
+>
+> - 🟦 **[Server Administration](https://community.dhis2.org/c/server-administration/33)** — General server topics.
+> - 🔹 **[DHIS2 on Docker](https://community.dhis2.org/c/server-administration/docker/95)** — **Specific to Docker on DHIS2.**
+> - 🔹 **[DHIS2 on Kubernetes](https://community.dhis2.org/c/server-administration/kubernetes/94)**
