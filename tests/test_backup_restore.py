@@ -54,7 +54,7 @@ def test_restore_from_backup(page: Page, backup_timestamp: str):
 
 
 def verify_restored_profile(page: Page):
-    page.get_by_title("header bar profile").click()
+    page.get_by_title("Profile menu").click()
     page.get_by_role("menuitem", name="My profile").click()
     page.wait_for_url("**/user-profile#/**")
 
