@@ -25,7 +25,7 @@ def test_create_backup(backup_timestamp: str):
 
 @pytest.mark.order(5)
 def test_clean_environment():
-    run_make_command("clean")
+    run_make_command("clean-all")
 
     assert_no_services_running()
 
@@ -54,7 +54,7 @@ def test_restore_from_backup(page: Page, backup_timestamp: str):
 
 
 def verify_restored_profile(page: Page):
-    page.get_by_title("Profile menu").click()
+    page.get_by_title("header bar profile").click()
     page.get_by_role("menuitem", name="My profile").click()
     page.wait_for_url("**/user-profile#/**")
 

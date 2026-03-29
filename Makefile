@@ -22,7 +22,7 @@ reinit:
 	$(MAKE) init
 
 install-loki-driver:
-	docker plugin ls --format '{{.Name}}' | grep -q 'loki:latest' || ./scripts/install-loki-driver.sh
+	docker plugin ls --format '{{.Name}}' | grep -q 'loki' || ./scripts/install-loki-driver.sh
 	docker plugin ls
 
 check:
@@ -72,9 +72,11 @@ clean:
 	$(COMPOSE_CMD) down --remove-orphans
 
 clean-all:
-	@echo "WARNING: This will destroy all Docker volumes (database, file storage, monitoring data, etc.)."
-	@echo "This action is irreversible."
-	@read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || (echo "Aborted." && exit 1)
+	@if [ -t 0 ]; then \
+		echo "WARNING: This will destroy all Docker volumes (database, file storage, monitoring data, etc.)."; \
+		echo "This action is irreversible."; \
+		read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || (echo "Aborted." && exit 1); \
+	fi
 	$(COMPOSE_CMD) down --remove-orphans --volumes
 
 config:
