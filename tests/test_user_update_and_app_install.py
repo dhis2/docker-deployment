@@ -22,7 +22,7 @@ def login_user(page: Page):
 def test_profile_update(page: Page):
     login_user(page)
 
-    page.get_by_title("header bar profile").click()
+    page.get_by_title("Profile menu").click()
     page.get_by_role("menuitem", name="My profile").click()
     page.wait_for_url("**/user-profile#/**")
 
