@@ -9,6 +9,7 @@ from test_user_update_and_app_install import login_user
 def test_launch_environment():
     run_make_command("launch COMPOSE_OPTS=-d")
 
+    wait_for_service_healthy("app")
     assert_no_services_unhealthy()
 
 
