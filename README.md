@@ -1,7 +1,6 @@
 # Docker Deployment
 
-> [!CAUTION]
-> **Ready for public testing — NOT yet recommended for production or critical data**
+> [!CAUTION] > **Ready for public testing — NOT yet recommended for production or critical data**
 >
 > This project is available for public testing and evaluation, but it remains immature and is not recommended for production use yet. The implementation has been designed to meet production standards, however it needs additional testing, stabilization, and a small set of features before we can recommend it for critical data.
 >
@@ -73,12 +72,10 @@ git clone https://github.com/dhis2/docker-deployment.git && \
 
 Open [http://dhis2-127-0-0-1.nip.io](http://dhis2-127-0-0-1.nip.io) in your favorite browser.
 
-> [!NOTE]
-> Your browser will warn you that the certificate is not trusted. This is expected, as it is a self-signed certificate.
+> [!NOTE] > Your browser will warn you that the certificate is not trusted. This is expected, as it is a self-signed certificate.
 <!-- markdownlint-disable MD028 -->
 
-> [!NOTE]
-> The default admin credentials are available in the `.env` file.
+> [!NOTE] > The default admin credentials are available in the `.env` file.
 
 ## Deployment For Production
 
@@ -122,8 +119,7 @@ docker compose up
 
 Open `https://<your-domain.com>` in your favorite browser.
 
-> [!NOTE]
-> The first time you launch the application, it will initialise with a blank database. *The default admin credentials are available in the `.env` file.* If you have an existing database, you can restore it following the [Backup and Restore](#backup-and-restore) section, under Advanced Usage, below.
+> [!NOTE] > The first time you launch the application, it will initialise with a blank database. *The default admin credentials are available in the `.env` file.* If you have an existing database, you can restore it following the [Backup and Restore](#backup-and-restore) section, under Advanced Usage, below.
 
 ## Advanced Usage
 
