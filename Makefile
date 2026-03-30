@@ -1,6 +1,6 @@
 PRE_COMMIT_VERSION ?= 4.3.0
 
-.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs launch clean config get-backup-timestamp
+.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs launch clean clean-all config get-backup-timestamp
 
 init:
 	@test -d .venv || python3 -m venv .venv
@@ -77,6 +77,7 @@ clean-all:
 		echo "This action is irreversible."; \
 		read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || (echo "Aborted." && exit 1); \
 	fi
+	$(COMPOSE_CMD) down --remove-orphans --volumes
 
 config:
 	@$(COMPOSE_CMD) config
