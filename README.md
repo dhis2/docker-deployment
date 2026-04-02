@@ -38,6 +38,8 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
     - [Backup](#backup)
     - [Backup Timestamp](#backup-timestamp)
     - [Restore](#restore)
+  - [Let's Encrypt Certificate Management](#lets-encrypt-certificate-management)
+    - [Production vs Staging](#production-vs-staging)
   - [Monitoring](#monitoring)
     - [Prerequisites](#prerequisites)
     - [Monitoring Deployment](#monitoring-deployment)
@@ -226,6 +228,19 @@ make restore
     ```shell
     make restore-file-storage
     ```
+
+### Let's Encrypt Certificate Management
+
+#### Production vs Staging
+
+- **Production (default):** trusted certificates with standard Let's Encrypt rate limits.
+- **Staging:** untrusted test certificates with much higher rate limits for validation and CI/testing workflows.
+
+To use staging, set this in `.env`:
+
+```dotenv
+LETSENCRYPT_ACME_CASERVER=https://acme-staging-v02.api.letsencrypt.org/directory
+```
 
 ### Monitoring
 
