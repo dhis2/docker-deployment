@@ -1,6 +1,7 @@
 # Docker Deployment
 
-> [!CAUTION] > **Ready for public testing — NOT yet recommended for production or critical data**
+> [!CAUTION]
+> **Ready for public testing — NOT yet recommended for production or critical data**
 >
 > This project is available for public testing and evaluation, but it remains immature and is not recommended for production use yet. The implementation has been designed to meet production standards, however it needs additional testing, stabilization, and a small set of features before we can recommend it for critical data.
 >
@@ -21,7 +22,6 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-
 
 - [Quick Start](#quick-start)
 - [Deployment For Production](#deployment-for-production)
@@ -74,10 +74,11 @@ git clone https://github.com/dhis2/docker-deployment.git && \
 
 Open [http://dhis2-127-0-0-1.nip.io](http://dhis2-127-0-0-1.nip.io) in your favorite browser.
 
-> [!NOTE] > Your browser will warn you that the certificate is not trusted. This is expected, as it is a self-signed certificate.
-<!-- markdownlint-disable MD028 -->
+> [!NOTE]
+> Your browser will warn you that the certificate is not trusted. This is expected, as it is a self-signed certificate.
 
-> [!NOTE] > The default admin credentials are available in the `.env` file.
+> [!NOTE]
+> The default admin credentials are available in the `.env` file.
 
 ## Deployment For Production
 
@@ -121,7 +122,8 @@ docker compose up
 
 Open `https://<your-domain.com>` in your favorite browser.
 
-> [!NOTE] > The first time you launch the application, it will initialise with a blank database. *The default admin credentials are available in the `.env` file.* If you have an existing database, you can restore it following the [Backup and Restore](#backup-and-restore) section, under Advanced Usage, below.
+> [!NOTE]
+> The first time you launch the application, it will initialise with a blank database. *The default admin credentials are available in the `.env` file.* If you have an existing database, you can restore it following the [Backup and Restore](#backup-and-restore) section, under Advanced Usage, below.
 
 ## Advanced Usage
 
@@ -161,7 +163,8 @@ docker compose -f docker-compose.yml -f overlays/glowroot/docker-compose.yml up
 
 The profiling overlay adds distributed tracing capabilities using Grafana Tempo and OpenTelemetry. This allows you to trace requests through the DHIS2 application, providing insights into performance bottlenecks and request flows.
 
-> **Note:** The profiling overlay requires the monitoring overlay to be enabled first.
+> [!NOTE]
+> The profiling overlay requires the monitoring overlay to be enabled first.
 
 ```shell
 docker compose -f docker-compose.yml -f overlays/monitoring/docker-compose.yml -f overlays/profiling/docker-compose.yml up

@@ -1,6 +1,7 @@
 # https://github.com/DavidAnson/markdownlint
 default: true
 MD013: false  # line-length - Line length
+MD028: false  # blank-lines - Blank lines between blockquotes
 MD033: false  # inline HTML - Inline HTML
 MD034: false  # no-bare-urls - No bare URLs
 MD059: false  # descriptive-link-text - Link text should be descriptive
