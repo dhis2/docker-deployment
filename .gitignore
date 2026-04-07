@@ -15,5 +15,7 @@ Thumbs.db
 # IDE
 .vscode/
 
+.ansible/
+
 traefik/acme.json
 backups/
