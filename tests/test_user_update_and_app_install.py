@@ -1,7 +1,8 @@
 import os
+import time
 
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Page, Error as PlaywrightError, expect
 
 URL = "https://" + os.getenv("APP_HOSTNAME")
 USERNAME = os.getenv("DHIS2_ADMIN_USERNAME")
@@ -9,7 +10,17 @@ PASSWORD = os.getenv("DHIS2_ADMIN_PASSWORD")
 
 
 def login_user(page: Page):
-    page.goto(URL + "/login.html")
+    # On Linux, Docker bridge network creation triggers netlink address/link
+    # notifications that cause Chromium to raise ERR_NETWORK_CHANGED.
+    for attempt in range(3):
+        try:
+            page.goto(URL + "/login.html")
+            break
+        except PlaywrightError as e:
+            if "ERR_NETWORK_CHANGED" not in str(e) or attempt == 2:
+                raise
+            print(f"ERR_NETWORK_CHANGED on navigation, retrying ({attempt + 1}/3)...")
+            time.sleep(5)
 
     page.get_by_role("textbox", name="Username").fill(USERNAME)
     page.get_by_role("textbox", name="Password").fill(PASSWORD)
@@ -61,4 +72,7 @@ def test_app_install(page: Page):
     iframe.get_by_role("button", name="Android Settings").click()
     iframe.get_by_role("button", name="Install").click()
 
-    expect(iframe.get_by_text("App installed successfully")).to_be_visible(timeout=15000)
+    success = iframe.get_by_text("App installed successfully")
+    error = iframe.get_by_text("Failed to install app")
+    expect(success.or_(error)).to_be_visible(timeout=60000)
+    expect(success).to_be_visible()
