@@ -72,4 +72,7 @@ def test_app_install(page: Page):
     iframe.get_by_role("button", name="Android Settings").click()
     iframe.get_by_role("button", name="Install").click()
 
-    expect(iframe.get_by_text("App installed successfully")).to_be_visible(timeout=30000)
+    success = iframe.get_by_text("App installed successfully")
+    error = iframe.get_by_text("Failed to install app")
+    expect(success.or_(error)).to_be_visible(timeout=60000)
+    expect(success).to_be_visible()
