@@ -52,6 +52,7 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
   - [Clean all services](#clean-all-services)
   - [Run end-to-end tests](#run-end-to-end-tests)
 - [Further Documentation](#further-documentation)
+- [Community & Discussions](#community--discussions)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -75,7 +76,6 @@ Open [http://dhis2-127-0-0-1.nip.io](http://dhis2-127-0-0-1.nip.io) in your favo
 
 > [!NOTE]
 > Your browser will warn you that the certificate is not trusted. This is expected, as it is a self-signed certificate.
-<!-- markdownlint-disable MD028 -->
 
 > [!NOTE]
 > The default admin credentials are available in the `.env` file.
@@ -163,7 +163,8 @@ docker compose -f docker-compose.yml -f overlays/glowroot/docker-compose.yml up
 
 The profiling overlay adds distributed tracing capabilities using Grafana Tempo and OpenTelemetry. This allows you to trace requests through the DHIS2 application, providing insights into performance bottlenecks and request flows.
 
-> **Note:** The profiling overlay requires the monitoring overlay to be enabled first.
+> [!NOTE]
+> The profiling overlay requires the monitoring overlay to be enabled first.
 
 ```shell
 docker compose -f docker-compose.yml -f overlays/monitoring/docker-compose.yml -f overlays/profiling/docker-compose.yml up
@@ -338,3 +339,15 @@ For more in-depth information, please refer to the following:
 
 - [Environment Variables](docs/environment-variables.md)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/current/app-pgdump.html)
+
+## Community & Discussions
+
+> [!TIP]
+>
+> ### 🤝 Join the Discussion
+>
+> For troubleshooting, configuration help, and community, please use the **DHIS2 Community of Practice**:
+>
+> - 🟦 **[Server Administration](https://community.dhis2.org/c/server-administration/33)** — General server topics.
+> - 🔹 **[DHIS2 on Docker](https://community.dhis2.org/c/server-administration/docker/95)** — **Specific to Docker on DHIS2.**
+> - 🔹 **[DHIS2 on Kubernetes](https://community.dhis2.org/c/server-administration/kubernetes/94)**
