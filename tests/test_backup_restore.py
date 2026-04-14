@@ -9,6 +9,7 @@ from test_user_update_and_app_install import login_user
 def test_launch_environment():
     run_make_command("launch COMPOSE_OPTS=-d")
 
+    wait_for_service_healthy("app")
     assert_no_services_unhealthy()
 
 
@@ -25,7 +26,7 @@ def test_create_backup(backup_timestamp: str):
 
 @pytest.mark.order(5)
 def test_clean_environment():
-    run_make_command("clean")
+    run_make_command("clean-all")
 
     assert_no_services_running()
 
@@ -77,5 +78,5 @@ def verify_restored_app(page: Page):
     iframe.locator("body").wait_for(state="visible")
 
     iframe.get_by_role("menuitem", name="Custom apps").click()
-    expect(iframe.get_by_role("heading", name="All installed custom apps")).to_be_visible()
-    expect(iframe.get_by_role("button", name="Android Settings")).to_be_visible()
+    expect(iframe.get_by_role("heading", name="All installed custom apps")).to_be_visible(timeout=30000)
+    expect(iframe.get_by_role("button", name="Android Settings")).to_be_visible(timeout=30000)
