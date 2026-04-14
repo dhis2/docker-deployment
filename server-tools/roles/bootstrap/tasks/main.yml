@@ -43,11 +43,11 @@
     home: "{{ docker_home }}"
     create_home: yes
 
-- name: Add user to docker group
-  user:
-    name: "{{ docker_user }}"
-    groups: "{{ docker_group }}"
-    append: yes
+#- name: Add user to docker group
+#  user:
+#    name: "{{ docker_user }}"
+#    groups: "{{ docker_group }}"
+#    append: yes
 
 - name: Ensure deploy directory exists
   file:
