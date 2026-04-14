@@ -1,2 +1,0 @@
-# Instance-specific env files contain passwords — never commit them
-*.env

@@ -1,30 +1,27 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=lib/env-utils.sh
-source "$SCRIPT_DIR/lib/env-utils.sh"
+REQUIRED_COMMANDS=("tr" "head" "fold" "shuf" "sed" "chmod" "cp")
+MISSING_COMMANDS=()
 
-check_required_commands
+for cmd in "${REQUIRED_COMMANDS[@]}"; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    MISSING_COMMANDS+=("$cmd")
+  fi
+done
 
-MONITORING_ENV="stacks/monitoring/.env"
-if [ ! -f "$MONITORING_ENV" ]; then
-  echo "Error: '$MONITORING_ENV' not found." >&2
-  echo "Run 'make generate-stack-envs' first to set up the shared stacks." >&2
+if [ ${#MISSING_COMMANDS[@]} -ne 0 ]; then
+  echo "Error: The following required commands are not available:" >&2
+  printf "  - %s\n" "${MISSING_COMMANDS[@]}" >&2
+  echo "" >&2
+  echo "Please install the missing commands and try again." >&2
   exit 1
 fi
 
-# If GEN_PROJECT_NAME is set, write to instances/<name>.env instead of .env.
-if [ -n "${GEN_PROJECT_NAME:-}" ]; then
-  mkdir -p instances
-  OUTPUT_FILE="instances/${GEN_PROJECT_NAME}.env"
-else
-  OUTPUT_FILE=".env"
-fi
+OUTPUT_FILE=".env"
 TEMPLATE_FILE=".env.template"
 
 if [ -f "$OUTPUT_FILE" ]; then
-  echo "Error: '$OUTPUT_FILE' already exists." >&2
+  echo "Error: An '$OUTPUT_FILE' file already exists." >&2
   exit 1
 fi
 
@@ -33,30 +30,57 @@ if [ ! -f "$TEMPLATE_FILE" ]; then
   exit 1
 fi
 
-# Validate required inputs
+LENGTH=32
+CHARSET='A-Za-z0-9_=.-'
+
+generate_password() {
+  local password=""
+  password+=$(LC_ALL=C tr -dc '[:upper:]' < /dev/urandom | head -c 1)
+  password+=$(LC_ALL=C tr -dc '[:lower:]' < /dev/urandom | head -c 1)
+  password+=$(LC_ALL=C tr -dc '0-9' < /dev/urandom | head -c 1)
+  password+=$(LC_ALL=C tr -dc '_=.-' < /dev/urandom | head -c 1)
+  local remaining=$((LENGTH - 4))
+  password+=$(LC_ALL=C tr -dc "$CHARSET" < /dev/urandom | head -c "$remaining")
+  echo "$password" | fold -w1 | shuf | tr -d '\n'
+}
+
+# Validate required inputs for ungeneratable values
 : "${GEN_APP_HOSTNAME:?Environment variable GEN_APP_HOSTNAME must be set}"
+: "${GEN_LETSENCRYPT_ACME_EMAIL:?Environment variable GEN_LETSENCRYPT_ACME_EMAIL must be set}"
 
 DHIS2_ADMIN_PASSWORD=$(generate_password)
 POSTGRES_PASSWORD=$(generate_password)
 POSTGRES_DB_PASSWORD=$(generate_password)
 POSTGRES_METRICS_PASSWORD=$(generate_password)
+GRAFANA_ADMIN_PASSWORD=$(generate_password)
+DHIS2_MONITOR_PASSWORD=$(generate_password)
 
-# Read shared monitoring credentials from the monitoring stack env so all instances match.
-DHIS2_MONITOR_PASSWORD=$(grep -E '^DHIS2_MONITOR_PASSWORD=' "$MONITORING_ENV" | cut -d= -f2-)
-DHIS2_MONITOR_USERNAME=$(grep -E '^DHIS2_MONITOR_USERNAME=' "$MONITORING_ENV" | cut -d= -f2-)
+# Detect GNU vs BSD sed
+if sed --version >/dev/null 2>&1; then
+  SED_FLAGS=(-i)
+else
+  SED_FLAGS=(-i '')
+fi
 
 cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
 
 # Remove the first line beginning with "# NOTE!!!:" and any leading blank lines
 sed "${SED_FLAGS[@]}" -e '/^# NOTE!!!:/d' -e '/./,$!d' "$OUTPUT_FILE"
 
-update_env_var "$OUTPUT_FILE" "DHIS2_ADMIN_PASSWORD" "$DHIS2_ADMIN_PASSWORD"
-update_env_var "$OUTPUT_FILE" "DHIS2_MONITOR_USERNAME" "$DHIS2_MONITOR_USERNAME"
-update_env_var "$OUTPUT_FILE" "DHIS2_MONITOR_PASSWORD" "$DHIS2_MONITOR_PASSWORD"
-update_env_var "$OUTPUT_FILE" "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD"
-update_env_var "$OUTPUT_FILE" "POSTGRES_DB_PASSWORD" "$POSTGRES_DB_PASSWORD"
-update_env_var "$OUTPUT_FILE" "POSTGRES_METRICS_PASSWORD" "$POSTGRES_METRICS_PASSWORD"
-update_env_var "$OUTPUT_FILE" "APP_HOSTNAME" "$GEN_APP_HOSTNAME"
+update_env_var() {
+  local key="$1"
+  local value="$2"
+  sed "${SED_FLAGS[@]}" "s|^${key}=.*|${key}=${value}|" "$OUTPUT_FILE"
+}
+
+update_env_var "DHIS2_ADMIN_PASSWORD" "$DHIS2_ADMIN_PASSWORD"
+update_env_var "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD"
+update_env_var "POSTGRES_DB_PASSWORD" "$POSTGRES_DB_PASSWORD"
+update_env_var "POSTGRES_METRICS_PASSWORD" "$POSTGRES_METRICS_PASSWORD"
+update_env_var "GRAFANA_ADMIN_PASSWORD" "$GRAFANA_ADMIN_PASSWORD"
+update_env_var "DHIS2_MONITOR_PASSWORD" "$DHIS2_MONITOR_PASSWORD"
+update_env_var "APP_HOSTNAME" "$GEN_APP_HOSTNAME"
+update_env_var "LETSENCRYPT_ACME_EMAIL" "$GEN_LETSENCRYPT_ACME_EMAIL"
 
 chmod u+rw,go-rwx "$OUTPUT_FILE"
 

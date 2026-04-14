@@ -1,8 +1,0 @@
-[
-  {
-    "targets": ["${PROJECT_NAME}-app:8080"],
-    "labels": {
-      "instance": "${PROJECT_NAME}"
-    }
-  }
-]

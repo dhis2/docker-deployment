@@ -1,36 +1,3 @@
-# Getting Started
-
-## One-time server setup
-
-```shell
-GEN_LETSENCRYPT_ACME_EMAIL=devops@dhis2.org \
-GEN_GRAFANA_HOSTNAME=grafana.127-0-0-1.nip.io \
-  make generate-stack-envs
-
-make launch-traefik
-make launch-monitoring
-```
-
-## Deploy an instance
-
-```shell
-APP_HOSTNAME=dhis2.127-0-0-1.nip.io PROJECT_NAME=prod make create-instance
-PROJECT_NAME=prod make launch-instance
-```
-
-To add a second instance:
-
-```shell
-APP_HOSTNAME=dev.dhis2.127-0-0-1.nip.io PROJECT_NAME=dev make create-instance
-PROJECT_NAME=dev make launch-instance
-```
-
-To stop an instance:
-
-```shell
-PROJECT_NAME=prod make stop-instance
-```
-
 # Docker Deployment
 
 > [!CAUTION]

@@ -17,14 +17,5 @@ Thumbs.db
 
 .ansible/
 
+traefik/acme.json
 backups/
-
-# Standalone stacks — env files contain passwords
-stacks/traefik/.env
-stacks/monitoring/.env
-
-# Generated route and target files (created by make launch-instance / launch-monitoring)
-stacks/traefik/conf.d/*.yml
-!stacks/traefik/conf.d/middlewares.yml
-stacks/monitoring/targets/dhis2/*.json
-stacks/monitoring/targets/postgres/*.json

@@ -1,23 +1,15 @@
 x-database-image: &database-image
   image: postgis/postgis:${POSTGRES_VERSION:-16-master}
 
-x-healthcheck-options: &healthcheck-options
-  interval: 10s
-  timeout: 3s
-  retries: 3
-  start_period: 30s
-
-x-loki-logging: &loki-logging
-  driver: loki
-  options:
-    loki-url: "http://localhost:3100/loki/api/v1/push"
-    loki-timeout: "1s"
-    loki-retries: "2"
-    loki-external-labels: "instance=${COMPOSE_PROJECT_NAME}"
+x-file-storage-image: &file-storage-image
+  image: rclone/rclone:${RCLONE_VERSION:-1.68}
 
 services:
   app:
     image: dhis2/core:${DHIS2_VERSION:-42}
+    depends_on:
+      database:
+        condition: service_healthy
     volumes:
       - dhis2:/opt/dhis2/
       #- ./config/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
@@ -47,21 +39,10 @@ services:
       POSTGRES_DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
       # -- Enable system audit logging
       SYSTEM_AUDIT_ENABLED: ${SYSTEM_AUDIT_ENABLED:-off}
-      MONITORING_API_ENABLED: on
-      MONITORING_JVM_ENABLED: on
-      MONITORING_DBPOOL_ENABLED: on
-      MONITORING_HIBERNATE_ENABLED: on
-      MONITORING_UPTIME_ENABLED: on
-      MONITORING_CPU_ENABLED: on
     networks:
-      application:
-      database:
-      proxy:
-        aliases:
-          - "${COMPOSE_PROJECT_NAME}-app"
-      monitoring_net:
-        aliases:
-          - "${COMPOSE_PROJECT_NAME}-app"
+      - frontend
+      - application
+      - database
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://127.0.0.1:8080/dhis-web-login/" ]
@@ -69,7 +50,6 @@ services:
       timeout: 3s
       retries: 3
       start_period: 120s
-    logging: *loki-logging
     user: 65534:65534
     cap_drop:
       - ALL
@@ -98,74 +78,238 @@ services:
       - database
     entrypoint: [ "/bin/sh", "/update-admin-password.sh" ]
     working_dir: /root
-    logging: *loki-logging
     <<: *database-image
     cap_drop:
       - ALL
     security_opt:
       - no-new-privileges:true
 
-  # Creates the DHIS2 monitoring user used by Prometheus to scrape /api/metrics.
-  # Runs once per instance after the admin password is set.
-  create-monitoring-user:
+  database:
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+      - ./config/postgresql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./config/postgresql/conf.d:/etc/postgresql/conf.d:ro
+    environment:
+      # -- Postgres user password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # -- Name of the database
+      POSTGRES_DB: ${POSTGRES_DB:-dhis}
+      # -- Database username
+      POSTGRES_DB_USERNAME: ${POSTGRES_DB_USERNAME}
+      # -- Database password
+      POSTGRES_DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      # -- Initdb arguments
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+      # -- Metrics username
+      POSTGRES_METRICS_USERNAME: ${POSTGRES_METRICS_USERNAME}
+      # -- Metrics user password
+      POSTGRES_METRICS_PASSWORD: ${POSTGRES_METRICS_PASSWORD}
+    networks:
+      - database
+    command: >
+      postgres
+        -c config_file=/etc/postgresql/postgresql.conf
+        -c hba_file=/var/lib/postgresql/data/pg_hba.conf
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    user: postgres
+    <<: *database-image
+    cap_drop:
+      - ALL
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /var/run/postgresql
+
+  traefik-init:
     image: alpine:3.22
+    volumes:
+      - cert:/cert:rw
+      - ./scripts/init-cert.sh:/init-cert.sh:ro
+    command: [ "/init-cert.sh" ]
+
+  traefik:
+    image: traefik:v3.5
     depends_on:
+      traefik-init:
+        condition: service_completed_successfully
+      # Prevent Traefik from starting if the DHIS2 administrator password isn't updated!
       update-admin-password:
         condition: service_completed_successfully
     volumes:
-      - ./scripts/create-monitoring-user.sh:/create-monitoring-user.sh:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - cert:/cert:rw
     environment:
-      DHIS2_HOSTNAME: ${DHIS2_HOSTNAME:-http://app:8080}
-      DHIS2_ADMIN_USERNAME: ${DHIS2_ADMIN_USERNAME}
-      DHIS2_ADMIN_PASSWORD: ${DHIS2_ADMIN_PASSWORD}
-      DHIS2_MONITOR_USERNAME: ${DHIS2_MONITOR_USERNAME}
-      DHIS2_MONITOR_PASSWORD: ${DHIS2_MONITOR_PASSWORD}
+      # -- Log level
+      TRAEFIK_LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # -- Enable access logs
+      TRAEFIK_ACCESSLOG: ${LOG_ACCESS:-true}
+      # -- Access log format
+      TRAEFIK_ACCESSLOG_FORMAT: ${LOG_FORMAT:-json}
+      # -- Allow ping
+      TRAEFIK_PING: true
+      # -- Default entrypoint port
+      TRAEFIK_ENTRYPOINTS_WEB_ADDRESS: :80
+      # -- Redirect to https
+      TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_TO: websecure
+      # -- Redirect scheme
+      TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME: https
+      # -- Default secure entrypoint port
+      TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS: :443
+      # -- Provider file
+      TRAEFIK_PROVIDERS_FILE_FILENAME: /etc/traefik/dynamic.yml
+      # -- Watch the provider file for changes
+      TRAEFIK_PROVIDERS_FILE_WATCH: false
+      # -- Enable API
+      TRAEFIK_API: false
+      # -- Allow insecure API access
+      TRAEFIK_API_INSECURE: false
+      # -- Enable Prometheus metrics
+      TRAEFIK_METRICS_PROMETHEUS: true
+      # -- ACME email
+      TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL: ${LETSENCRYPT_ACME_EMAIL}
+      # -- ACME storage file
+      TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_STORAGE: /cert/acme.json
+      # -- ACME TLS challenge
+      TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_TLSCHALLENGE: true
+      # -- ACME CA server
+      TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_CASERVER: ${LETSENCRYPT_ACME_CASERVER:-https://acme-v02.api.letsencrypt.org/directory}
+      # -- Hostname
+      APP_HOSTNAME: ${APP_HOSTNAME}
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
     networks:
-      - application
-    entrypoint: [ "/bin/sh", "/create-monitoring-user.sh" ]
-    logging: *loki-logging
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-
-  # Exports PostgreSQL metrics for Prometheus scraping.
-  # Attached to monitoring_net with a predictable alias for the shared Prometheus.
-  postgres-exporter:
-    image: quay.io/prometheuscommunity/postgres-exporter:${POSTGRES_EXPORTER_VERSION:-v0.17.1}
-    depends_on:
-      create-monitoring-user:
-        condition: service_completed_successfully
-    environment:
-      DATA_SOURCE_NAME: "postgresql://${POSTGRES_METRICS_USERNAME}:${POSTGRES_METRICS_PASSWORD}@database:5432/${POSTGRES_DB}?sslmode=disable"
-    networks:
-      database:
-      monitoring_net:
-        aliases:
-          - "${COMPOSE_PROJECT_NAME}-postgres-exporter"
+      - frontend
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--quiet", "--output-document=/dev/null", "http://localhost:9187/metrics" ]
-      <<: *healthcheck-options
-    logging: *loki-logging
+      test: [ "CMD", "traefik", "healthcheck" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
     user: nobody:nobody
     cap_drop:
       - ALL
     read_only: true
     security_opt:
       - no-new-privileges:true
+    tmpfs:
+      - /tmp
+
+  backup-database:
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup-database.sh:/backup-database.sh:ro
+    environment:
+      # -- Database hostname
+      POSTGRES_HOST: database
+      # -- Database username
+      POSTGRES_USER: ${POSTGRES_DB_USERNAME}
+      # -- Database password
+      POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      # -- Database name
+      POSTGRES_DB: ${POSTGRES_DB:-dhis}
+      # -- Database backup format
+      POSTGRES_BACKUP_FORMAT: ${POSTGRES_BACKUP_FORMAT:-custom}
+      # -- The `PGPASSWORD` environment variable is used by the `pg_dump` command`
+      PGPASSWORD: ${POSTGRES_DB_PASSWORD}
+    networks:
+      - database
+    entrypoint: [ "/bin/bash", "/backup-database.sh" ]
+    <<: *database-image
+    profiles:
+      - backup
+
+  backup-file-storage:
+    volumes:
+      - dhis2:/opt/dhis2:ro
+      - ./backups:/backups
+      - ./scripts/backup-file-storage.sh:/backup-file-storage.sh:ro
+    environment:
+      # -- Backup timestamp. Used to name the backup directory and the backup file. Since those are created by different containers, we need to ensure the backup timestamp is the same for both containers.
+      BACKUP_TIMESTAMP: ${BACKUP_TIMESTAMP}
+      # -- Directory to back up
+      BACKUP_SOURCE_PATH: ${BACKUP_SOURCE_PATH:-/opt/dhis2/files}
+    networks:
+      - application
+    entrypoint: [ "/bin/sh", "/backup-file-storage.sh" ]
+    <<: *file-storage-image
+    profiles:
+      - backup
+
+  restore-database:
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - ./backups:/backups:ro
+      - ./scripts/restore-database.sh:/restore-database.sh:ro
+      - ./scripts/fix-ownership.sh:/fix-ownership.sh:ro
+    environment:
+      # -- Database hostname
+      POSTGRES_HOST: database
+      # -- Database username
+      POSTGRES_USER: ${POSTGRES_DB_USERNAME}
+      # -- Database password
+      POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      # -- Database name
+      POSTGRES_DB: ${POSTGRES_DB:-dhis}
+      # -- The `PGPASSWORD` environment variable is used by the `pg_dump` command`
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      # -- Database restore file
+      DB_RESTORE_FILE: ${DB_RESTORE_FILE}
+      # -- Number of parallel jobs for pg_restore
+      DB_RESTORE_NUMBER_OF_JOBS: ${DB_RESTORE_NUMBER_OF_JOBS:-4}
+    networks:
+      - database
+    entrypoint: [ "/bin/bash", "/restore-database.sh" ]
+    <<: *database-image
+    profiles:
+      - restore
+
+  restore-file-storage:
+    volumes:
+      - dhis2:/opt/dhis2
+      - ./backups:/backups:ro
+      - ./scripts/restore-file-storage.sh:/restore-file-storage.sh:ro
+    environment:
+      # -- Directory to restore from
+      FILE_STORAGE_RESTORE_SOURCE_DIR: ${FILE_STORAGE_RESTORE_SOURCE_DIR}
+      # -- Directory to restore to
+      RESTORE_DESTINATION_PATH: ${RESTORE_DESTINATION_PATH:-/opt/dhis2/files}
+    networks:
+      - application
+    entrypoint: [ "/bin/sh", "/restore-file-storage.sh" ]
+    <<: *file-storage-image
+    profiles:
+      - restore
+
+  compose-docs:
+    image: tons/docker-compose-docs:2.1.0
+    volumes:
+      - .:/src:ro
+    environment:
+      DOCKER_COMPOSE_FILE_GLOBS: /src/docker-compose.yml;/src/overlays/*/docker-compose.yml
+    profiles:
+      - docs
 
 networks:
+  frontend:
   application:
   database:
-    name: ${COMPOSE_PROJECT_NAME}-db
-    external: true
-  proxy:
-    name: proxy
-    external: true
-  monitoring_net:
-    name: monitoring_net
-    external: true
+  monitoring:
 
 volumes:
   dhis2: {}
+  postgres: {}
+  cert: {}
