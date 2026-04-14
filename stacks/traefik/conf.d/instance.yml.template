@@ -1,0 +1,36 @@
+# Generated per-instance Traefik routing configuration.
+# Created by `make launch-instance` — do not edit manually.
+# Remove with `make stop-instance PROJECT_NAME=<name>`.
+
+http:
+  routers:
+    ${PROJECT_NAME}-app:
+      rule: "Host(`${APP_HOSTNAME}`)"
+      service: ${PROJECT_NAME}-app
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - security
+
+    ${PROJECT_NAME}-glowroot:
+      rule: "Host(`glowroot.${APP_HOSTNAME}`)"
+      service: ${PROJECT_NAME}-glowroot
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - security
+
+  services:
+    ${PROJECT_NAME}-app:
+      loadBalancer:
+        servers:
+          - url: "http://${PROJECT_NAME}-app:8080"
+
+    ${PROJECT_NAME}-glowroot:
+      loadBalancer:
+        servers:
+          - url: "http://${PROJECT_NAME}-app:4000"
