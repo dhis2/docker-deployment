@@ -3,6 +3,9 @@
 set -o errexit
 set -o nounset
 
+# Install curl (not included in baosystems/postgis image)
+apt update && apt install -y --no-install-recommends curl
+
 URL="https://github.com/shoenig/bcrypt-tool/releases/download/v1.1.7/bcrypt-tool_1.1.7_linux_amd64.tar.gz"
 EXPECTED_SHA="7eb3f0cc159a54e4a1efb0fc56c11a5eb80efa5c88b482d0034eceea4cdf936e"
 
