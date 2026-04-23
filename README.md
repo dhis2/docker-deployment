@@ -1,5 +1,8 @@
 # Docker Deployment
 
+[![Verified by InfraScan](https://img.shields.io/badge/Verified_by-SolDevelo_InfraScan-0052cc?style=flat&logo=security)](https://github.com/soldevelo/infrascan)
+
+
 > [!CAUTION]
 > **Ready for public testing — NOT yet recommended for production or critical data**
 >
