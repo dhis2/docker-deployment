@@ -5,7 +5,7 @@ PRE_COMMIT_VERSION ?= 4.3.0
 PROJECT_NAME ?= $(notdir $(CURDIR))
 ENV_FILE = instances/$(PROJECT_NAME).env
 
-.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance launch-postgres launch-instance launch-traefik launch-monitoring ensure-networks stop-instance clean clean-all config get-backup-timestamp
+.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances launch-postgres launch-instance launch-traefik launch-monitoring ensure-networks stop-instance clean clean-all config get-backup-timestamp
 
 init:
 	@test -d .venv || python3 -m venv .venv
@@ -115,6 +115,21 @@ launch-monitoring: ensure-networks
 create-instance:
 	@test -n "$(APP_HOSTNAME)" || (echo "Error: APP_HOSTNAME must be set" >&2; exit 1)
 	GEN_PROJECT_NAME=$(PROJECT_NAME) GEN_APP_HOSTNAME=$(APP_HOSTNAME) ./scripts/generate-env.sh
+
+# List all configured instances with their hostname and running container count.
+list-instances:
+	@envs=$$(ls instances/*.env 2>/dev/null); \
+	if [ -z "$$envs" ]; then \
+		echo "No instances found in instances/"; \
+	else \
+		printf "%-20s %-40s %s\n" "INSTANCE" "HOSTNAME" "CONTAINERS"; \
+		for env in $$envs; do \
+			name=$$(basename $$env .env); \
+			hostname=$$(grep -E '^APP_HOSTNAME=' $$env | cut -d= -f2-); \
+			running=$$(docker compose --project-name $$name -f docker-compose.yml ps -q 2>/dev/null | wc -l | tr -d ' '); \
+			printf "%-20s %-40s %s running\n" "$$name" "$$hostname" "$$running"; \
+		done; \
+	fi
 
 # Start the PostgreSQL stack for a named instance.
 # Creates a per-instance db network (PROJECT_NAME-db) and waits until healthy.
