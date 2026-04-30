@@ -156,6 +156,8 @@ Open [http://dhis2.127-0-0-1.nip.io](http://dhis2.127-0-0-1.nip.io) in your favo
 
 > [!NOTE]
 > Your browser will warn you that the certificate is not trusted. This is expected, as it is a self-signed certificate.
+>
+> For local testing without real DNS, [nip.io](https://nip.io) provides free wildcard DNS that resolves to an embedded IP address — for example, `dhis2.127-0-0-1.nip.io` resolves to `127.0.0.1` with no configuration required.
 
 > [!NOTE]
 > The default DHIS2 admin credentials are available in `instances/prod.env`.
@@ -172,6 +174,13 @@ Before deploying to production, ensure you have:
 - A fully qualified domain name (FQDN) for each DHIS2 instance you plan to run.
 - A valid email address for Let's Encrypt certificate management.
 - Appropriate firewall rules configured for ports 80 and 443.
+
+> [!NOTE]
+> A wildcard DNS record (`*.your-domain.com`) pointing to your server is a convenient way to cover all instances with a single DNS entry — each instance then gets its own subdomain (e.g. `prod.your-domain.com`, `dev.your-domain.com`).
+>
+> You can also namespace instances under a shared subdomain: add an A record for `dhis2.your-domain.com` and a wildcard `*.dhis2.your-domain.com`, then host `prod` at `dhis2.your-domain.com` and additional instances at `dev.dhis2.your-domain.com`, `test.dhis2.your-domain.com`, etc. Note that a wildcard does not match the bare subdomain it is rooted at, so the explicit A record for `dhis2.your-domain.com` is required alongside the wildcard.
+>
+> For local testing without real DNS, [nip.io](https://nip.io) can also be used, as mentioned earlier.
 
 ### One-time server setup
 
