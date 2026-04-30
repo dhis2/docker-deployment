@@ -2,7 +2,7 @@
 
 A collection of useful process and architectural reference diagrams.
 
-## 1. One-time server setup
+## One-time server setup
 
 Run once per host before creating any instances.
 
@@ -17,7 +17,7 @@ flowchart TD
     E --> G["Writes: conf.d/monitoring.yml<br/>Starts: Grafana, Prometheus,<br/>Loki, etc.<br/>Watches: monitoring/targets/"]
 ```
 
-## 8. Instance lifecycle (sequence)
+## Instance lifecycle (sequence)
 
 ```mermaid
 sequenceDiagram
