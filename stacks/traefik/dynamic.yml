@@ -40,6 +40,7 @@ http:
         referrerPolicy: "strict-origin-when-cross-origin"
         frameDeny: true
         contentTypeNosniff: true
+        browserXssFilter: true
 
   services:
     app:
