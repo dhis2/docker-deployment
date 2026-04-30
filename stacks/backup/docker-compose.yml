@@ -7,7 +7,7 @@ x-file-storage-image: &file-storage-image
 services:
   backup-database:
     volumes:
-      - ./backups:/backups
+      - ${BACKUP_DIR}:/backups
       - ./scripts/backup-database.sh:/backup-database.sh:ro
     environment:
       # -- Database hostname
@@ -32,7 +32,7 @@ services:
   backup-file-storage:
     volumes:
       - dhis2:/opt/dhis2:ro
-      - ./backups:/backups
+      - ${BACKUP_DIR}:/backups
       - ./scripts/backup-file-storage.sh:/backup-file-storage.sh:ro
     environment:
       # -- Backup timestamp. Used to name the backup directory and the backup file. Since those are created by different containers, we need to ensure the backup timestamp is the same for both containers.
@@ -48,7 +48,7 @@ services:
 
   restore-database:
     volumes:
-      - ./backups:/backups:ro
+      - ${BACKUP_DIR}:/backups:ro
       - ./scripts/restore-database.sh:/restore-database.sh:ro
       - ./scripts/fix-ownership.sh:/fix-ownership.sh:ro
     environment:
@@ -76,7 +76,7 @@ services:
   restore-file-storage:
     volumes:
       - dhis2:/opt/dhis2
-      - ./backups:/backups:ro
+      - ${BACKUP_DIR}:/backups:ro
       - ./scripts/restore-file-storage.sh:/restore-file-storage.sh:ro
     environment:
       # -- Directory to restore from
