@@ -27,7 +27,7 @@ services:
     volumes:
       - tempo:/var/tempo
     networks:
-      - monitoring_net
+      - monitoring
     command: [ "sh", "-c", "mkdir -p /var/tempo/traces /var/tempo/wal /var/tempo/generator/wal && chown -R nobody:nobody /var/tempo" ]
     user: root
     security_opt:
@@ -42,7 +42,7 @@ services:
       - tempo:/var/tempo
       - ./overlays/profiling/config/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
     networks:
-      - monitoring_net
+      - monitoring
     command: [ "-config.file=/etc/tempo/tempo.yml" ]
     restart: unless-stopped
     healthcheck:
@@ -64,7 +64,7 @@ services:
       OTEL_VERSION: ${OTEL_VERSION:-2.11.0}
       OTEL_JAR_SHA256: ${OTEL_JAR_SHA256:-4cff4ab46179260a61fc0d884f3f170cfbd9d2962dd260be2cff31262d0c7618}
     networks:
-      - monitoring_net
+      - monitoring
     command:
       - sh
       - -c
@@ -78,8 +78,8 @@ services:
       - no-new-privileges:true
 
 networks:
-  monitoring_net:
-    name: monitoring_net
+  monitoring:
+    name: monitoring
     external: true
 
 volumes:

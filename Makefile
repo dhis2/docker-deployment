@@ -99,7 +99,7 @@ COMPOSE_CMD = docker compose \
 # Safe to run multiple times (ignores errors if networks already exist).
 ensure-networks:
 	docker network create proxy 2>/dev/null || true
-	docker network create monitoring_net 2>/dev/null || true
+	docker network create monitoring 2>/dev/null || true
 
 # Start the standalone Traefik gateway (run once; watches stacks/traefik/conf.d/ for route changes)
 start-traefik: ensure-networks

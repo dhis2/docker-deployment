@@ -59,7 +59,7 @@ services:
       proxy:
         aliases:
           - "${COMPOSE_PROJECT_NAME}-app"
-      monitoring_net:
+      monitoring:
         aliases:
           - "${COMPOSE_PROJECT_NAME}-app"
     restart: unless-stopped
@@ -130,7 +130,7 @@ services:
       - no-new-privileges:true
 
   # Exports PostgreSQL metrics for Prometheus scraping.
-  # Attached to monitoring_net with a predictable alias for the shared Prometheus.
+  # Attached to monitoring with a predictable alias for the shared Prometheus.
   postgres-exporter:
     image: quay.io/prometheuscommunity/postgres-exporter:${POSTGRES_EXPORTER_VERSION:-v0.17.1}
     depends_on:
@@ -140,7 +140,7 @@ services:
       DATA_SOURCE_NAME: "postgresql://${POSTGRES_METRICS_USERNAME}:${POSTGRES_METRICS_PASSWORD}@database:5432/${POSTGRES_DB}?sslmode=disable"
     networks:
       database:
-      monitoring_net:
+      monitoring:
         aliases:
           - "${COMPOSE_PROJECT_NAME}-postgres-exporter"
     restart: unless-stopped
@@ -163,8 +163,8 @@ networks:
   proxy:
     name: proxy
     external: true
-  monitoring_net:
-    name: monitoring_net
+  monitoring:
+    name: monitoring
     external: true
 
 volumes:

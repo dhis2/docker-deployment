@@ -13,7 +13,7 @@ flowchart TD
     B --> C["stacks/traefik/.env<br/>stacks/monitoring/.env written"]
     C --> D["make start-traefik"]
     C --> E["make start-monitoring"]
-    D --> F["Creates: proxy network<br/>Creates: monitoring_net network<br/>Starts: Traefik container<br/>Watches: stacks/traefik/conf.d/"]
+    D --> F["Creates: proxy network<br/>Creates: monitoring network<br/>Starts: Traefik container<br/>Watches: stacks/traefik/conf.d/"]
     E --> G["Writes: conf.d/monitoring.yml<br/>Starts: Grafana, Prometheus,<br/>Loki, etc.<br/>Watches: monitoring/targets/"]
 ```
 
@@ -36,7 +36,7 @@ sequenceDiagram
 
     Note over Operator,Monitoring: make start-instance
     Operator->>Make: PROJECT_NAME=NAME
-    Make->>Docker: ensure proxy + monitoring_net networks
+    Make->>Docker: ensure proxy + monitoring networks
     Make->>Docker: create NAME-db network
     Make->>Docker: compose up postgres --wait
     Docker-->>Make: postgres healthy
@@ -73,7 +73,7 @@ sequenceDiagram
 
 ![Architecture](./architecture.svg)
 
-| Service | proxy | monitoring_net | one-db | two-db |
+| Service | proxy | monitoring | one-db | two-db |
 |---|:---:|:---:|:---:|:---:|
 | Traefik | ✓ | | | |
 | one-app | ✓ | ✓ | ✓ | |

@@ -13,7 +13,7 @@
 # NOTE: DHIS2_MONITOR_USERNAME and DHIS2_MONITOR_PASSWORD in this file's .env must match
 # the values set in all instance .env files, since Prometheus uses a single shared credential.
 #
-# The monitoring_net and proxy external networks must exist before starting this stack:
+# The monitoring and proxy external networks must exist before starting this stack:
 #   make ensure-networks
 
 x-healthcheck-options: &healthcheck-options
@@ -109,7 +109,7 @@ services:
       PROMETHEUS_RETENTION_TIME: ${PROMETHEUS_RETENTION_TIME:-15d}
     networks:
       - monitoring_internal
-      - monitoring_net
+      - monitoring
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
@@ -175,8 +175,8 @@ services:
 
 networks:
   monitoring_internal:
-  monitoring_net:
-    name: monitoring_net
+  monitoring:
+    name: monitoring
     external: true
   proxy:
     name: proxy
