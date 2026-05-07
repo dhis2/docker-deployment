@@ -3,7 +3,7 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  # DHIS2 application metrics — one target file per instance added by `make launch-instance`
+  # DHIS2 application metrics — one target file per instance added by `make start-instance`
   # All instances must use the same DHIS2_MONITOR_USERNAME and DHIS2_MONITOR_PASSWORD
   # (set in monitoring/.env and matching each instance's .env file).
   - job_name: 'dhis2'
@@ -16,7 +16,7 @@ scrape_configs:
       username: ${DHIS2_MONITOR_USERNAME}
       password_file: /run/secrets/dhis2_monitor_password
 
-  # PostgreSQL metrics — one target file per instance added by `make launch-instance`
+  # PostgreSQL metrics — one target file per instance added by `make start-instance`
   - job_name: 'postgres'
     file_sd_configs:
       - files:

@@ -6,7 +6,7 @@ PROJECT_NAME ?= $(notdir $(CURDIR))
 ENV_FILE = instances/$(PROJECT_NAME).env
 BACKUP_DIR ?= ./backups/$(PROJECT_NAME)
 
-.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances launch-postgres launch-instance launch-traefik launch-monitoring ensure-networks stop-instance delete-instance clean clean-all config get-backup-timestamp
+.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances start-postgres start-instance start-traefik start-monitoring ensure-networks stop-instance delete-instance clean clean-all config get-backup-timestamp
 
 init:
 	@test -d .venv || python3 -m venv .venv
@@ -102,11 +102,11 @@ ensure-networks:
 	docker network create monitoring_net 2>/dev/null || true
 
 # Start the standalone Traefik gateway (run once; watches stacks/traefik/conf.d/ for route changes)
-launch-traefik: ensure-networks
+start-traefik: ensure-networks
 	docker compose -f stacks/traefik/docker-compose.yml --env-file stacks/traefik/.env up $(COMPOSE_OPTS)
 
 # Start the standalone monitoring stack (run once; watches stacks/monitoring/targets/ for new instances)
-launch-monitoring: ensure-networks
+start-monitoring: ensure-networks
 	GRAFANA_HOSTNAME=$$(grep -E '^GRAFANA_HOSTNAME=' stacks/monitoring/.env | cut -d= -f2-) \
 		envsubst < stacks/traefik/conf.d/monitoring.yml.template > stacks/traefik/conf.d/monitoring.yml
 	docker compose -f stacks/monitoring/docker-compose.yml --env-file stacks/monitoring/.env up $(COMPOSE_OPTS)
@@ -134,15 +134,15 @@ list-instances:
 
 # Start the PostgreSQL stack for a named instance.
 # Creates a per-instance db network (PROJECT_NAME-db) and waits until healthy.
-launch-postgres:
+start-postgres:
 	docker network create $(PROJECT_NAME)-db 2>/dev/null || true
 	$(POSTGRES_COMPOSE_CMD) up --wait -d
 
-# Launch a named DHIS2 instance connected to the standalone Traefik, monitoring, and postgres stacks.
-# Requires: PROJECT_NAME and ENV_FILE to be set, ensure-networks and launch-traefik and
-#           launch-monitoring to have been run first.
-# Example: PROJECT_NAME=dev ENV_FILE=instances/dev.env make launch-instance
-launch-instance: ensure-networks install-loki-driver launch-postgres
+# Start a named DHIS2 instance connected to the standalone Traefik, monitoring, and postgres stacks.
+# Requires: PROJECT_NAME and ENV_FILE to be set, ensure-networks and start-traefik and
+#           start-monitoring to have been run first.
+# Example: PROJECT_NAME=dev ENV_FILE=instances/dev.env make start-instance
+start-instance: ensure-networks install-loki-driver start-postgres
 	PROJECT_NAME=$(PROJECT_NAME) APP_HOSTNAME=$$(grep -E '^APP_HOSTNAME=' $(ENV_FILE) | cut -d= -f2-) \
 		envsubst < stacks/traefik/conf.d/instance.yml.template > stacks/traefik/conf.d/$(PROJECT_NAME).yml
 	PROJECT_NAME=$(PROJECT_NAME) \

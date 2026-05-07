@@ -76,7 +76,7 @@ flowchart LR
   - [Deployment Prerequisites](#deployment-prerequisites)
   - [One-time server setup](#one-time-server-setup)
   - [Create an instance](#create-an-instance)
-  - [Launch an instance](#launch-an-instance)
+  - [Start an instance](#start-an-instance)
   - [Manage multiple instances](#manage-multiple-instances)
   - [Stop an instance](#stop-an-instance)
 - [Advanced Usage](#advanced-usage)
@@ -118,7 +118,7 @@ flowchart TD
     subgraph per["② For each DHIS2 instance"]
         D["<b>PROJECT_NAME=&lt;name&gt; APP_HOSTNAME=&lt;hostname&gt;<br/>make create-instance</b>"]
         E["<i>Review instances/&lt;name&gt;.env<br/>Passwords and settings are generated for you</i>"]
-        F["<b>PROJECT_NAME=&lt;name&gt; make launch-instance</b>"]
+        F["<b>PROJECT_NAME=&lt;name&gt; make start-instance</b>"]
         D --> E --> F
     end
 
@@ -128,7 +128,7 @@ flowchart TD
 
     subgraph once["① One-time host setup"]
         B["<b>make generate-stack-envs</b><br/><i>Set your email and Grafana hostname</i>"]
-        C["<b>make launch-traefik</b><br/><b>make launch-monitoring</b>"]
+        C["<b>make start-traefik</b><br/><b>make start-monitoring</b>"]
         B --> C
     end
 
@@ -144,12 +144,12 @@ GEN_LETSENCRYPT_ACME_EMAIL=whatever@dhis2.org \
 GEN_GRAFANA_HOSTNAME=grafana.127-0-0-1.nip.io \
   make generate-stack-envs
 
-make launch-traefik &
-make launch-monitoring &
+make start-traefik &
+make start-monitoring &
 
 # Create and launch a DHIS2 instance (called "prod")
 APP_HOSTNAME=dhis2.127-0-0-1.nip.io PROJECT_NAME=prod make create-instance
-PROJECT_NAME=prod make launch-instance
+PROJECT_NAME=prod make start-instance
 ```
 
 Open [http://dhis2.127-0-0-1.nip.io](http://dhis2.127-0-0-1.nip.io) in your favorite browser.
@@ -191,8 +191,8 @@ GEN_LETSENCRYPT_ACME_EMAIL=your@email.com \
 GEN_GRAFANA_HOSTNAME=grafana.your-domain.com \
   make generate-stack-envs
 
-COMPOSE_OPTS=-d make launch-traefik
-COMPOSE_OPTS=-d make launch-monitoring
+COMPOSE_OPTS=-d make start-traefik
+COMPOSE_OPTS=-d make start-monitoring
 ```
 
 `COMPOSE_OPTS=-d` runs both stacks in detached mode. Traefik watches `stacks/traefik/conf.d/` for route changes; Prometheus watches `stacks/monitoring/targets/` for new scrape targets — both pick up new instances automatically without a restart.
@@ -215,12 +215,12 @@ You can list your instances at any time:
 make list-instances
 ```
 
-### Launch an instance
+### Start an instance
 
-Launch an instance by targeting that named instance with the `PROJECT_NAME` variable:
+Start an instance by targeting that named instance with the `PROJECT_NAME` variable:
 
 ```shell
-PROJECT_NAME=<name> make launch-instance
+PROJECT_NAME=<name> make start-instance
 ```
 
 This will:
@@ -241,7 +241,7 @@ Additional instances can be created and launched independently. Each instance is
 ```shell
 # Add a second instance
 APP_HOSTNAME=dev.your-domain.com PROJECT_NAME=dev make create-instance
-PROJECT_NAME=dev make launch-instance
+PROJECT_NAME=dev make start-instance
 ```
 
 To see all configured instances and their running container counts:
@@ -265,7 +265,7 @@ stateDiagram-v2
     direction LR
     [*] --> **Configured** : **make create-instance**<br/>generates instances/name.env
 
-    **Configured** --> **Running** : **make launch-instance**<br/>starts database + app, registers routes
+    **Configured** --> **Running** : **make start-instance**<br/>starts database + app, registers routes
 
     **Running** --> **Configured** : **make stop-instance**<br/>stops containers, removes routes<br/>config file is kept
 
@@ -310,10 +310,10 @@ docker compose -f docker-compose.yml -f overlays/glowroot/docker-compose.yml up
 The profiling overlay adds distributed tracing capabilities using Grafana Tempo and OpenTelemetry. This allows you to trace requests through the DHIS2 application, providing insights into performance bottlenecks and request flows.
 
 > [!NOTE]
-> The profiling overlay requires the monitoring stack to be running first (`make launch-monitoring`).
+> The profiling overlay requires the monitoring stack to be running first (`make start-monitoring`).
 
 ```shell
-PROJECT_NAME=<name> COMPOSE_OPTS="-f overlays/profiling/docker-compose.yml" make launch-instance
+PROJECT_NAME=<name> COMPOSE_OPTS="-f overlays/profiling/docker-compose.yml" make start-instance
 ```
 
 For detailed configuration and usage, see the [Profiling Overlay README](overlays/profiling/README.md).
@@ -408,7 +408,7 @@ The Docker Loki Driver plugin is required to forward container logs to Loki. It 
 The monitoring stack is launched as part of the one-time server setup:
 
 ```shell
-COMPOSE_OPTS=-d make launch-monitoring
+COMPOSE_OPTS=-d make start-monitoring
 ```
 
 This deploys:
@@ -423,7 +423,7 @@ DHIS2's built-in monitoring API is enabled, exposing health and performance metr
 
 #### Accessing Monitoring Services
 
-1. Ensure the monitoring stack is running (`make launch-monitoring`).
+1. Ensure the monitoring stack is running (`make start-monitoring`).
 2. Open `https://<GEN_GRAFANA_HOSTNAME>` in your browser (the hostname configured during server setup).
 3. Login with:
     - Username: `admin`
@@ -462,11 +462,11 @@ GEN_LETSENCRYPT_ACME_EMAIL=dev@dhis2.org \
 GEN_GRAFANA_HOSTNAME=grafana.127-0-0-1.nip.io \
   make generate-stack-envs
 
-make launch-traefik &
-make launch-monitoring &
+make start-traefik &
+make start-monitoring &
 
 APP_HOSTNAME=dhis2.127-0-0-1.nip.io PROJECT_NAME=dev make create-instance
-PROJECT_NAME=dev make launch-instance
+PROJECT_NAME=dev make start-instance
 ```
 
 ### Clean all services

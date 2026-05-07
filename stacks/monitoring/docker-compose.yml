@@ -1,10 +1,10 @@
 # Standalone monitoring stack for multi-instance deployments.
 #
 # Deploy this stack once before launching any DHIS2 instances:
-#   make launch-monitoring
+#   make start-monitoring
 #
 # Per-instance scrape targets are added automatically to monitoring/targets/dhis2/ and
-# monitoring/targets/postgres/ by `make launch-instance` and removed by `make stop-instance`.
+# monitoring/targets/postgres/ by `make start-instance` and removed by `make stop-instance`.
 # Prometheus refreshes these directories every 30 seconds — no restart required.
 #
 # Loki is exposed on 127.0.0.1:3100 for the Docker logging driver. All instance containers

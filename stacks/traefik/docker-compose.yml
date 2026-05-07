@@ -1,9 +1,9 @@
 # Standalone Traefik gateway stack for multi-instance deployments.
 #
 # Deploy this stack once before launching any DHIS2 instances:
-#   make launch-traefik
+#   make start-traefik
 #
-# Routes are added automatically to traefik/conf.d/ by `make launch-instance`
+# Routes are added automatically to traefik/conf.d/ by `make start-instance`
 # and removed by `make stop-instance`. Traefik watches the directory and reloads
 # within ~1 second of any change — no restart required.
 #

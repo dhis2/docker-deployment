@@ -11,8 +11,8 @@ Run once per host before creating any instances.
 flowchart TD
     A([Start]) --> B["make generate-stack-envs<br/>GEN_LETSENCRYPT_ACME_EMAIL=...<br/>GEN_GRAFANA_HOSTNAME=..."]
     B --> C["stacks/traefik/.env<br/>stacks/monitoring/.env written"]
-    C --> D["make launch-traefik"]
-    C --> E["make launch-monitoring"]
+    C --> D["make start-traefik"]
+    C --> E["make start-monitoring"]
     D --> F["Creates: proxy network<br/>Creates: monitoring_net network<br/>Starts: Traefik container<br/>Watches: stacks/traefik/conf.d/"]
     E --> G["Writes: conf.d/monitoring.yml<br/>Starts: Grafana, Prometheus,<br/>Loki, etc.<br/>Watches: monitoring/targets/"]
 ```
@@ -34,7 +34,7 @@ sequenceDiagram
     Note right of FS: passwords + hostname set
     Make-->>Operator: instances/NAME.env created
 
-    Note over Operator,Monitoring: make launch-instance
+    Note over Operator,Monitoring: make start-instance
     Operator->>Make: PROJECT_NAME=NAME
     Make->>Docker: ensure proxy + monitoring_net networks
     Make->>Docker: create NAME-db network
