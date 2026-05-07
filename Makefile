@@ -6,7 +6,7 @@ PROJECT_NAME ?= $(notdir $(CURDIR))
 ENV_FILE = instances/$(PROJECT_NAME).env
 BACKUP_DIR ?= ./backups/$(PROJECT_NAME)
 
-.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances launch-postgres launch-instance launch-traefik launch-monitoring ensure-networks stop-instance clean clean-all config get-backup-timestamp
+.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances launch-postgres launch-instance launch-traefik launch-monitoring ensure-networks stop-instance delete-instance clean clean-all config get-backup-timestamp
 
 init:
 	@test -d .venv || python3 -m venv .venv
@@ -160,6 +160,23 @@ stop-instance:
 	rm -f stacks/traefik/conf.d/$(PROJECT_NAME).yml
 	rm -f stacks/monitoring/targets/dhis2/$(PROJECT_NAME).json
 	rm -f stacks/monitoring/targets/postgres/$(PROJECT_NAME).json
+
+# Delete a named DHIS2 instance: stop containers, remove volumes, and delete env file.
+# WARNING: This permanently destroys all data for the instance.
+# Example: PROJECT_NAME=dev ENV_FILE=instances/dev.env make delete-instance
+delete-instance:
+	@if [ -t 0 ]; then \
+		echo "WARNING: This will permanently destroy all data for instance '$(PROJECT_NAME)' (database, file storage, env file)."; \
+		echo "This action is irreversible."; \
+		read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || (echo "Aborted." && exit 1); \
+	fi
+	$(COMPOSE_CMD) down --remove-orphans --volumes
+	$(POSTGRES_COMPOSE_CMD) down --volumes
+	docker network rm $(PROJECT_NAME)-db 2>/dev/null || true
+	rm -f stacks/traefik/conf.d/$(PROJECT_NAME).yml
+	rm -f stacks/monitoring/targets/dhis2/$(PROJECT_NAME).json
+	rm -f stacks/monitoring/targets/postgres/$(PROJECT_NAME).json
+	rm -f instances/$(PROJECT_NAME).env
 
 clean:
 	$(COMPOSE_CMD) down --remove-orphans
