@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Shared utilities for .env generation scripts.
 # Source this file; do not execute it directly.
 
