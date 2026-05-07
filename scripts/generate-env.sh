@@ -2,9 +2,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=lib/env-utils.sh
+# shellcheck source=scripts/lib/env-utils.sh
 source "$SCRIPT_DIR/lib/env-utils.sh"
 
+# shellcheck disable=SC2119
 check_required_commands
 
 MONITORING_ENV="stacks/monitoring/.env"

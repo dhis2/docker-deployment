@@ -9,9 +9,10 @@ set -euo pipefail
 #   GEN_GRAFANA_HOSTNAME        - Hostname for the Grafana UI (e.g. grafana.example.com)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=lib/env-utils.sh
+# shellcheck source=scripts/lib/env-utils.sh
 source "$SCRIPT_DIR/lib/env-utils.sh"
 
+# shellcheck disable=SC2119
 check_required_commands
 
 TRAEFIK_ENV="stacks/traefik/.env"
