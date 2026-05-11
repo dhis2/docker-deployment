@@ -21,10 +21,6 @@ services:
       JAVA_TOOL_OPTIONS: >-
         -Dlog4j2.configurationFile=/opt/dhis2/log4j2.xml -javaagent:/otel/opentelemetry-javaagent.jar -Dotel.service.name=dhis2 -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://tempo:4318 -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.instrumentation.jdbc.enabled=true -Dotel.instrumentation.hibernate.enabled=true
 
-  grafana:
-    volumes:
-      - ./overlays/profiling/config/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
-
   # This is needed to avoid permission issues with the tempo container when running as non-root user
   tempo-init:
     image: busybox:1.37.0
@@ -80,6 +76,11 @@ services:
     user: root
     security_opt:
       - no-new-privileges:true
+
+networks:
+  monitoring:
+    name: monitoring
+    external: true
 
 volumes:
   tempo: {}
