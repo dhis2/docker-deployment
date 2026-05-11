@@ -1,6 +1,6 @@
 PRE_COMMIT_VERSION ?= 4.3.0
 
-.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs launch clean clean-all config get-backup-timestamp
+.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs launch launch-vpn clean clean-vpn clean-all config get-backup-timestamp
 
 init:
 	@test -d .venv || python3 -m venv .venv
@@ -70,6 +70,14 @@ launch: install-loki-driver
 
 clean:
 	$(COMPOSE_CMD) down --remove-orphans
+
+COMPOSE_CMD_VPN = $(COMPOSE_CMD) -f overlays/wireguard/docker-compose.yml
+
+launch-vpn: install-loki-driver
+	$(COMPOSE_CMD_VPN) up $(COMPOSE_OPTS)
+
+clean-vpn:
+	$(COMPOSE_CMD_VPN) down --remove-orphans
 
 clean-all:
 	@if [ -t 0 ]; then \

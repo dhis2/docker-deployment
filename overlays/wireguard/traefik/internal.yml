@@ -1,0 +1,24 @@
+tls:
+  certificates:
+    - certFile: /etc/traefik/certs/internal.crt
+      keyFile: /etc/traefik/certs/internal.key
+
+http:
+  routers:
+    grafana-internal:
+      rule: 'Host(`grafana.internal`)'
+      service: grafana
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - security
+
+    glowroot-internal:
+      rule: 'Host(`glowroot.internal`)'
+      service: glowroot
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - security

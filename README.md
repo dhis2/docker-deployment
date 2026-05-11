@@ -34,6 +34,7 @@ This repository provides a Docker-based deployment for the DHIS2 application, de
     - [Traefik Dashboard](#traefik-dashboard)
     - [Glowroot](#glowroot)
     - [Profiling (Tracing with Tempo)](#profiling-tracing-with-tempo)
+    - [VPN Access (WireGuard)](#vpn-access-wireguard)
   - [Backup and Restore](#backup-and-restore)
     - [Backup](#backup)
     - [Backup Timestamp](#backup-timestamp)
@@ -171,6 +172,21 @@ docker compose -f docker-compose.yml -f overlays/monitoring/docker-compose.yml -
 ```
 
 For detailed configuration and usage, see the [Profiling Overlay README](overlays/profiling/README.md).
+
+#### VPN Access (WireGuard)
+
+The WireGuard overlay adds a VPN endpoint so authorised clients can reach admin and monitoring UIs (Grafana, Glowroot) over a private tunnel using `*.internal` hostnames, without exposing those services publicly.
+
+```shell
+make launch-vpn
+```
+
+| Hostname            | Service     |
+| ------------------- | ----------- |
+| `grafana.internal`  | Grafana     |
+| `glowroot.internal` | Glowroot    |
+
+For client setup, certificate trust, and full configuration reference, see [docs/vpn.md](docs/vpn.md).
 
 ### Backup and Restore
 
