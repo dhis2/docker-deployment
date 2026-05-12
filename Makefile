@@ -6,7 +6,7 @@ PROJECT_NAME ?= $(notdir $(CURDIR))
 ENV_FILE = instances/$(PROJECT_NAME).env
 BACKUP_DIR ?= ./backups/$(PROJECT_NAME)
 
-.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances start-postgres start-instance start-traefik start-monitoring ensure-networks stop-instance delete-instance clean clean-all config get-backup-timestamp
+.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances start-postgres start-instance start-traefik start-monitoring start-vpn stop-vpn get-vpn-ca ensure-networks stop-instance delete-instance clean clean-all config get-backup-timestamp
 
 init:
 	@test -d .venv || python3 -m venv .venv
@@ -28,11 +28,10 @@ reinit:
 	$(MAKE) init
 
 # Generate .env files for stacks/traefik/ and stacks/monitoring/ (run once per server).
-# Requires: GEN_LETSENCRYPT_ACME_EMAIL and GEN_GRAFANA_HOSTNAME to be set.
-# Example: GEN_LETSENCRYPT_ACME_EMAIL=ops@example.com GEN_GRAFANA_HOSTNAME=grafana.example.com make generate-stack-envs
+# Requires: GEN_LETSENCRYPT_ACME_EMAIL to be set.
+# Example: GEN_LETSENCRYPT_ACME_EMAIL=ops@example.com make generate-stack-envs
 generate-stack-envs:
 	GEN_LETSENCRYPT_ACME_EMAIL=$(GEN_LETSENCRYPT_ACME_EMAIL) \
-	GEN_GRAFANA_HOSTNAME=$(GEN_GRAFANA_HOSTNAME) \
 		./scripts/generate-stack-envs.sh
 
 install-loki-driver:
@@ -107,8 +106,6 @@ start-traefik: ensure-networks
 
 # Start the standalone monitoring stack (run once; watches stacks/monitoring/targets/ for new instances)
 start-monitoring: ensure-networks
-	GRAFANA_HOSTNAME=$$(grep -E '^GRAFANA_HOSTNAME=' stacks/monitoring/.env | cut -d= -f2-) \
-		envsubst < stacks/traefik/conf.d/monitoring.yml.template > stacks/traefik/conf.d/monitoring.yml
 	docker compose -f stacks/monitoring/docker-compose.yml --env-file stacks/monitoring/.env up $(COMPOSE_OPTS)
 
 # Generate the env file for a new instance.
@@ -180,6 +177,27 @@ delete-instance:
 
 clean:
 	$(COMPOSE_CMD) down --remove-orphans
+
+COMPOSE_CMD_VPN = docker compose -p wireguard -f overlays/wireguard/docker-compose.yml
+
+# Start the standalone WireGuard VPN (run once per server; manages certs and peer configs).
+# After first start, retrieve the rootCA.pem from the wireguard-certs Docker volume and
+# distribute to VPN clients so they trust the *.internal wildcard certificate.
+start-vpn: ensure-networks install-loki-driver
+	$(COMPOSE_CMD_VPN) up -d wireguard wireguard-proxy
+	# Traefik's file provider watches conf.d/ for YAML changes but NOT the cert files
+	# referenced inside them. On first launch the certs don't exist yet when Traefik
+	# starts, so touching internal.yml forces a reload that picks up the new certs.
+	touch stacks/traefik/conf.d/internal.yml
+
+stop-vpn:
+	$(COMPOSE_CMD_VPN) down --remove-orphans
+
+# Export the *.internal root CA from the wireguard-certs volume so it can be installed
+# in a client's OS / browser trust store. Writes rootCA.pem to the current directory.
+get-vpn-ca:
+	$(COMPOSE_CMD_VPN) run --rm --entrypoint cat mkcert /certs/rootCA.pem > rootCA.pem
+	@echo "Wrote rootCA.pem — install it in your OS trust store, then restart your browser."
 
 clean-all:
 	@if [ -t 0 ]; then \

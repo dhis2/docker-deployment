@@ -28,6 +28,7 @@ services:
     volumes:
       - ./conf.d:/etc/traefik/conf.d:ro
       - cert:/cert:rw
+      - wireguard-certs:/etc/traefik/certs:ro
     environment:
       # -- Log level
       TRAEFIK_LOG_LEVEL: ${LOG_LEVEL:-INFO}
@@ -84,3 +85,5 @@ networks:
 
 volumes:
   cert: {}
+  wireguard-certs:
+    name: wireguard-certs

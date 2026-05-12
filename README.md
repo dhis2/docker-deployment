@@ -54,7 +54,7 @@ flowchart LR
     Browser -->|"prod.your-domain.com"| Traefik
     Browser -->|"dev.your-domain.com"| Traefik
     Browser -->|"other.your-domain.com"| Traefik
-    Browser -->|"grafana.your-domain.com [VPN]"| Mon
+    Browser -->|"grafana.internal [VPN]"| Mon
     Traefik --> App1
     Traefik --> App2
     Traefik --> App3
@@ -85,6 +85,7 @@ flowchart LR
     - [Traefik Dashboard](#traefik-dashboard)
     - [Glowroot](#glowroot)
     - [Profiling (Tracing with Tempo)](#profiling-tracing-with-tempo)
+    - [VPN Access (WireGuard)](#vpn-access-wireguard)
   - [Backup and Restore](#backup-and-restore)
     - [Backup](#backup)
     - [Backup Timestamp](#backup-timestamp)
@@ -127,7 +128,7 @@ flowchart TD
     A(["Start"]) --> B
 
     subgraph once["① One-time host setup"]
-        B["<b>make generate-stack-envs</b><br/><i>Set your email and Grafana hostname</i>"]
+        B["<b>make generate-stack-envs</b><br/><i>Set your Let's Encrypt email</i>"]
         C["<b>make start-traefik</b><br/><b>make start-monitoring</b>"]
         B --> C
     end
@@ -141,7 +142,6 @@ git clone https://github.com/dhis2/docker-deployment.git && \
 
 # One-time host setup: configure and launch Traefik and the monitoring stack
 GEN_LETSENCRYPT_ACME_EMAIL=whatever@dhis2.org \
-GEN_GRAFANA_HOSTNAME=grafana.127-0-0-1.nip.io \
   make generate-stack-envs
 
 make start-traefik &
@@ -166,6 +166,9 @@ Open [http://dhis2.127-0-0-1.nip.io](http://dhis2.127-0-0-1.nip.io) in your favo
 
 This section is for users planning to deploy DHIS2 in a production environment.
 
+> **Note**
+> Check out this [project](./server-tools) if you're deploying on a blank server.
+
 ### Deployment Prerequisites
 
 Before deploying to production, ensure you have:
@@ -188,7 +191,6 @@ Run these commands once per host before creating any instances. They generate en
 
 ```shell
 GEN_LETSENCRYPT_ACME_EMAIL=your@email.com \
-GEN_GRAFANA_HOSTNAME=grafana.your-domain.com \
   make generate-stack-envs
 
 COMPOSE_OPTS=-d make start-traefik
@@ -196,6 +198,8 @@ COMPOSE_OPTS=-d make start-monitoring
 ```
 
 `COMPOSE_OPTS=-d` runs both stacks in detached mode. Traefik watches `stacks/traefik/conf.d/` for route changes; Prometheus watches `stacks/monitoring/targets/` for new scrape targets — both pick up new instances automatically without a restart.
+
+> Grafana is not exposed publicly. It is reachable at `https://grafana.internal` once you set up the VPN — see the [VPN Access](#vpn-access-wireguard) section.
 
 ### Create an instance
 
@@ -318,6 +322,28 @@ PROJECT_NAME=<name> COMPOSE_OPTS="-f overlays/profiling/docker-compose.yml" make
 
 For detailed configuration and usage, see the [Profiling Overlay README](overlays/profiling/README.md).
 
+#### VPN Access (WireGuard)
+
+The standalone WireGuard stack provides a private tunnel so authorised clients can reach admin and monitoring UIs (Grafana, Glowroot) over `*.internal` hostnames without exposing them publicly. DHIS2 itself stays public — only admin surfaces move behind the VPN.
+
+```shell
+WIREGUARD_SERVER_URL=<your-server-public-ip-or-fqdn> \
+  make start-vpn
+```
+
+| Hostname            | Service     |
+| ------------------- | ----------- |
+| `grafana.internal`  | Grafana     |
+| `glowroot.internal` | Glowroot    |
+
+Once the stack is up, export the self-signed root CA for clients to trust:
+
+```shell
+make get-vpn-ca   # writes rootCA.pem to the current directory
+```
+
+Use `make stop-vpn` to tear down the VPN stack. For client setup, peer enrolment, CA installation per OS, and the full architecture, see [docs/vpn.md](docs/vpn.md).
+
 ### Backup and Restore
 
 Robust backup and restore procedures are essential for production. Backups are stored in the `./backups` directory. We support backup and restore of both the database and the file storage.
@@ -423,11 +449,13 @@ DHIS2's built-in monitoring API is enabled, exposing health and performance metr
 
 #### Accessing Monitoring Services
 
-1. Ensure the monitoring stack is running (`make start-monitoring`).
-2. Open `https://<GEN_GRAFANA_HOSTNAME>` in your browser (the hostname configured during server setup).
+Grafana is only reachable over the WireGuard VPN at `https://grafana.internal` — it is not exposed publicly. See [VPN Access (WireGuard)](#vpn-access-wireguard) for setup.
+
+1. Ensure the monitoring stack is running (`make start-monitoring`) and the VPN is up (`make start-vpn`).
+2. Connect to the VPN and open `https://grafana.internal` in your browser.
 3. Login with:
     - Username: `admin`
-    - Password: Check `stacks/monitoring/.env` for `GRAFANA_ADMIN_PASSWORD`.
+    - Password: check `stacks/monitoring/.env` for `GRAFANA_ADMIN_PASSWORD`.
 
 #### Configuration
 
@@ -459,7 +487,6 @@ To start all services for development, follow the same flow as production using 
 
 ```shell
 GEN_LETSENCRYPT_ACME_EMAIL=dev@dhis2.org \
-GEN_GRAFANA_HOSTNAME=grafana.127-0-0-1.nip.io \
   make generate-stack-envs
 
 make start-traefik &

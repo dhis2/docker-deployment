@@ -1,0 +1,68 @@
+x-loki-logging: &loki-logging
+  driver: loki
+  options:
+    loki-url: "http://localhost:3100/loki/api/v1/push"
+    loki-timeout: "1s"
+    loki-retries: "2"
+
+services:
+  mkcert:
+    image: vishnunair/docker-mkcert@sha256:bbaff8dac84f4d6fe5ffe36d954e838347864adfb0ae434106ef5b6d188e8729
+    volumes:
+      - wireguard-certs:/certs
+      - ./scripts/mkcert.sh:/mkcert.sh:ro
+    environment:
+      # TODO: Should we avoid wildcard certificates and generate a certificate for each domain?
+      domain: "*.internal"
+    command: sh /mkcert.sh
+
+  # Proxy VPN traffic on 10.8.0.1:443 to Traefik. Runs in the WireGuard container's
+  # network namespace so it can bind to wg0's IP. Docker DNS resolves 'traefik' on each
+  # new connection, so this survives Traefik container restarts without needing an IP change.
+  wireguard-proxy:
+    image: alpine/socat:1.8.0.0
+    depends_on:
+      - wireguard
+    network_mode: "service:wireguard"
+    command: TCP-LISTEN:443,fork,bind=10.8.0.1,reuseaddr TCP:traefik:443
+    restart: unless-stopped
+    logging: *loki-logging
+
+  wireguard:
+    image: linuxserver/wireguard:${WIREGUARD_VERSION:-latest}
+    depends_on:
+      mkcert:
+        condition: service_completed_successfully
+    volumes:
+      - ./config:/config
+      - ./coredns/Corefile:/config/coredns/Corefile:ro
+    environment:
+      PUID: 1000
+      PGID: 1000
+      SERVERURL: ${WIREGUARD_SERVER_URL:-auto}
+      SERVERPORT: ${WIREGUARD_SERVER_PORT:-51820}
+      # TODO: default peer?
+      PEERS: ${WIREGUARD_PEERS:-laptop}
+      PEERDNS: auto
+      INTERNAL_SUBNET: ${WIREGUARD_INTERNAL_SUBNET:-10.8.0.0}
+      ALLOWEDIPS: ${WIREGUARD_ALLOWED_IPS:-0.0.0.0/0}
+    ports:
+      - "0.0.0.0:${WIREGUARD_SERVER_PORT:-51820}:51820/udp"
+    networks:
+      - proxy
+    restart: unless-stopped
+    logging: *loki-logging
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv6.conf.all.disable_ipv6=1
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  wireguard-certs:
+    name: wireguard-certs

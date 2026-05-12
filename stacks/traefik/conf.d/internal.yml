@@ -1,0 +1,39 @@
+# Internal routes accessible only via VPN (WireGuard).
+# DNS for *.internal is resolved by CoreDNS inside the WireGuard container.
+# TLS is served using the mkcert certificate from overlays/wireguard/certs/.
+
+tls:
+  certificates:
+    - certFile: /etc/traefik/certs/internal.crt
+      keyFile: /etc/traefik/certs/internal.key
+
+http:
+  routers:
+    grafana-internal:
+      rule: 'Host(`grafana.internal`)'
+      service: grafana-internal
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - security-internal
+
+    glowroot-internal:
+      rule: 'Host(`glowroot.internal`)'
+      service: glowroot-internal
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - security-internal
+
+  services:
+    grafana-internal:
+      loadBalancer:
+        servers:
+          - url: "http://monitoring-grafana:3000"
+
+    glowroot-internal:
+      loadBalancer:
+        servers:
+          - url: "http://app:4000"
