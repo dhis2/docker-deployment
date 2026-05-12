@@ -30,6 +30,5 @@ stacks/traefik/conf.d/*.yml
 stacks/monitoring/targets/dhis2/*.json
 stacks/monitoring/targets/postgres/*.json
 
-# WireGuard — generated certs and peer configs (contain private keys)
-overlays/wireguard/certs/
+# WireGuard — generated peer configs (contain private keys)
 overlays/wireguard/config/

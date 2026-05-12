@@ -16,7 +16,7 @@ http:
         - websecure
       tls: {}
       middlewares:
-        - security
+        - security-internal
 
     glowroot-internal:
       rule: 'Host(`glowroot.internal`)'
@@ -25,7 +25,7 @@ http:
         - websecure
       tls: {}
       middlewares:
-        - security
+        - security-internal
 
   services:
     grafana-internal:

@@ -9,13 +9,12 @@ services:
   mkcert:
     image: vishnunair/docker-mkcert@sha256:bbaff8dac84f4d6fe5ffe36d954e838347864adfb0ae434106ef5b6d188e8729
     volumes:
-      - ./overlays/wireguard/certs:/certs
-      - ./overlays/wireguard/scripts/mkcert.sh:/mkcert.sh:ro
+      - wireguard-certs:/certs
+      - ./scripts/mkcert.sh:/mkcert.sh:ro
     environment:
       # TODO: Should we avoid wildcard certificates and generate a certificate for each domain?
       domain: "*.internal"
     command: sh /mkcert.sh
-    logging: *loki-logging
 
   # Proxy VPN traffic on 10.8.0.1:443 to Traefik. Runs in the WireGuard container's
   # network namespace so it can bind to wg0's IP. Docker DNS resolves 'traefik' on each
@@ -31,9 +30,12 @@ services:
 
   wireguard:
     image: linuxserver/wireguard:${WIREGUARD_VERSION:-latest}
+    depends_on:
+      mkcert:
+        condition: service_completed_successfully
     volumes:
-      - ./overlays/wireguard/config:/config
-      - ./overlays/wireguard/coredns/Corefile:/config/coredns/Corefile:ro
+      - ./config:/config
+      - ./coredns/Corefile:/config/coredns/Corefile:ro
     environment:
       PUID: 1000
       PGID: 1000
@@ -60,3 +62,7 @@ networks:
   proxy:
     name: proxy
     external: true
+
+volumes:
+  wireguard-certs:
+    name: wireguard-certs

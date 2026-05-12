@@ -6,7 +6,7 @@ PROJECT_NAME ?= $(notdir $(CURDIR))
 ENV_FILE = instances/$(PROJECT_NAME).env
 BACKUP_DIR ?= ./backups/$(PROJECT_NAME)
 
-.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances start-postgres start-instance start-traefik start-monitoring ensure-networks stop-instance delete-instance clean clean-all config get-backup-timestamp
+.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances start-postgres start-instance start-traefik start-monitoring start-vpn stop-vpn ensure-networks stop-instance delete-instance clean clean-all config get-backup-timestamp
 
 init:
 	@test -d .venv || python3 -m venv .venv
@@ -178,12 +178,19 @@ delete-instance:
 clean:
 	$(COMPOSE_CMD) down --remove-orphans
 
-COMPOSE_CMD_VPN = $(COMPOSE_CMD) -f overlays/wireguard/docker-compose.yml
+COMPOSE_CMD_VPN = docker compose -p wireguard -f overlays/wireguard/docker-compose.yml
 
-launch-vpn: install-loki-driver
-	$(COMPOSE_CMD_VPN) up $(COMPOSE_OPTS)
+# Start the standalone WireGuard VPN (run once per server; manages certs and peer configs).
+# After first start, retrieve the rootCA.pem from the wireguard-certs Docker volume and
+# distribute to VPN clients so they trust the *.internal wildcard certificate.
+start-vpn: ensure-networks install-loki-driver
+	$(COMPOSE_CMD_VPN) up -d wireguard wireguard-proxy
+	# Traefik's file provider watches conf.d/ for YAML changes but NOT the cert files
+	# referenced inside them. On first launch the certs don't exist yet when Traefik
+	# starts, so touching internal.yml forces a reload that picks up the new certs.
+	touch stacks/traefik/conf.d/internal.yml
 
-clean-vpn:
+stop-vpn:
 	$(COMPOSE_CMD_VPN) down --remove-orphans
 
 clean-all:
