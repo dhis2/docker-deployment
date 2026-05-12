@@ -6,7 +6,7 @@ PROJECT_NAME ?= $(notdir $(CURDIR))
 ENV_FILE = instances/$(PROJECT_NAME).env
 BACKUP_DIR ?= ./backups/$(PROJECT_NAME)
 
-.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances start-postgres start-instance start-traefik start-monitoring start-vpn stop-vpn ensure-networks stop-instance delete-instance clean clean-all config get-backup-timestamp
+.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances start-postgres start-instance start-traefik start-monitoring start-vpn stop-vpn get-vpn-ca ensure-networks stop-instance delete-instance clean clean-all config get-backup-timestamp
 
 init:
 	@test -d .venv || python3 -m venv .venv
@@ -192,6 +192,12 @@ start-vpn: ensure-networks install-loki-driver
 
 stop-vpn:
 	$(COMPOSE_CMD_VPN) down --remove-orphans
+
+# Export the *.internal root CA from the wireguard-certs volume so it can be installed
+# in a client's OS / browser trust store. Writes rootCA.pem to the current directory.
+get-vpn-ca:
+	$(COMPOSE_CMD_VPN) run --rm --entrypoint cat mkcert /certs/rootCA.pem > rootCA.pem
+	@echo "Wrote rootCA.pem — install it in your OS trust store, then restart your browser."
 
 clean-all:
 	@if [ -t 0 ]; then \
