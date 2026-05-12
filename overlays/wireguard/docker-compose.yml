@@ -17,25 +17,17 @@ services:
     command: sh /mkcert.sh
     logging: *loki-logging
 
-  #  wireguard-dnat:
-  #    image: alpine:3.22
-  #    network_mode: "service:wireguard"
-  #    cap_add:
-  #      - NET_ADMIN
-  #    command: >
-  #      sh -c "
-  #      apk add -q iptables &&
-  #      TRAEFIK_IP=$$(getent hosts traefik | awk '{print \$$1}') &&
-  #      echo \"Adding DNAT rules for traefik at \$${TRAEFIK_IP}\" &&
-  #      iptables -t nat -A PREROUTING -i wg0 -p tcp --dport 80  -j DNAT --to-destination \$${TRAEFIK_IP}:80 &&
-  #      iptables -t nat -A PREROUTING -i wg0 -p tcp --dport 443 -j DNAT --to-destination \$${TRAEFIK_IP}:443
-  #      "
-  #    depends_on:
-  #      wireguard:
-  #        condition: service_started
-  #      traefik:
-  #        condition: service_healthy
-  #    restart: on-failure
+  # Proxy VPN traffic on 10.8.0.1:443 to Traefik. Runs in the WireGuard container's
+  # network namespace so it can bind to wg0's IP. Docker DNS resolves 'traefik' on each
+  # new connection, so this survives Traefik container restarts without needing an IP change.
+  wireguard-proxy:
+    image: alpine/socat:1.8.0.0
+    depends_on:
+      - wireguard
+    network_mode: "service:wireguard"
+    command: TCP-LISTEN:443,fork,bind=10.8.0.1,reuseaddr TCP:traefik:443
+    restart: unless-stopped
+    logging: *loki-logging
 
   wireguard:
     image: linuxserver/wireguard:${WIREGUARD_VERSION:-latest}
