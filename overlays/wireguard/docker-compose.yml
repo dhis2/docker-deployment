@@ -9,7 +9,7 @@ services:
   mkcert:
     image: vishnunair/docker-mkcert@sha256:bbaff8dac84f4d6fe5ffe36d954e838347864adfb0ae434106ef5b6d188e8729
     volumes:
-      - cert-internal:/certs
+      - ./overlays/wireguard/certs:/certs
       - ./overlays/wireguard/scripts/mkcert.sh:/mkcert.sh:ro
     environment:
       # TODO: Should we avoid wildcard certificates and generate a certificate for each domain?
@@ -55,7 +55,7 @@ services:
     ports:
       - "0.0.0.0:${WIREGUARD_SERVER_PORT:-51820}:51820/udp"
     networks:
-      - frontend
+      - proxy
     restart: unless-stopped
     logging: *loki-logging
     cap_add:
@@ -64,17 +64,7 @@ services:
       - net.ipv4.conf.all.src_valid_mark=1
       - net.ipv6.conf.all.disable_ipv6=1
 
-  traefik:
-    depends_on:
-      mkcert:
-        condition: service_completed_successfully
-    volumes:
-      - cert-internal:/etc/traefik/certs:ro
-      - ./traefik/dynamic.yml:/etc/traefik/dynamic.d/00-main.yml:ro
-      - ./overlays/wireguard/traefik/internal.yml:/etc/traefik/dynamic.d/10-internal.yml:ro
-    environment:
-      TRAEFIK_PROVIDERS_FILE_FILENAME: ""
-      TRAEFIK_PROVIDERS_FILE_DIRECTORY: /etc/traefik/dynamic.d
-
-volumes:
-  cert-internal: {}
+networks:
+  proxy:
+    name: proxy
+    external: true

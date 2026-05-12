@@ -26,5 +26,10 @@ stacks/monitoring/.env
 # Generated route and target files (created by make launch-instance / launch-monitoring)
 stacks/traefik/conf.d/*.yml
 !stacks/traefik/conf.d/middlewares.yml
+!stacks/traefik/conf.d/internal.yml
 stacks/monitoring/targets/dhis2/*.json
 stacks/monitoring/targets/postgres/*.json
+
+# WireGuard — generated certs and peer configs (contain private keys)
+overlays/wireguard/certs/
+overlays/wireguard/config/

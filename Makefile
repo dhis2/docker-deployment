@@ -28,11 +28,10 @@ reinit:
 	$(MAKE) init
 
 # Generate .env files for stacks/traefik/ and stacks/monitoring/ (run once per server).
-# Requires: GEN_LETSENCRYPT_ACME_EMAIL and GEN_GRAFANA_HOSTNAME to be set.
-# Example: GEN_LETSENCRYPT_ACME_EMAIL=ops@example.com GEN_GRAFANA_HOSTNAME=grafana.example.com make generate-stack-envs
+# Requires: GEN_LETSENCRYPT_ACME_EMAIL to be set.
+# Example: GEN_LETSENCRYPT_ACME_EMAIL=ops@example.com make generate-stack-envs
 generate-stack-envs:
 	GEN_LETSENCRYPT_ACME_EMAIL=$(GEN_LETSENCRYPT_ACME_EMAIL) \
-	GEN_GRAFANA_HOSTNAME=$(GEN_GRAFANA_HOSTNAME) \
 		./scripts/generate-stack-envs.sh
 
 install-loki-driver:
@@ -107,8 +106,6 @@ start-traefik: ensure-networks
 
 # Start the standalone monitoring stack (run once; watches stacks/monitoring/targets/ for new instances)
 start-monitoring: ensure-networks
-	GRAFANA_HOSTNAME=$$(grep -E '^GRAFANA_HOSTNAME=' stacks/monitoring/.env | cut -d= -f2-) \
-		envsubst < stacks/traefik/conf.d/monitoring.yml.template > stacks/traefik/conf.d/monitoring.yml
 	docker compose -f stacks/monitoring/docker-compose.yml --env-file stacks/monitoring/.env up $(COMPOSE_OPTS)
 
 # Generate the env file for a new instance.

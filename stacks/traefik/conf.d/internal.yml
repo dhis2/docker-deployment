@@ -1,3 +1,7 @@
+# Internal routes accessible only via VPN (WireGuard).
+# DNS for *.internal is resolved by CoreDNS inside the WireGuard container.
+# TLS is served using the mkcert certificate from overlays/wireguard/certs/.
+
 tls:
   certificates:
     - certFile: /etc/traefik/certs/internal.crt
