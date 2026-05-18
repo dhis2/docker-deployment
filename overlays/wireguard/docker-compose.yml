@@ -6,6 +6,7 @@ x-loki-logging: &loki-logging
     loki-retries: "2"
 
 services:
+  # Pinned by digest: this image only publishes a `latest` tag, so a digest is the only stable reference.
   mkcert:
     image: vishnunair/docker-mkcert@sha256:bbaff8dac84f4d6fe5ffe36d954e838347864adfb0ae434106ef5b6d188e8729
     volumes:
