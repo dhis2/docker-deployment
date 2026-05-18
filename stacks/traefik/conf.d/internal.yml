@@ -4,8 +4,10 @@
 
 tls:
   certificates:
-    - certFile: /etc/traefik/certs/internal.crt
-      keyFile: /etc/traefik/certs/internal.key
+    - certFile: /etc/traefik/certs/grafana.internal.crt
+      keyFile: /etc/traefik/certs/grafana.internal.key
+    - certFile: /etc/traefik/certs/glowroot.internal.crt
+      keyFile: /etc/traefik/certs/glowroot.internal.key
 
 http:
   routers:
