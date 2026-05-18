@@ -32,3 +32,6 @@ stacks/monitoring/targets/postgres/*.json
 
 # WireGuard — generated peer configs (contain private keys)
 overlays/wireguard/config/
+
+# WireGuard — root CA exported by `make get-vpn-ca`
+rootCA.pem
