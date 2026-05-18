@@ -5,7 +5,7 @@
 #
 # Per-instance scrape targets are added automatically to monitoring/targets/dhis2/ and
 # monitoring/targets/postgres/ by `make start-instance` and removed by `make stop-instance`.
-# Prometheus refreshes these directories every 30 seconds — no restart required.
+# Prometheus refreshes these directories every 30 seconds - no restart required.
 #
 # Loki is exposed on 127.0.0.1:3100 for the Docker logging driver. All instance containers
 # using the shared-monitoring overlay push logs here with an `instance` label for filtering.
@@ -201,7 +201,7 @@ configs:
         evaluation_interval: 15s
 
       scrape_configs:
-        # DHIS2 application metrics — one target file per instance in targets/dhis2/
+        # DHIS2 application metrics - one target file per instance in targets/dhis2/
         # All instances must use the same DHIS2_MONITOR_USERNAME and DHIS2_MONITOR_PASSWORD.
         - job_name: 'dhis2'
           file_sd_configs:
@@ -213,7 +213,7 @@ configs:
             username: ${DHIS2_MONITOR_USERNAME}
             password_file: /run/secrets/dhis2_monitor_password
 
-        # PostgreSQL metrics — one target file per instance in targets/postgres/
+        # PostgreSQL metrics - one target file per instance in targets/postgres/
         - job_name: 'postgres'
           file_sd_configs:
             - files:

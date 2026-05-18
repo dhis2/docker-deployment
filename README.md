@@ -157,7 +157,7 @@ Open [http://dhis2.127-0-0-1.nip.io](http://dhis2.127-0-0-1.nip.io) in your favo
 > [!NOTE]
 > Your browser will warn you that the certificate is not trusted. This is expected, as it is a self-signed certificate.
 >
-> For local testing without real DNS, [nip.io](https://nip.io) provides free wildcard DNS that resolves to an embedded IP address — for example, `dhis2.127-0-0-1.nip.io` resolves to `127.0.0.1` with no configuration required.
+> For local testing without real DNS, [nip.io](https://nip.io) provides free wildcard DNS that resolves to an embedded IP address - for example, `dhis2.127-0-0-1.nip.io` resolves to `127.0.0.1` with no configuration required.
 
 > [!NOTE]
 > The default DHIS2 admin credentials are available in `instances/prod.env`.
@@ -179,7 +179,7 @@ Before deploying to production, ensure you have:
 - Appropriate firewall rules configured for ports 80 and 443.
 
 > [!NOTE]
-> A wildcard DNS record (`*.your-domain.com`) pointing to your server is a convenient way to cover all instances with a single DNS entry — each instance then gets its own subdomain (e.g. `prod.your-domain.com`, `dev.your-domain.com`).
+> A wildcard DNS record (`*.your-domain.com`) pointing to your server is a convenient way to cover all instances with a single DNS entry - each instance then gets its own subdomain (e.g. `prod.your-domain.com`, `dev.your-domain.com`).
 >
 > You can also namespace instances under a shared subdomain: add an A record for `dhis2.your-domain.com` and a wildcard `*.dhis2.your-domain.com`, then host `prod` at `dhis2.your-domain.com` and additional instances at `dev.dhis2.your-domain.com`, `test.dhis2.your-domain.com`, etc. Note that a wildcard does not match the bare subdomain it is rooted at, so the explicit A record for `dhis2.your-domain.com` is required alongside the wildcard.
 >
@@ -197,9 +197,9 @@ COMPOSE_OPTS=-d make start-traefik
 COMPOSE_OPTS=-d make start-monitoring
 ```
 
-`COMPOSE_OPTS=-d` runs both stacks in detached mode. Traefik watches `stacks/traefik/conf.d/` for route changes; Prometheus watches `stacks/monitoring/targets/` for new scrape targets — both pick up new instances automatically without a restart.
+`COMPOSE_OPTS=-d` runs both stacks in detached mode. Traefik watches `stacks/traefik/conf.d/` for route changes; Prometheus watches `stacks/monitoring/targets/` for new scrape targets - both pick up new instances automatically without a restart.
 
-> Grafana is not exposed publicly. It is reachable at `https://grafana.internal` once you set up the VPN — see the [VPN Access](#vpn-access-wireguard) section.
+> Grafana is not exposed publicly. It is reachable at `https://grafana.internal` once you set up the VPN. See the [VPN Access](#vpn-access-wireguard) section.
 
 ### Create an instance
 
@@ -209,7 +209,7 @@ Generate the environment file for a named instance. `PROJECT_NAME` is a short id
 APP_HOSTNAME=<name>.<your-domain.com> PROJECT_NAME=<name> make create-instance
 ```
 
-This writes `instances/<name>.env` with generated passwords and the supplied hostname. Review and adjust that file before launching — see the [environment variables documentation](docs/environment-variables.md) for details on each variable.
+This writes `instances/<name>.env` with generated passwords and the supplied hostname. Review and adjust that file before launching. See the [environment variables documentation](docs/environment-variables.md) for details on each variable.
 
 You can create multiple instances in this way, by simply using different names for each.
 
@@ -324,7 +324,7 @@ For detailed configuration and usage, see the [Profiling Overlay README](overlay
 
 #### VPN Access (WireGuard)
 
-The standalone WireGuard stack provides a private tunnel so authorised clients can reach admin and monitoring UIs (Grafana, Glowroot) over `*.internal` hostnames without exposing them publicly. DHIS2 itself stays public — only admin surfaces move behind the VPN.
+The standalone WireGuard stack provides a private tunnel so authorised clients can reach admin and monitoring UIs (Grafana, Glowroot) over `*.internal` hostnames without exposing them publicly. DHIS2 itself stays public; only admin surfaces move behind the VPN.
 
 ```shell
 WIREGUARD_SERVER_URL=<your-server-public-ip-or-fqdn> \
@@ -449,7 +449,7 @@ DHIS2's built-in monitoring API is enabled, exposing health and performance metr
 
 #### Accessing Monitoring Services
 
-Grafana is only reachable over the WireGuard VPN at `https://grafana.internal` — it is not exposed publicly. See [VPN Access (WireGuard)](#vpn-access-wireguard) for setup.
+Grafana is only reachable over the WireGuard VPN at `https://grafana.internal`. It is not exposed publicly. See [VPN Access (WireGuard)](#vpn-access-wireguard) for setup.
 
 1. Ensure the monitoring stack is running (`make start-monitoring`) and the VPN is up (`make start-vpn`).
 2. Connect to the VPN and open `https://grafana.internal` in your browser.

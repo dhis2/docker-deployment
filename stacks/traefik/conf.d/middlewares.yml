@@ -16,7 +16,7 @@ http:
         stsPreload: true
 
     # Same as 'security' but without HSTS. Used for internal/VPN-only routes served
-    # with a self-signed CA — HSTS there would lock browsers out unrecoverably if a
+    # with a self-signed CA - HSTS there would lock browsers out unrecoverably if a
     # client hits the route before trusting the CA.
     security-internal:
       headers:

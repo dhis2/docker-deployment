@@ -1,5 +1,5 @@
 # Generated per-instance Traefik routing configuration.
-# Created by `make launch-instance` — do not edit manually.
+# Created by `make launch-instance` - do not edit manually.
 # Remove with `make stop-instance PROJECT_NAME=<name>`.
 
 http:

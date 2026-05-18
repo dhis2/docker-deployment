@@ -8,7 +8,7 @@ monitoring UIs that are not exposed publicly:
 | `grafana.internal`  | Grafana (monitoring) |
 | `glowroot.internal` | Glowroot APM UI      |
 
-DHIS2 itself stays public on `${APP_HOSTNAME}` via Let's Encrypt — only admin
+DHIS2 itself stays public on `${APP_HOSTNAME}` via Let's Encrypt - only admin
 surfaces are moved behind the VPN.
 
 ## How it works
@@ -42,7 +42,7 @@ Client                          Server
 - **Traefik** mounts the same `wireguard-certs` volume read-only at
   `/etc/traefik/certs/` and serves the internal routes defined in
   `stacks/traefik/conf.d/internal.yml`. Internal routes use the
-  `security-internal` middleware (everything `security` has except HSTS) — HSTS on a self-signed cert would lock browsers out unrecoverably if a client hit the route before trusting the CA.
+  `security-internal` middleware (everything `security` has except HSTS) - HSTS on a self-signed cert would lock browsers out unrecoverably if a client hit the route before trusting the CA.
 
 ## Configuration
 
@@ -65,7 +65,7 @@ WIREGUARD_PEERS=alice,bob \
   make start-vpn
 ```
 
-This brings up `mkcert` (one-shot — generates certs on first run, no-op
+This brings up `mkcert` (one-shot - generates certs on first run, no-op
 afterwards), then `wireguard`, then `wireguard-proxy`, and finally touches
 `stacks/traefik/conf.d/internal.yml` so the running Traefik reloads and picks
 up the newly minted certs.

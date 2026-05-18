@@ -1,2 +1,2 @@
-# Instance-specific env files contain passwords — never commit them
+# Instance-specific env files contain passwords - never commit them
 *.env
