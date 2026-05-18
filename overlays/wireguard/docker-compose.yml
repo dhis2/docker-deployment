@@ -11,9 +11,6 @@ services:
     volumes:
       - wireguard-certs:/certs
       - ./scripts/mkcert.sh:/mkcert.sh:ro
-    environment:
-      # TODO: Should we avoid wildcard certificates and generate a certificate for each domain?
-      domain: "*.internal"
     command: sh /mkcert.sh
 
   # Proxy VPN traffic on 10.8.0.1:443 to Traefik. Runs in the WireGuard container's
