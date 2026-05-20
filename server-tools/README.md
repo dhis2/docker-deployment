@@ -1,9 +1,6 @@
 # DHIS2 Docker Deployment Ansible Playbook
 
-This Ansible playbook provisions a host for running the DHIS2 Docker stack. It
-installs Docker, applies firewall and security hardening, and clones this
-repository onto the host. Starting the stack itself is done manually with the
-`make start-*` targets from the cloned working tree, not by Ansible.
+This Ansible playbook provisions a host for running the DHIS2 Docker stack. It installs Docker, applies firewall and security hardening, and clones this repository onto the host. Starting the stack itself is done manually with the `make start-*` targets from the cloned working tree, not by Ansible.
 
 ## Features
 
@@ -63,14 +60,10 @@ Edit `group_vars/all.yml` to customize:
 - AppArmor is enabled
 - Unattended-upgrades are enabled
 
-The above is only a subset of the security hardening that is applied. For more information, see
-the [firewall](roles/firewall/tasks/main.yml) and [harden](roles/harden/tasks/main.yml) roles.
+The above is only a subset of the security hardening that is applied. For more information, see the [firewall](roles/firewall/tasks/main.yml) and [harden](roles/harden/tasks/main.yml) roles.
 
 ### Firewall Management
 
-All firewall rules for Docker and host-facing ports are managed by the `firewall` role.
-See [roles/firewall/tasks/main.yml](roles/firewall/tasks/main.yml) for more details.
+All firewall rules for Docker and host-facing ports are managed by the `firewall` role. See [roles/firewall/tasks/main.yml](roles/firewall/tasks/main.yml) for more details.
 
-WARNING: Do **not** use UFW or other firewall frontends alongside this setup. Docker bypasses standard host
-chains (INPUT/OUTPUT), so UFW rules are ignored or may conflict. All host and container traffic should be managed
-exclusively through this Ansible role.
+⚠️ **Important:** Do **not** use UFW or other firewall frontends alongside this setup. Docker bypasses standard host chains (INPUT/OUTPUT), so UFW rules are ignored or may conflict. All host and container traffic should be managed exclusively through this Ansible role.
