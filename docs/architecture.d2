@@ -1,0 +1,137 @@
+# Docker deployment — network and service architecture
+#
+# Generate SVG:
+#   ~/.local/bin/d2 docs/architecture.d2 docs/architecture.svg
+#
+# NOTE: the DHIS2 CLI is also named "d2" and shadows the diagram tool in PATH.
+# Use the full path ~/.local/bin/d2 or alias it:
+#   alias d2diagram=~/.local/bin/d2
+#
+# Watch mode (re-renders on save):
+#   ~/.local/bin/d2 --watch docs/architecture.d2 docs/architecture.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+classes: {
+  network_box: {
+    style: {
+      fill: "#f8fafc"
+      stroke: "#94a3b8"
+      stroke-dash: 4
+      border-radius: 8
+      font-size: 13
+    }
+  }
+  app_node: {
+    style: {
+      fill: "#dbeafe"
+      stroke: "#3b82f6"
+      border-radius: 4
+    }
+  }
+  monitoring_node: {
+    style: {
+      fill: "#dcfce7"
+      stroke: "#16a34a"
+      border-radius: 4
+    }
+  }
+  db_node: {
+    style: {
+      fill: "#fef9c3"
+      stroke: "#ca8a04"
+      border-radius: 4
+    }
+  }
+}
+
+direction: down
+
+# ── External ──────────────────────────────────────────────────
+
+internet: Internet {shape: cloud}
+
+# ── Shared: Traefik (proxy network) ──────────────────────────
+
+proxy_network: proxy network {
+  class: network_box
+
+  traefik: Traefik {
+    class: app_node
+    label: "Traefik\nwatches conf.d/*.yml"
+  }
+}
+
+# ── Shared: Monitoring (monitoring_net) ───────────────────────
+
+monitoring_net: monitoring_net {
+  class: network_box
+
+  prometheus: Prometheus {class: monitoring_node}
+  grafana: Grafana {class: monitoring_node}
+  loki: Loki {class: monitoring_node}
+
+  prometheus -> grafana: query
+  loki -> grafana: query
+}
+
+# ── Instance: one ─────────────────────────────────────────────
+
+one: Instance: one {
+  class: network_box
+
+  app: one-app {
+    class: app_node
+    label: "one-app\nproxy · monitoring_net · one-db"
+  }
+  db: one-postgres {
+    shape: cylinder
+    class: db_node
+  }
+  exporter: postgres-exporter {
+    class: db_node
+  }
+
+  app -> db: JDBC
+  db -> exporter
+}
+
+# ── Instance: two ─────────────────────────────────────────────
+
+two: Instance: two {
+  class: network_box
+
+  app: two-app {
+    class: app_node
+    label: "two-app\nproxy · monitoring_net · two-db"
+  }
+  db: two-postgres {
+    shape: cylinder
+    class: db_node
+  }
+  exporter: postgres-exporter {
+    class: db_node
+  }
+
+  app -> db: JDBC
+  db -> exporter
+}
+
+# ── Connections ───────────────────────────────────────────────
+
+internet -> proxy_network.traefik: HTTPS :443
+
+proxy_network.traefik -> one.app: HTTP :8080
+proxy_network.traefik -> two.app: HTTP :8080
+
+one.app -> monitoring_net.loki: logs
+two.app -> monitoring_net.loki: logs
+
+monitoring_net.prometheus -> one.app: scrape :8080
+monitoring_net.prometheus -> two.app: scrape :8080
+monitoring_net.prometheus -> one.exporter: scrape :9187
+monitoring_net.prometheus -> two.exporter: scrape :9187

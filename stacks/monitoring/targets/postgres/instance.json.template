@@ -1,0 +1,8 @@
+[
+  {
+    "targets": ["${PROJECT_NAME}-postgres-exporter:9187"],
+    "labels": {
+      "instance": "${PROJECT_NAME}"
+    }
+  }
+]

@@ -1,0 +1,15 @@
+# Shared middleware definitions used by all per-instance route configs.
+# This file is always present in conf.d/ and loaded by the standalone Traefik stack.
+
+http:
+  middlewares:
+    security:
+      headers:
+        forceSTSHeader: true
+        stsSeconds: 63072000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true

@@ -1,0 +1,56 @@
+x-database-image: &database-image
+  image: postgis/postgis:${POSTGRES_VERSION:-16-master}
+
+services:
+  database:
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ../../init-scripts:/docker-entrypoint-initdb.d:ro
+      - ../../config/postgresql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ../../config/postgresql/conf.d:/etc/postgresql/conf.d:ro
+    environment:
+      # -- Postgres user password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # -- Name of the database
+      POSTGRES_DB: ${POSTGRES_DB:-dhis}
+      # -- Database username
+      POSTGRES_DB_USERNAME: ${POSTGRES_DB_USERNAME}
+      # -- Database password
+      POSTGRES_DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      # -- Initdb arguments
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+      # -- Metrics username
+      POSTGRES_METRICS_USERNAME: ${POSTGRES_METRICS_USERNAME}
+      # -- Metrics user password
+      POSTGRES_METRICS_PASSWORD: ${POSTGRES_METRICS_PASSWORD}
+    networks:
+      db:
+        aliases:
+          - database
+    command: >
+      postgres
+        -c config_file=/etc/postgresql/postgresql.conf
+        -c hba_file=/var/lib/postgresql/data/pg_hba.conf
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    user: postgres
+    <<: *database-image
+    cap_drop:
+      - ALL
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /var/run/postgresql
+
+networks:
+  db:
+    name: ${COMPOSE_PROJECT_NAME}-db
+    external: true
+
+volumes:
+  postgres: {}
