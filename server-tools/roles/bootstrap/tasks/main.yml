@@ -7,6 +7,7 @@
     name:
       - git
       - curl
+      - make
       - wget
       - apt-transport-https
       - ca-certificates
@@ -43,7 +44,7 @@
     home: "{{ docker_home }}"
     create_home: yes
 
-#- name: Add user to docker group
+# - name: Add user to docker group
 #  user:
 #    name: "{{ docker_user }}"
 #    groups: "{{ docker_group }}"

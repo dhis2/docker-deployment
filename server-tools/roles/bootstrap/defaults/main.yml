@@ -1,0 +1,11 @@
+# Default infrastructure variables shared across roles.
+# bootstrap runs first, so these defaults are in scope for the firewall,
+# harden and platform roles too. Override per deployment in group_vars/all.yml.
+
+# User that owns the deploy directory and runs the Docker stacks.
+docker_user: dhis2
+docker_group: docker
+docker_home: "/home/{{ docker_user }}"
+
+# Where the docker-deployment repository is checked out on the target host.
+deploy_dir: /opt/dhis2

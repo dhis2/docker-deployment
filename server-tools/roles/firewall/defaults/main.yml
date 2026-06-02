@@ -1,0 +1,14 @@
+# Default firewall configuration. Override per deployment in group_vars/all.yml.
+
+# Host-facing TCP ports opened in the DOCKER-USER chain.
+# 22 (SSH), 80 (HTTP -> redirected to HTTPS by Traefik), 443 (HTTPS).
+firewall_allowed_ports:
+  - 22
+  - 80
+  - 443
+
+# Additional host-facing UDP ports (beyond the WireGuard port handled below).
+firewall_allowed_udp_ports: [ ]
+
+# WireGuard listen port. Only opened when enable_vpn is true (see tasks/main.yml).
+wireguard_port: 51820

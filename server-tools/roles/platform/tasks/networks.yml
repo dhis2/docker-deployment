@@ -1,0 +1,13 @@
+# Create the shared external Docker networks the stacks attach to.
+# These persist across reboots, so create-once is sufficient.
+
+- name: Ensure shared Docker networks exist
+  ansible.builtin.command: docker network create {{ item }}
+  loop:
+    - proxy
+    - monitoring
+  register: network_create
+  changed_when: network_create.rc == 0
+  failed_when:
+    - network_create.rc != 0
+    - "'already exists' not in network_create.stderr"

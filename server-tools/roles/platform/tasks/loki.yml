@@ -1,0 +1,14 @@
+# Install the Loki Docker logging driver plugin (used by the WireGuard stack and
+# by per-instance app containers via the `loki` logging driver).
+
+- name: Check whether the Loki Docker plugin is installed
+  ansible.builtin.shell: docker plugin ls | grep -q loki
+  register: loki_plugin
+  changed_when: false
+  failed_when: false
+
+- name: Install the Loki Docker logging driver
+  ansible.builtin.command: ./scripts/install-loki-driver.sh
+  args:
+    chdir: "{{ deploy_dir }}"
+  when: loki_plugin.rc != 0

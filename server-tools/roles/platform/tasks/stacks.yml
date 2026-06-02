@@ -1,0 +1,37 @@
+# Install and start the Traefik gateway and monitoring stacks as systemd services.
+# Units run `docker compose ... up` in the foreground (Type=simple) so systemd
+# tracks them. We deliberately do NOT call the `make start-*` targets, which also
+# run compose in the foreground and would block.
+
+- name: Install Traefik systemd unit
+  ansible.builtin.template:
+    src: traefik.service.j2
+    dest: /etc/systemd/system/traefik.service
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart traefik
+
+- name: Install monitoring systemd unit
+  ansible.builtin.template:
+    src: monitoring.service.j2
+    dest: /etc/systemd/system/monitoring.service
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart monitoring
+
+- name: Apply pending systemd unit changes
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start Traefik
+  ansible.builtin.systemd:
+    name: traefik
+    enabled: true
+    state: started
+
+- name: Enable and start monitoring
+  ansible.builtin.systemd:
+    name: monitoring
+    enabled: true
+    state: started

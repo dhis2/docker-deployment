@@ -1,49 +1,95 @@
-# DHIS2 Docker Deployment Ansible Playbook
+# DHIS2 Hosting Platform - Ansible
 
-This Ansible playbook automates the deployment of the DHIS2 Docker stack.
+This Ansible playbook provisions a server and brings up the **shared hosting
+stacks** for DHIS2: the Traefik gateway, the monitoring stack, and (optionally)
+the WireGuard VPN.
 
-## Features
+It does **not** deploy DHIS2 instances. Instances are created and managed
+separately with the `make` workflow in the repository root (`make
+create-instance`, `make start-instance`, etc.).
 
-- **Infrastructure Bootstrapping**: Installs required system packages including Docker and Docker Compose
-- **Security Hardening**: Applies system hardening based on the microk8s-playbook harden.yaml, adapted for Docker
-- **Deployment Automation**: Clones the repository, generates .env file, and deploys with selected overlays
-- **Modularity**: Uses Ansible roles for easy extension and maintenance
-- **Idempotency**: Safe to run multiple times
+## What it does
 
-## Prerequisites (recommendations)
+- **bootstrap**: installs Docker + Compose and required packages, creates the Docker user, and prepares the deploy directory.
+- **firewall**: configures a default-deny `DOCKER-USER` firewall, allowing only SSH/HTTP/HTTPS (and the WireGuard port when the VPN is enabled).
+- **harden**: SSH, kernel and Docker hardening (user-namespace remapping, etc.).
+- **platform**: clones the repo, generates the shared stack env files, ensures the shared Docker networks exist, installs the Loki log driver, and runs the Traefik, monitoring and (optional) WireGuard stacks as **systemd services** (`traefik.service`, `monitoring.service`, `wireguard.service`).
 
-- Ansible installed on the control machine
-- Target server with Ubuntu 24.04
-- SSH access to the target server with sudo privileges
-- Environment variables set: `GEN_APP_HOSTNAME` and `GEN_LETSENCRYPT_ACME_EMAIL`
+Grafana is reachable only over the WireGuard VPN at `https://grafana.internal`.
+With `enable_vpn: false` it is not reachable until a VPN is added.
 
 ## Configuration
 
-Edit `group_vars/all.yml` to customize:
+Two files are **implementation-specific and gitignored** (they must not be
+committed): `inventory.ini` (your hosts) and `group_vars/all.yml` (your
+overrides). Create both before running.
 
-- `app_hostname`: Application hostname (set via env var)
-- `letsencrypt_email`: Let's Encrypt email (set via env var)
-- `overlays`: List of overlays to enable, e.g., `['monitoring']`
-- Other variables as needed
+### Inventory
+
+Create `inventory.ini` describing your target host(s):
+
+```ini
+[servers]
+my-server ansible_host=server.example.com ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_my_server
+```
+
+### Variables
+
+Defaults for every variable live in each role's `defaults/main.yml`. Per
+deployment, override only what you need in **`group_vars/all.yml`**.
+
+Create `group_vars/all.yml` with at least the required variable:
+
+```yaml
+# Let's Encrypt ACME email (REQUIRED - no default)
+letsencrypt_email: "{{ lookup('env', 'GEN_LETSENCRYPT_ACME_EMAIL') | mandatory }}"
+
+# Optional overrides (showing defaults):
+# enable_platform: true        # master switch for the platform role
+# enable_vpn: true             # deploy WireGuard + open its UDP port
+# repo_url: https://github.com/dhis2/docker-deployment
+# repo_branch: master
+# deploy_dir: /opt/dhis2
+# docker_user: dhis2
+# docker_group: docker
+# allowed_ssh_users: [ ubuntu ]
+# firewall_allowed_ports: [ 22, 80, 443 ]
+# firewall_allowed_udp_ports: []   # WireGuard port is handled by enable_vpn
+```
+
+### Overridable variables
+
+| Variable | Default | Role | Purpose |
+| --- | --- | --- | --- |
+| `letsencrypt_email` | _(none, required)_ | platform | ACME registration email for Traefik |
+| `enable_platform` | `true` | platform | Run the platform role after provisioning server |
+| `enable_vpn` | `true` | platform | Deploy WireGuard and open its UDP port |
+| `repo_url` | `https://github.com/dhis2/docker-deployment` | platform | Repo to deploy from |
+| `repo_branch` | `master` | platform | Branch to deploy |
+| `deploy_dir` | `/opt/dhis2` | bootstrap | Checkout location on the host |
+| `docker_user` / `docker_group` | `dhis2` / `docker` | bootstrap | Owner of the deploy dir |
+| `allowed_ssh_users` | `[ ubuntu ]` | harden | SSH `AllowUsers` |
+| `firewall_allowed_ports` | `[ 22, 80, 443 ]` | firewall | Host-facing TCP ports |
+| `firewall_allowed_udp_ports` | `[]` | firewall | Extra UDP ports (WireGuard handled via `enable_vpn`) |
+| `wireguard_port` | `51820` | firewall | WireGuard UDP port (opened when `enable_vpn`) |
 
 ## Usage
 
-1. Set environment variables:
+1. Set the Let's Encrypt email in your environment:
 
     ```bash
-    export GEN_APP_HOSTNAME=your.domain.com
     export GEN_LETSENCRYPT_ACME_EMAIL=your.email@example.com
     ```
 
-2. Update the inventory file `inventory.ini` according to your needs
+2. Create `inventory.ini` and `group_vars/all.yml` for your deployment (see above).
 
-3. Copy your public SSH key to the target server
+3. Copy your public SSH key to the target server:
 
     ```bash
     ssh-copy-id ubuntu@<your server ip>
     ```
 
-4. Store your user's sudo password in `./.ansible_become_pass`
+4. Store your sudo password in `./.ansible_become_pass` (gitignored).
 
 5. Run the playbook:
 
@@ -51,29 +97,23 @@ Edit `group_vars/all.yml` to customize:
     make deployment
     ```
 
-## Roles
+## After deployment
 
-- **bootstrap**: Installs Docker, creates users, sets up directories
-- **firewall**: Configures firewall rules for Docker and host-facing ports
-- **harden**: Applies security hardening (SSH, kernel, Docker config)
-- **deploy**: Clones repo, generates .env, runs docker-compose
+- The stacks run as systemd services: `systemctl status traefik monitoring wireguard`.
+- To reach Grafana, connect to the VPN and export the root CA so your browser trusts the `*.internal` certificate (from the repo root):
 
-## Security Notes
+    ```bash
+    make get-vpn-ca   # writes rootCA.pem; install it in your OS/browser trust store
+    ```
 
-- Docker is configured with user namespace remapping for least privilege
-- Firewall rules are configured to deny all by default and only allow SSH, HTTP, HTTPS and inter-container communication only on default subnets
-- AppArmor is enabled
-- Unattended-upgrades are enabled
-- Secrets are handled via environment variables and .env file
+## Security notes
 
-The above is only a subset of the security hardening that is applied. For more information, see
-the [firewall](roles/firewall/tasks/main.yml) and [harden](roles/harden/tasks/main.yml) roles.
+- Docker uses user-namespace remapping for least privilege.
+- The firewall is default-deny; only SSH/HTTP/HTTPS (and WireGuard when enabled) are allowed, plus inter-container traffic on default Docker subnets.
+- AppArmor and unattended-upgrades are enabled.
+- Stack env files contain secrets and are generated on the host (gitignored in the deployed checkout).
 
-### Firewall Management
-
-All firewall rules for Docker and host-facing ports are managed by the `firewall` role.
-See [roles/firewall/tasks/main.yml](roles/firewall/tasks/main.yml) for more details.
-
-⚠️ **Important:** Do **not** use UFW or other firewall frontends alongside this setup. Docker bypasses standard host
-chains (INPUT/OUTPUT), so UFW rules are ignored or may conflict. All host and container traffic should be managed
-exclusively through this Ansible role.
+> **Important:** Do **not** use UFW or other firewall frontends alongside this
+> setup. Docker bypasses standard host chains, so UFW rules are ignored or may
+> conflict. All host and container traffic is managed through the `firewall` role.
+> See [roles/firewall/tasks/main.yml](roles/firewall/tasks/main.yml).

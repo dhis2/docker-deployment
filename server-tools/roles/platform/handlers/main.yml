@@ -1,0 +1,18 @@
+- name: reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: restart traefik
+  ansible.builtin.systemd:
+    name: traefik
+    state: restarted
+
+- name: restart monitoring
+  ansible.builtin.systemd:
+    name: monitoring
+    state: restarted
+
+- name: restart wireguard
+  ansible.builtin.systemd:
+    name: wireguard
+    state: restarted
