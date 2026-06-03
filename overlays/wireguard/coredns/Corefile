@@ -11,6 +11,14 @@ internal:53 {
         match .*\.internal\.
         answer "{{ .Name }} 60 IN A 10.8.0.1"
     }
+    # Answer AAAA (IPv6) for *.internal with NODATA (NOERROR, no answer) instead
+    # of letting the query fall through to a non-responding plugin, which returns
+    # SERVFAIL. A SERVFAIL on AAAA makes clients' getaddrinfo fail the whole
+    # lookup even though the A record resolves.
+    template IN AAAA internal {
+        match .*\.internal\.
+        rcode NOERROR
+    }
     log
     errors
 }
