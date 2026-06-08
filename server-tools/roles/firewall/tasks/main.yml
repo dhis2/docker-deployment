@@ -80,18 +80,6 @@
   loop: "{{ firewall_allowed_udp_ports | default([]) }}"
   become: true
 
-- name: Allow WireGuard UDP port (when VPN enabled)
-  ansible.builtin.iptables:
-    chain: DOCKER-USER
-    protocol: udp
-    destination_port: "{{ wireguard_port }}"
-    jump: ACCEPT
-    state: present
-    comment: "Allow WireGuard UDP port {{ wireguard_port }}"
-    ip_version: ipv4
-  become: true
-  when: enable_vpn | default(true) | bool
-
 - name: Drop everything else
   ansible.builtin.iptables:
     chain: DOCKER-USER

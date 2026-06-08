@@ -7,8 +7,7 @@ firewall_allowed_ports:
   - 80
   - 443
 
-# Additional host-facing UDP ports (beyond the WireGuard port handled below).
-firewall_allowed_udp_ports: [ ]
-
-# WireGuard listen port. Only opened when enable_vpn is true (see tasks/main.yml).
-wireguard_port: 51820
+# Host-facing UDP ports. 51820 is the WireGuard port (the VPN is started
+# manually with `make start-vpn`); harmless if the VPN is not used.
+firewall_allowed_udp_ports:
+  - 51820

@@ -1,4 +1,4 @@
-- name: Provision DHIS2 hosting platform
+- name: Provision DHIS2 server
   hosts: all
   become: true
 
@@ -6,5 +6,5 @@
     - bootstrap
     - firewall
     - harden
-    - role: platform
-      when: enable_platform | default(true) | bool
+    - role: repo
+      when: clone_repo | default(true) | bool

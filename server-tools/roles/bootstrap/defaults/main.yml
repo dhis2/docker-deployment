@@ -1,11 +1,12 @@
 # Default infrastructure variables shared across roles.
 # bootstrap runs first, so these defaults are in scope for the firewall,
-# harden and platform roles too. Override per deployment in group_vars/all.yml.
+# harden and repo roles too. Override per deployment in group_vars/all.yml.
 
-# User that owns the deploy directory and runs the Docker stacks.
-docker_user: dhis2
-docker_group: docker
-docker_home: "/home/{{ docker_user }}"
+# The operational user: owns deploy_dir, runs `make` / `sudo docker`, and is the
+# Docker user-namespace remap target. Defaults to the inventory ansible_user.
+# To use a dedicated account instead, set operator_user (+ operator_user_password,
+# and optionally operator_user_ssh_key) in group_vars/all.yml.
+operator_user: "{{ ansible_user }}"
 
 # Where the docker-deployment repository is checked out on the target host.
 deploy_dir: /opt/dhis2
