@@ -2,11 +2,13 @@
 # bootstrap runs first, so these defaults are in scope for the firewall,
 # harden and repo roles too. Override per deployment in group_vars/all.yml.
 
-# The operational user: owns deploy_dir, runs `make` / `sudo docker`, and is the
-# Docker user-namespace remap target. Defaults to the inventory ansible_user.
-# To use a dedicated account instead, set operator_user (+ operator_user_password,
-# and optionally operator_user_ssh_key) in group_vars/all.yml.
-operator_user: "{{ ansible_user }}"
+# The operational user: owns deploy_dir, runs `make`, and is the Docker
+# user-namespace remap target. Defaults to the inventory ansible_user.
+# NOTE: this user is NOT added to the (root-equivalent) `docker` group; it runs
+# docker via `sudo` (see the Makefile SUDO variable and README).
+# To use a dedicated account instead, set docker_user (+ docker_user_password,
+# and optionally docker_user_ssh_key) in group_vars/all.yml.
+docker_user: "{{ ansible_user }}"
 
 # Where the docker-deployment repository is checked out on the target host.
 deploy_dir: /opt/dhis2

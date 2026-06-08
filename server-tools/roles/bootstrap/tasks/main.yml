@@ -38,43 +38,43 @@
 
 # Operator user: the account that owns deploy_dir and runs `make` / `sudo docker`.
 # By default this is the inventory ansible_user (already exists), so nothing is
-# created. Set operator_user to a dedicated name in group_vars/all.yml to have a
+# created. Set docker_user to a dedicated name in group_vars/all.yml to have a
 # separate account provisioned (with a pre-hashed password and optional SSH key).
 - name: Assert a password is provided for a dedicated operator user
   assert:
-    that: operator_user_password is defined and operator_user_password | length > 0
+    that: docker_user_password is defined and docker_user_password | length > 0
     fail_msg: >-
-      operator_user is set to a dedicated account ({{ operator_user }}) but
-      operator_user_password is not set. Provide a pre-hashed password
+      docker_user is set to a dedicated account ({{ docker_user }}) but
+      docker_user_password is not set. Provide a pre-hashed password
       (e.g. `mkpasswd --method=sha-512`). See README.md.
-  when: operator_user != ansible_user
+  when: docker_user != ansible_user
 
 - name: Create the operator user
   user:
-    name: "{{ operator_user }}"
-    password: "{{ operator_user_password }}"
+    name: "{{ docker_user }}"
+    password: "{{ docker_user_password }}"
     update_password: on_create
     groups: sudo
     append: yes
     shell: /bin/bash
     create_home: yes
-  when: operator_user != ansible_user
+  when: docker_user != ansible_user
 
 - name: Add the operator user's SSH key
   authorized_key:
-    user: "{{ operator_user }}"
-    key: "{{ operator_user_ssh_key }}"
+    user: "{{ docker_user }}"
+    key: "{{ docker_user_ssh_key }}"
   when:
-    - operator_user != ansible_user
-    - operator_user_ssh_key is defined
-    - operator_user_ssh_key | length > 0
+    - docker_user != ansible_user
+    - docker_user_ssh_key is defined
+    - docker_user_ssh_key | length > 0
 
 - name: Ensure deploy directory exists
   file:
     path: "{{ deploy_dir }}"
     state: directory
-    owner: "{{ operator_user }}"
-    group: "{{ operator_user }}"
+    owner: "{{ docker_user }}"
+    group: "{{ docker_user }}"
     mode: '0755'
 
 - name: Enable and start Docker service

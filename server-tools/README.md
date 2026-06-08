@@ -21,7 +21,7 @@ start-monitoring`, `make start-vpn`, `make start-instance`, ...).
 
 One user owns `deploy_dir`, runs `make`, and is the Docker user-namespace remap
 target. By default this is the inventory `ansible_user` (no extra account is
-created). To use a dedicated account, set `operator_user` (see below).
+created). To use a dedicated account, set `docker_user` (see below).
 
 Operators are intentionally **not** added to the root-equivalent `docker` group.
 Instead the `make` workflow runs docker via `sudo` by default (explicit and
@@ -57,28 +57,28 @@ what you need, for example:
 repo_branch: master
 
 # Use a dedicated operator account instead of the inventory ansible_user.
-# operator_user_password must be PRE-HASHED, e.g.:
+# docker_user_password must be PRE-HASHED, e.g.:
 #   mkpasswd --method=sha-512        (from the `whois` package)
 #   openssl passwd -6
-# Without operator_user_ssh_key the account cannot SSH until a key is added
+# Without docker_user_ssh_key the account cannot SSH until a key is added
 # (log in as the ansible_user and add one to the operator's authorized_keys).
-operator_user: dhis2admin
-operator_user_password: "$6$rounds=...$..."
-operator_user_ssh_key: "ssh-ed25519 AAAA... you@host"
+docker_user: dhis2admin
+docker_user_password: "$6$rounds=...$..."
+docker_user_ssh_key: "ssh-ed25519 AAAA... you@host"
 ```
 
 #### Overridable variables
 
 | Variable | Default | Role | Purpose |
 | --- | --- | --- | --- |
-| `operator_user` | inventory `ansible_user` | bootstrap | User that owns `deploy_dir`, runs `make`, and is the userns-remap target |
-| `operator_user_password` | _(none)_ | bootstrap | **Pre-hashed** password; required only when `operator_user` is a dedicated account |
-| `operator_user_ssh_key` | _(none)_ | bootstrap | Optional SSH public key for the dedicated operator account |
+| `docker_user` | inventory `ansible_user` | bootstrap | User that owns `deploy_dir`, runs `make`, and is the userns-remap target |
+| `docker_user_password` | _(none)_ | bootstrap | **Pre-hashed** password; required only when `docker_user` is a dedicated account |
+| `docker_user_ssh_key` | _(none)_ | bootstrap | Optional SSH public key for the dedicated operator account |
 | `clone_repo` | `true` | repo | Whether to clone/check out the repo into `deploy_dir` |
 | `repo_url` | `https://github.com/dhis2/docker-deployment` | repo | Repo to check out |
 | `repo_branch` | `master` | repo | Branch to check out |
 | `deploy_dir` | `/opt/dhis2` | bootstrap | Checkout location on the host |
-| `allowed_ssh_users` | `[ ubuntu ]` | harden | SSH `AllowUsers` (the `operator_user` is added automatically) |
+| `allowed_ssh_users` | `[ ubuntu ]` | harden | SSH `AllowUsers` (the `docker_user` is added automatically) |
 | `firewall_allowed_ports` | `[ 22, 80, 443 ]` | firewall | Host-facing TCP ports |
 | `firewall_allowed_udp_ports` | `[ 51820 ]` | firewall | Host-facing UDP ports (51820 = WireGuard) |
 

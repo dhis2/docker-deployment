@@ -30,7 +30,7 @@
 - name: Allow specific SSH users
   lineinfile:
     path: /etc/ssh/sshd_config
-    line: "AllowUsers {{ (allowed_ssh_users + [operator_user]) | unique | join(' ') }}"
+    line: "AllowUsers {{ (allowed_ssh_users + [docker_user]) | unique | join(' ') }}"
     state: present
 
 # - name: Restart SSH service
@@ -123,14 +123,14 @@
   # Allocates UID range 100000-165535 for the user, enabling Docker to remap container UIDs
   lineinfile:
     path: /etc/subuid
-    line: "{{ operator_user }}:100000:65536"
+    line: "{{ docker_user }}:100000:65536"
     create: yes
 
 - name: Configure subgid for user namespace remapping
   # Allocates GID range 100000-165535 for the user, enabling Docker to remap container GIDs
   lineinfile:
     path: /etc/subgid
-    line: "{{ operator_user }}:100000:65536"
+    line: "{{ docker_user }}:100000:65536"
     create: yes
 
 - name: Install AppArmor utils and profiles
@@ -156,7 +156,7 @@
     dest: /etc/docker/daemon.json
     content: |
       {
-        "userns-remap": "{{ operator_user }}",
+        "userns-remap": "{{ docker_user }}",
         "icc": false,
         "log-driver": "json-file",
         "log-opts": {

@@ -4,7 +4,7 @@
 # run the `make` workflow (start-traefik, start-monitoring, start-vpn,
 # start-instance, ...) on the server. It does not start any stacks itself.
 #
-# The checkout runs as operator_user so the working tree is owned by the user
+# The checkout runs as docker_user so the working tree is owned by the user
 # who runs `make` (and who can therefore write generated files such as
 # instances/*.env and rendered conf.d/*.yml).
 
@@ -25,7 +25,7 @@
   when: not git_repo.stat.exists and dir_contents.matched > 0
 
 - name: Clone or update the repository
-  become_user: "{{ operator_user }}"
+  become_user: "{{ docker_user }}"
   ansible.builtin.git:
     repo: "{{ repo_url }}"
     dest: "{{ deploy_dir }}"
