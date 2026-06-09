@@ -189,7 +189,7 @@ delete-instance:
 clean:
 	$(COMPOSE_CMD) down --remove-orphans
 
-COMPOSE_CMD_VPN = $(DOCKER) compose -p wireguard -f overlays/wireguard/docker-compose.yml
+COMPOSE_CMD_VPN = $(DOCKER) compose -p wireguard --env-file overlays/wireguard/.env -f overlays/wireguard/docker-compose.yml
 
 # Start the standalone WireGuard VPN (run once per server; manages certs and peer configs).
 # After first start, retrieve the rootCA.pem from the wireguard-certs Docker volume and

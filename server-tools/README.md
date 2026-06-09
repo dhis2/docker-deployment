@@ -44,7 +44,12 @@ for every variable live in each role's `defaults/main.yml`.
 
 ```ini
 [servers]
-my-server ansible_host=server.example.com ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_my_server
+my-server-name
+
+[servers:vars]
+ansible_host=server.example.com
+ansible_user=ubuntu
+#ansible_ssh_private_key_file=~/.ssh/id_my_server
 ```
 
 ### Variables

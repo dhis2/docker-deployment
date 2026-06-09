@@ -46,23 +46,25 @@ Client                          Server
 
 ## Configuration
 
-Set these as environment variables when running `make start-vpn` (all have
-defaults):
+The VPN stack reads `overlays/wireguard/.env`, created by `make generate-stack-envs`
+from `overlays/wireguard/.env.template`. Edit it before launching:
 
-| Variable                    | Default     | Description                                                            |
-| --------------------------- | ----------- | ---------------------------------------------------------------------- |
-| `WIREGUARD_PEERS`           | `laptop`    | Comma-separated peer names to generate configs for                     |
-| `WIREGUARD_SERVER_URL`      | `auto`      | Public endpoint clients connect to (use the server's public IP or FQDN) |
-| `WIREGUARD_SERVER_PORT`     | `51820`     | UDP port WireGuard listens on                                          |
-| `WIREGUARD_INTERNAL_SUBNET` | `10.8.0.0`  | Tunnel subnet (must not overlap with the client's local networks)      |
-| `WIREGUARD_ALLOWED_IPS`     | `0.0.0.0/0` | CIDRs routed through the tunnel on the client (full vs. split tunnel)  |
+| Variable                    | Default       | Description                                                            |
+| --------------------------- | ------------- | ---------------------------------------------------------------------- |
+| `WIREGUARD_PEERS`           | `dhis2`       | Comma-separated peer names to generate configs for                     |
+| `WIREGUARD_SERVER_URL`      | `auto`        | Public endpoint clients connect to (use the server's public IP or FQDN) |
+| `WIREGUARD_SERVER_PORT`     | `51820`       | UDP port WireGuard listens on                                          |
+| `WIREGUARD_INTERNAL_SUBNET` | `10.8.0.0`    | Tunnel subnet (must not overlap with the client's local networks)      |
+| `WIREGUARD_ALLOWED_IPS`     | `10.8.0.0/24` | CIDRs routed through the tunnel on the client. Default (split tunnel) reaches all `*.internal` services and works with every client; `0.0.0.0/0` (full tunnel) needs wg-quick/official apps, not NetworkManager |
 
 ## Launch
 
+Assumes `make generate-stack-envs` has already been run during server setup (it
+creates `overlays/wireguard/.env`). Edit that file, then start the VPN:
+
 ```shell
-WIREGUARD_SERVER_URL=<server-public-ip-or-fqdn> \
-WIREGUARD_PEERS=alice,bob \
-  make start-vpn
+# in overlays/wireguard/.env, set WIREGUARD_SERVER_URL and WIREGUARD_PEERS
+make start-vpn
 ```
 
 This brings up `mkcert` (one-shot - generates certs on first run, no-op
@@ -73,9 +75,9 @@ up the newly minted certs.
 Use `make stop-vpn` to tear down the stack. Peer configs and the cert volume
 persist across restarts.
 
-> **Firewall:** UDP `${WIREGUARD_SERVER_PORT}` must be open inbound on the
-> server. The `server-tools/` Ansible role configures this when its
-> `wireguard_server_port` matches the value used here.
+> **Firewall:** UDP `WIREGUARD_SERVER_PORT` (default `51820`) must be open inbound
+> on the server. The `server-tools/` Ansible playbook opens it by default
+> (`firewall_allowed_udp_ports`).
 
 ## Enrol a peer
 
