@@ -9,6 +9,12 @@ monitoring, WireGuard VPN) and DHIS2 instances is done by an operator with the
 `make` workflow in the repository root (`make start-traefik`, `make
 start-monitoring`, `make start-vpn`, `make start-instance`, ...).
 
+## Prerequisites
+
+- Ansible installed on the control machine (where you run `make deployment`).
+- A target server running Ubuntu 24.04.
+- SSH access to the target server with sudo privileges.
+
 ## What it does
 
 - **bootstrap**: installs Docker + Compose and required packages (incl. `make`), optionally creates the operator user, and prepares the deploy directory.
