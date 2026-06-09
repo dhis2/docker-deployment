@@ -326,9 +326,11 @@ For detailed configuration and usage, see the [Profiling Overlay README](overlay
 
 The standalone WireGuard stack provides a private tunnel so authorised clients can reach admin and monitoring UIs (Grafana, Glowroot) over `*.internal` hostnames without exposing them publicly. DHIS2 itself stays public; only admin surfaces move behind the VPN.
 
+This assumes `make generate-stack-envs` has already been run during server setup (it creates `overlays/wireguard/.env`). Edit that file, then start the VPN:
+
 ```shell
-WIREGUARD_SERVER_URL=<your-server-public-ip-or-fqdn> \
-  make start-vpn
+# in overlays/wireguard/.env, set WIREGUARD_SERVER_URL and WIREGUARD_PEERS
+make start-vpn
 ```
 
 | Hostname            | Service     |

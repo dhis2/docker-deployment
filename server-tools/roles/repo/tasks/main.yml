@@ -1,0 +1,33 @@
+# Clone or update the docker-deployment repository into deploy_dir.
+#
+# This is the only thing the role does: it sets up the repo so an operator can
+# run the `make` workflow (start-traefik, start-monitoring, start-vpn,
+# start-instance, ...) on the server. It does not start any stacks itself.
+#
+# The checkout runs as docker_user so the working tree is owned by the user
+# who runs `make` (and who can therefore write generated files such as
+# instances/*.env and rendered conf.d/*.yml).
+
+- name: Check if deploy dir is already a git repo
+  ansible.builtin.stat:
+    path: "{{ deploy_dir }}/.git"
+  register: git_repo
+
+- name: Check deploy dir contents
+  ansible.builtin.find:
+    paths: "{{ deploy_dir }}"
+    file_type: any
+  register: dir_contents
+
+- name: Fail if deploy dir is not empty and not a git repo
+  ansible.builtin.fail:
+    msg: "Deploy directory {{ deploy_dir }} is not empty and is not a git repository. Remove it or resolve the conflict."
+  when: not git_repo.stat.exists and dir_contents.matched > 0
+
+- name: Clone or update the repository
+  become_user: "{{ docker_user }}"
+  ansible.builtin.git:
+    repo: "{{ repo_url }}"
+    dest: "{{ deploy_dir }}"
+    version: "{{ repo_branch }}"
+    update: true

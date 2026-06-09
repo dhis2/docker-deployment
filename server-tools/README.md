@@ -1,79 +1,114 @@
-# DHIS2 Docker Deployment Ansible Playbook
+# DHIS2 Server Provisioning - Ansible
 
-This Ansible playbook automates the deployment of the DHIS2 Docker stack.
+This Ansible playbook **provisions and hardens a server** for running the DHIS2
+Docker stacks, and optionally **checks out this repository** to the deploy
+directory so an operator can run the `make` workflow on the box.
 
-## Features
+It does **not** start any containers. Starting and managing the stacks (Traefik,
+monitoring, WireGuard VPN) and DHIS2 instances is done by an operator with the
+`make` workflow in the repository root (`make start-traefik`, `make
+start-monitoring`, `make start-vpn`, `make start-instance`, ...).
 
-- **Infrastructure Bootstrapping**: Installs required system packages including Docker and Docker Compose
-- **Security Hardening**: Applies system hardening based on the microk8s-playbook harden.yaml, adapted for Docker
-- **Deployment Automation**: Clones the repository, generates .env file, and deploys with selected overlays
-- **Modularity**: Uses Ansible roles for easy extension and maintenance
-- **Idempotency**: Safe to run multiple times
+## What it does
 
-## Prerequisites (recommendations)
+- **bootstrap**: installs Docker + Compose and required packages (incl. `make`), optionally creates the operator user, and prepares the deploy directory.
+- **firewall**: configures a default-deny `DOCKER-USER` firewall, allowing only SSH/HTTP/HTTPS, the WireGuard UDP port, and inter-container traffic.
+- **harden**: SSH, kernel and Docker hardening (user-namespace remapping, etc.).
+- **repo** (optional, `clone_repo`): clones/updates this repository into
+  `deploy_dir`, owned by the operator user.
 
-- Ansible installed on the control machine
-- Target server with Ubuntu 24.04
-- SSH access to the target server with sudo privileges
-- Environment variables set: `GEN_APP_HOSTNAME` and `GEN_LETSENCRYPT_ACME_EMAIL`
+## The operator user and `sudo docker`
+
+One user owns `deploy_dir`, runs `make`, and is the Docker user-namespace remap
+target. By default this is the inventory `ansible_user` (no extra account is
+created). To use a dedicated account, set `docker_user` (see below).
+
+Operators are intentionally **not** added to the root-equivalent `docker` group.
+Instead the `make` workflow runs docker via `sudo` by default (explicit and
+logged). That's controlled by the `SUDO` variable in the root `Makefile`:
+
+```bash
+make start-traefik              # runs: sudo docker compose ...
+make start-traefik SUDO=        # no sudo (e.g. dev container, or user in docker group)
+```
+
+So `make` will prompt for the operator's sudo password when starting containers.
 
 ## Configuration
 
-Edit `group_vars/all.yml` to customize:
+Two files are **implementation-specific and gitignored** (must not be committed):
+`inventory.ini` (your hosts) and `group_vars/all.yml` (your overrides). Defaults
+for every variable live in each role's `defaults/main.yml`.
 
-- `app_hostname`: Application hostname (set via env var)
-- `letsencrypt_email`: Let's Encrypt email (set via env var)
-- `overlays`: List of overlays to enable, e.g., `['monitoring']`
-- Other variables as needed
+### Inventory
+
+```ini
+[servers]
+my-server-name
+
+[servers:vars]
+ansible_host=server.example.com
+ansible_user=ubuntu
+#ansible_ssh_private_key_file=~/.ssh/id_my_server
+```
+
+### Variables
+
+`group_vars/all.yml` can be empty (all variables have defaults). Override only
+what you need, for example:
+
+```yaml
+# Check out a non-default branch:
+repo_branch: master
+
+# Use a dedicated operator account instead of the inventory ansible_user.
+# docker_user_password must be PRE-HASHED, e.g.:
+#   mkpasswd --method=sha-512        (from the `whois` package)
+#   openssl passwd -6
+# Without docker_user_ssh_key the account cannot SSH until a key is added
+# (log in as the ansible_user and add one to the operator's authorized_keys).
+docker_user: dhis2admin
+docker_user_password: "$6$rounds=...$..."
+docker_user_ssh_key: "ssh-ed25519 AAAA... you@host"
+```
+
+#### Overridable variables
+
+| Variable | Default | Role | Purpose |
+| --- | --- | --- | --- |
+| `docker_user` | inventory `ansible_user` | bootstrap | User that owns `deploy_dir`, runs `make`, and is the userns-remap target |
+| `docker_user_password` | _(none)_ | bootstrap | **Pre-hashed** password; required only when `docker_user` is a dedicated account |
+| `docker_user_ssh_key` | _(none)_ | bootstrap | Optional SSH public key for the dedicated operator account |
+| `clone_repo` | `true` | repo | Whether to clone/check out the repo into `deploy_dir` |
+| `repo_url` | `https://github.com/dhis2/docker-deployment` | repo | Repo to check out |
+| `repo_branch` | `master` | repo | Branch to check out |
+| `deploy_dir` | `/opt/dhis2` | bootstrap | Checkout location on the host |
+| `allowed_ssh_users` | `[ ubuntu ]` | harden | SSH `AllowUsers` (the `docker_user` is added automatically) |
+| `firewall_allowed_ports` | `[ 22, 80, 443 ]` | firewall | Host-facing TCP ports |
+| `firewall_allowed_udp_ports` | `[ 51820 ]` | firewall | Host-facing UDP ports (51820 = WireGuard) |
 
 ## Usage
 
-1. Set environment variables:
-
-    ```bash
-    export GEN_APP_HOSTNAME=your.domain.com
-    export GEN_LETSENCRYPT_ACME_EMAIL=your.email@example.com
-    ```
-
-2. Update the inventory file `inventory.ini` according to your needs
-
-3. Copy your public SSH key to the target server
-
-    ```bash
-    ssh-copy-id ubuntu@<your server ip>
-    ```
-
-4. Store your user's sudo password in `./.ansible_become_pass`
-
-5. Run the playbook:
+1. Create `inventory.ini` and (optionally) `group_vars/all.yml`.
+2. Copy your SSH key to the target server: `ssh-copy-id ubuntu@<server>`.
+3. Store your sudo password in `./.ansible_become_pass` (gitignored).
+4. Run the playbook:
 
     ```bash
     make deployment
     ```
 
-## Roles
+5. Then, on the server, start the stacks with the `make` workflow (e.g.
+   `make start-traefik`, `make start-monitoring`, `make start-vpn`). See the repository root `README.md` and `docs/` for those steps.
 
-- **bootstrap**: Installs Docker, creates users, sets up directories
-- **firewall**: Configures firewall rules for Docker and host-facing ports
-- **harden**: Applies security hardening (SSH, kernel, Docker config)
-- **deploy**: Clones repo, generates .env, runs docker-compose
+## Security notes
 
-## Security Notes
+- Docker uses user-namespace remapping for least privilege.
+- Operators use `sudo docker` rather than membership of the `docker` group.
+- The firewall is default-deny; only SSH/HTTP/HTTPS + WireGuard are allowed, plus inter-container traffic on default Docker subnets.
+- AppArmor and unattended-upgrades are enabled.
 
-- Docker is configured with user namespace remapping for least privilege
-- Firewall rules are configured to deny all by default and only allow SSH, HTTP, HTTPS and inter-container communication only on default subnets
-- AppArmor is enabled
-- Unattended-upgrades are enabled
-- Secrets are handled via environment variables and .env file
-
-The above is only a subset of the security hardening that is applied. For more information, see
-the [firewall](roles/firewall/tasks/main.yml) and [harden](roles/harden/tasks/main.yml) roles.
-
-### Firewall Management
-
-All firewall rules for Docker and host-facing ports are managed by the `firewall` role.
-See [roles/firewall/tasks/main.yml](roles/firewall/tasks/main.yml) for more details.
-
-⚠️ **Important:** Do **not** use UFW or other firewall frontends alongside this setup. Docker bypasses standard host
-chains (INPUT/OUTPUT), so UFW rules are ignored or may conflict. All host and container traffic should be managed
-exclusively through this Ansible role.
+> **Important:** Do **not** use UFW or other firewall frontends alongside this
+> setup. Docker bypasses standard host chains, so UFW rules are ignored or may
+> conflict. All host and container traffic is managed through the `firewall` role.
+> See [roles/firewall/tasks/main.yml](roles/firewall/tasks/main.yml).

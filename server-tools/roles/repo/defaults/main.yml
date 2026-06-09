@@ -1,0 +1,8 @@
+# Defaults for the repo role. Override per deployment in group_vars/all.yml.
+
+# Clone / check out the docker-deployment repository into deploy_dir.
+clone_repo: true
+
+# Repository to check out, and the branch to use.
+repo_url: https://github.com/dhis2/docker-deployment
+repo_branch: master

@@ -1,0 +1,12 @@
+# Implementation-specific configuration - do not commit.
+# Defaults live in roles/*/defaults/main.yml; document required overrides in README.md.
+group_vars/all.yml
+
+# Inventory is specific to your hosts - see README.md for the expected format.
+inventory.ini
+
+# Sudo become password file
+.ansible_become_pass
+
+# Ansible runtime artifacts
+.ansible/

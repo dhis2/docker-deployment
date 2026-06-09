@@ -1,4 +1,4 @@
-- name: Deploy DHIS2 Docker Stack
+- name: Provision DHIS2 server
   hosts: all
   become: true
 
@@ -6,5 +6,5 @@
     - bootstrap
     - firewall
     - harden
-    - role: deploy
-      when: enable_deploy | default(false) | bool
+    - role: repo
+      when: clone_repo | default(true) | bool
