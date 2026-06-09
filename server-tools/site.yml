@@ -1,4 +1,4 @@
-- name: Provision DHIS2 Docker host
+- name: Provision DHIS2 server
   hosts: all
   become: true
 
@@ -6,4 +6,5 @@
     - bootstrap
     - firewall
     - harden
-    - deploy
+    - role: repo
+      when: clone_repo | default(true) | bool

@@ -56,7 +56,7 @@
     ip_version: ipv4
   become: true
 
-- name: Allow host-facing ports
+- name: Allow host-facing TCP ports
   ansible.builtin.iptables:
     chain: DOCKER-USER
     protocol: tcp
@@ -66,6 +66,18 @@
     comment: "Allow host port {{ item }}"
     ip_version: ipv4
   loop: "{{ firewall_allowed_ports }}"
+  become: true
+
+- name: Allow host-facing UDP ports
+  ansible.builtin.iptables:
+    chain: DOCKER-USER
+    protocol: udp
+    destination_port: "{{ item }}"
+    jump: ACCEPT
+    state: present
+    comment: "Allow host UDP port {{ item }}"
+    ip_version: ipv4
+  loop: "{{ firewall_allowed_udp_ports | default([]) }}"
   become: true
 
 - name: Drop everything else
