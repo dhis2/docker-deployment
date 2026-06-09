@@ -79,6 +79,13 @@ persist across restarts.
 > on the server. The `server-tools/` Ansible playbook opens it by default
 > (`firewall_allowed_udp_ports`).
 
+## macOS clients
+
+The macOS WireGuard app differs from Linux + NetworkManager in two ways:
+
+- **`.internal` name resolution.** A bare domain in the tunnel's `DNS =` line is treated as a *search* domain, not a split-DNS *match* domain, so `grafana.internal` will not resolve by name. Instead add a resolver file (active while the tunnel is up): `printf 'nameserver 10.8.0.1\n' | sudo tee /etc/resolver/internal` (remove with `sudo rm /etc/resolver/internal`).
+- **Use `https://`.** The tunnel forwards only port 443, so opening `grafana.internal` (which defaults to `http://`) fails with `ERR_CONNECTION_REFUSED`. Always use `https://grafana.internal`.
+
 ## Enrol a peer
 
 After `make start-vpn`, each peer's config lives at
