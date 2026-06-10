@@ -16,7 +16,16 @@
 
 ## Overview
 
-This repository provides a Docker-based deployment for the DHIS2 application, designed for both local development/testing and secure production implementations. It leverages Docker Compose to orchestrate DHIS2, PostgreSQL, Traefik (as a reverse proxy), and an optional monitoring stack. Facilities are also provided for backup and restore of the database and file storage.
+> [!IMPORTANT]
+> **Stable release notice**
+>
+> The `master` branch contains **version 1.0** of the DHIS2 Docker deployment tools. It has been tested internally and is working, although it still has some known limitations.
+>
+> New features — including **multiple instance deployment** and **VPN security** — are under active development on the `development-2.0` branch. You are welcome to explore that branch, but these features are not yet part of a stable release.
+
+This repository provides a Docker-based deployment for the DHIS2 application, designed for local development, testing, and secure single-instance production-oriented deployments. It uses Docker Compose to orchestrate DHIS2 and supporting services, aiming to provide a simple, reproducible, and transparent deployment workflow.
+
+The `master` branch is intended for public testing and evaluation, while the next major iteration of the tooling is being developed on the `development-2.0` branch.
 
 ## Table of contents
 
