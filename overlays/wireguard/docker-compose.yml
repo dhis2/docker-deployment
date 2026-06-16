@@ -35,7 +35,11 @@ services:
         condition: service_completed_successfully
     volumes:
       - ./config:/config
-      - ./coredns/Corefile:/config/coredns/Corefile:ro
+      # Mount the coredns directory, not the Corefile alone: a single-file bind
+      # mount nested inside the /config mount fails on macOS Docker Desktop with
+      # VirtioFS (docker/desktop-feedback#420). The dir holds only Corefile, and
+      # the image reads /config/coredns/Corefile regardless of mount type.
+      - ./coredns:/config/coredns:ro
     environment:
       PUID: 1000
       PGID: 1000
