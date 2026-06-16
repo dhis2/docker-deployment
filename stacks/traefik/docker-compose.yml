@@ -87,3 +87,4 @@ volumes:
   cert: {}
   wireguard-certs:
     name: wireguard-certs
+    external: true

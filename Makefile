@@ -15,7 +15,7 @@ PROJECT_NAME ?= $(notdir $(CURDIR))
 ENV_FILE = instances/$(PROJECT_NAME).env
 BACKUP_DIR ?= ./backups/$(PROJECT_NAME)
 
-.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances start-postgres start-instance start-traefik start-monitoring start-vpn stop-vpn get-vpn-ca ensure-networks stop-instance delete-instance clean clean-all config get-backup-timestamp
+.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances start-postgres start-instance start-traefik start-monitoring start-vpn stop-vpn get-vpn-ca ensure-networks ensure-volumes stop-instance delete-instance clean clean-all config get-backup-timestamp
 
 init:
 	@test -d .venv || python3 -m venv .venv
@@ -111,8 +111,11 @@ ensure-networks:
 	$(DOCKER) network create proxy 2>/dev/null || true
 	$(DOCKER) network create monitoring 2>/dev/null || true
 
+ensure-volumes:
+	docker volume create wireguard-certs 2>/dev/null || true
+
 # Start the standalone Traefik gateway (run once; watches stacks/traefik/conf.d/ for route changes)
-start-traefik: ensure-networks
+start-traefik: ensure-networks ensure-volumes
 	$(DOCKER) compose -f stacks/traefik/docker-compose.yml --env-file stacks/traefik/.env up $(COMPOSE_OPTS)
 
 # Start the standalone monitoring stack (run once; watches stacks/monitoring/targets/ for new instances)
@@ -194,7 +197,7 @@ COMPOSE_CMD_VPN = $(DOCKER) compose -p wireguard --env-file overlays/wireguard/.
 # Start the standalone WireGuard VPN (run once per server; manages certs and peer configs).
 # After first start, retrieve the rootCA.pem from the wireguard-certs Docker volume and
 # distribute to VPN clients so they trust the *.internal wildcard certificate.
-start-vpn: ensure-networks install-loki-driver
+start-vpn: ensure-networks ensure-volumes install-loki-driver
 	$(COMPOSE_CMD_VPN) up -d wireguard wireguard-proxy
 	# Traefik's file provider watches conf.d/ for YAML changes but NOT the cert files
 	# referenced inside them. On first launch the certs don't exist yet when Traefik

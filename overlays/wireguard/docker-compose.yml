@@ -66,3 +66,4 @@ networks:
 volumes:
   wireguard-certs:
     name: wireguard-certs
+    external: true
