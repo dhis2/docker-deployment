@@ -79,6 +79,8 @@ persist across restarts.
 > on the server. The `server-tools/` Ansible playbook opens it by default
 > (`firewall_allowed_udp_ports`).
 
+> **Running the server on macOS (Docker Desktop):** disable *Settings -> Resources -> Network -> "Use kernel networking for UDP"*. With it enabled (the default), inbound UDP to a published port has its source IP rewritten before delivery, which breaks the WireGuard handshake.
+
 ## macOS clients
 
 The macOS WireGuard app differs from Linux + NetworkManager in two ways:
