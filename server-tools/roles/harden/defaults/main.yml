@@ -1,0 +1,5 @@
+# Default hardening configuration. Override per deployment in group_vars/all.yml.
+
+# Users permitted to log in over SSH (AllowUsers directive).
+allowed_ssh_users:
+  - ubuntu

@@ -30,7 +30,7 @@
 - name: Allow specific SSH users
   lineinfile:
     path: /etc/ssh/sshd_config
-    line: "AllowUsers {{ allowed_ssh_users | join(' ') }}"
+    line: "AllowUsers {{ (allowed_ssh_users + [docker_user]) | unique | join(' ') }}"
     state: present
 
 # - name: Restart SSH service
@@ -171,5 +171,5 @@
   file:
     path: /var/run/docker.sock
     owner: root
-    group: "{{ docker_group }}"
+    group: docker
     mode: '0660'
