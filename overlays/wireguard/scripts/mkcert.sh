@@ -9,7 +9,8 @@ for host in grafana.internal glowroot.internal; do
         mkcert "${host}"
         mv "${host}.pem" "/certs/${host}.crt"
         mv "${host}-key.pem" "/certs/${host}.key"
-        chmod 600 "/certs/${host}.key"
+        chown nobody:nobody "/certs/${host}.key"
+        chmod 640 "/certs/${host}.key"
     fi
 done
 
