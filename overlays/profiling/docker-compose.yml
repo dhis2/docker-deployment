@@ -13,7 +13,7 @@ services:
         condition: service_healthy
     volumes:
       - otel:/otel:ro
-      - ./config/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
+      - ./instances/${COMPOSE_PROJECT_NAME}/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
     environment:
       # OpenTelemetry Java Agent configuration
       # Using JAVA_TOOL_OPTIONS to append to existing JVM args rather than replacing CATALINA_OPTS

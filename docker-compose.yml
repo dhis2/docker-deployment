@@ -20,8 +20,8 @@ services:
     image: dhis2/core:${DHIS2_VERSION:-42}
     volumes:
       - dhis2:/opt/dhis2/
-      #- ./config/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
-      - ./config/dhis2/dhis.conf:/opt/dhis2/dhis.conf:ro
+      #- ./instances/${COMPOSE_PROJECT_NAME}/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
+      - ./instances/${COMPOSE_PROJECT_NAME}/dhis2/dhis.conf:/opt/dhis2/dhis.conf:ro
       - type: tmpfs
         target: /tmp
         tmpfs:

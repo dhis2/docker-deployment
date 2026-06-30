@@ -135,6 +135,7 @@ clean-monitoring:
 create-instance:
 	@test -n "$(APP_HOSTNAME)" || (echo "Error: APP_HOSTNAME must be set" >&2; exit 1)
 	GEN_PROJECT_NAME=$(PROJECT_NAME) GEN_APP_HOSTNAME=$(APP_HOSTNAME) ./scripts/generate-env.sh
+	GEN_PROJECT_NAME=$(PROJECT_NAME) ./scripts/generate-instance-config.sh
 
 # List all configured instances with their hostname and running container count.
 list-instances:
@@ -196,6 +197,7 @@ delete-instance:
 	rm -f stacks/monitoring/targets/dhis2/$(PROJECT_NAME).json
 	rm -f stacks/monitoring/targets/postgres/$(PROJECT_NAME).json
 	rm -f instances/$(PROJECT_NAME).env
+	rm -rf instances/$(PROJECT_NAME)
 
 clean:
 	$(COMPOSE_CMD) down --remove-orphans
