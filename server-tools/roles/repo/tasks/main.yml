@@ -6,7 +6,7 @@
 #
 # The checkout runs as docker_user so the working tree is owned by the user
 # who runs `make` (and who can therefore write generated files such as
-# instances/*.env and rendered conf.d/*.yml).
+# instances/*/.env and rendered conf.d/*.yml).
 
 - name: Check if deploy dir is already a git repo
   ansible.builtin.stat:

@@ -30,9 +30,9 @@ sequenceDiagram
 
     Note over Operator,FS: make create-instance
     Operator->>Make: APP_HOSTNAME=… PROJECT_NAME=NAME
-    Make->>FS: generate instances/NAME.env
+    Make->>FS: generate instances/NAME/.env
     Note right of FS: passwords + hostname set
-    Make-->>Operator: instances/NAME.env created
+    Make-->>Operator: instances/NAME/.env created
 
     Note over Operator,Monitoring: make start-instance
     Operator->>Make: PROJECT_NAME=NAME
@@ -62,7 +62,7 @@ sequenceDiagram
 
     Note over Operator,FS: make delete-instance (planned)
     Operator->>Make: PROJECT_NAME=NAME
-    Make->>FS: remove instances/NAME.env
+    Make->>FS: remove instances/NAME/
     Make-->>Operator: Instance fully removed
 
 ```

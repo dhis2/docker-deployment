@@ -118,7 +118,7 @@ flowchart TD
 
     subgraph per["② For each DHIS2 instance"]
         D["<b>PROJECT_NAME=&lt;name&gt; APP_HOSTNAME=&lt;hostname&gt;<br/>make create-instance</b>"]
-        E["<i>Review instances/&lt;name&gt;.env<br/>Passwords and settings are generated for you</i>"]
+        E["<i>Review instances/&lt;name&gt;/.env<br/>Passwords and settings are generated for you</i>"]
         F["<b>PROJECT_NAME=&lt;name&gt; make start-instance</b>"]
         D --> E --> F
     end
@@ -160,7 +160,7 @@ Open [http://dhis2.127-0-0-1.nip.io](http://dhis2.127-0-0-1.nip.io) in your favo
 > For local testing without real DNS, [nip.io](https://nip.io) provides free wildcard DNS that resolves to an embedded IP address - for example, `dhis2.127-0-0-1.nip.io` resolves to `127.0.0.1` with no configuration required.
 
 > [!NOTE]
-> The default DHIS2 admin credentials are available in `instances/prod.env`.
+> The default DHIS2 admin credentials are available in `instances/prod/.env`.
 
 ## Deployment For Production
 
@@ -209,7 +209,7 @@ Generate the environment file for a named instance. `PROJECT_NAME` is a short id
 APP_HOSTNAME=<name>.<your-domain.com> PROJECT_NAME=<name> make create-instance
 ```
 
-This writes `instances/<name>.env` with generated passwords and the supplied hostname. Review and adjust that file before launching. See the [environment variables documentation](docs/environment-variables.md) for details on each variable.
+This writes `instances/<name>/.env` with generated passwords and the supplied hostname. Review and adjust that file before launching. See the [environment variables documentation](docs/environment-variables.md) for details on each variable.
 
 You can create multiple instances in this way, by simply using different names for each.
 
@@ -256,7 +256,7 @@ make list-instances
 
 ### Stop an instance
 
-Stopping an instance brings down its containers and removes its Traefik routes and Prometheus targets. The `instances/<name>.env` file is retained so the instance can be relaunched later.
+Stopping an instance brings down its containers and removes its Traefik routes and Prometheus targets. The `instances/<name>/.env` file is retained so the instance can be relaunched later.
 
 ```shell
 PROJECT_NAME=<name> make stop-instance
@@ -267,7 +267,7 @@ The diagram below summarises all possible states for an instance and the command
 ```mermaid
 stateDiagram-v2
     direction LR
-    [*] --> **Configured** : **make create-instance**<br/>generates instances/name.env
+    [*] --> **Configured** : **make create-instance**<br/>generates instances/name/.env
 
     **Configured** --> **Running** : **make start-instance**<br/>starts database + app, registers routes
 

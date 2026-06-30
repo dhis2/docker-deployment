@@ -15,10 +15,10 @@ if [ ! -f "$MONITORING_ENV" ]; then
   exit 1
 fi
 
-# If GEN_PROJECT_NAME is set, write to instances/<name>.env instead of .env.
+# If GEN_PROJECT_NAME is set, write to instances/<name>/.env instead of .env.
 if [ -n "${GEN_PROJECT_NAME:-}" ]; then
-  mkdir -p instances
-  OUTPUT_FILE="instances/${GEN_PROJECT_NAME}.env"
+  mkdir -p "instances/${GEN_PROJECT_NAME}"
+  OUTPUT_FILE="instances/${GEN_PROJECT_NAME}/.env"
 else
   OUTPUT_FILE=".env"
 fi
