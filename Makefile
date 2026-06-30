@@ -15,7 +15,7 @@ PROJECT_NAME ?= $(notdir $(CURDIR))
 ENV_FILE = instances/$(PROJECT_NAME).env
 BACKUP_DIR ?= ./backups/$(PROJECT_NAME)
 
-.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances start-postgres start-instance start-traefik start-monitoring start-vpn stop-vpn get-vpn-ca ensure-networks ensure-volumes stop-instance delete-instance clean clean-all config get-backup-timestamp
+.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances start-postgres start-instance start-traefik clean-traefik start-monitoring clean-monitoring start-vpn stop-vpn get-vpn-ca ensure-networks ensure-volumes stop-instance delete-instance clean clean-all config get-backup-timestamp
 
 init:
 	@test -d .venv || python3 -m venv .venv
@@ -118,9 +118,17 @@ ensure-volumes:
 start-traefik: ensure-networks ensure-volumes
 	$(DOCKER) compose -f stacks/traefik/docker-compose.yml --env-file stacks/traefik/.env up $(COMPOSE_OPTS)
 
+# Stop and remove the Traefik stack containers (preserves volumes).
+clean-traefik:
+	$(DOCKER) compose -f stacks/traefik/docker-compose.yml --env-file stacks/traefik/.env down --remove-orphans
+
 # Start the standalone monitoring stack (run once; watches stacks/monitoring/targets/ for new instances)
 start-monitoring: ensure-networks
 	$(DOCKER) compose -f stacks/monitoring/docker-compose.yml --env-file stacks/monitoring/.env up $(COMPOSE_OPTS)
+
+# Stop and remove the monitoring stack containers (preserves volumes).
+clean-monitoring:
+	$(DOCKER) compose -f stacks/monitoring/docker-compose.yml --env-file stacks/monitoring/.env down --remove-orphans
 
 # Generate the env file for a new instance.
 # Example: APP_HOSTNAME=dhis2.example.com PROJECT_NAME=prod make create-instance
