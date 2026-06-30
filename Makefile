@@ -108,11 +108,10 @@ COMPOSE_CMD = $(DOCKER) compose \
 # Create the shared Docker networks required by the multi-instance workflow.
 # Safe to run multiple times (ignores errors if networks already exist).
 ensure-networks:
-	$(DOCKER) network create proxy 2>/dev/null || true
-	$(DOCKER) network create monitoring 2>/dev/null || true
+	$(DOCKER) compose -p shared-networks -f stacks/base/networks.yml up --no-start
 
 ensure-volumes:
-	docker volume create wireguard-certs 2>/dev/null || true
+	$(DOCKER) compose -p shared-volumes -f stacks/base/volumes.yml up --no-start
 
 # Start the standalone Traefik gateway (run once; watches stacks/traefik/conf.d/ for route changes)
 start-traefik: ensure-networks ensure-volumes
