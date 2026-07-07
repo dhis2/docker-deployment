@@ -232,6 +232,11 @@ clean-all:
 		read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || (echo "Aborted." && exit 1); \
 	fi
 	$(COMPOSE_CMD) down --remove-orphans --volumes
+	$(POSTGRES_COMPOSE_CMD) down --volumes
+	$(DOCKER) network rm $(PROJECT_NAME)-db 2>/dev/null || true
+	rm -f stacks/traefik/conf.d/$(PROJECT_NAME).yml
+	rm -f stacks/monitoring/targets/dhis2/$(PROJECT_NAME).json
+	rm -f stacks/monitoring/targets/postgres/$(PROJECT_NAME).json
 
 config:
 	@$(COMPOSE_CMD) config
