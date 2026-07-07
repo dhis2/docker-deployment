@@ -9,24 +9,30 @@ USERNAME = os.getenv("DHIS2_ADMIN_USERNAME")
 PASSWORD = os.getenv("DHIS2_ADMIN_PASSWORD")
 
 
-def login_user(page: Page):
+def retry_on_network_change(action, attempts: int = 3, delay: int = 5):
     # On Linux, Docker bridge network creation triggers netlink address/link
-    # notifications that cause Chromium to raise ERR_NETWORK_CHANGED.
-    for attempt in range(3):
+    # notifications that cause Chromium to raise ERR_NETWORK_CHANGED on any
+    # in-flight navigation, so retry the whole navigating action.
+    for attempt in range(attempts):
         try:
-            page.goto(URL + "/login.html")
-            break
+            return action()
         except PlaywrightError as e:
-            if "ERR_NETWORK_CHANGED" not in str(e) or attempt == 2:
+            if "ERR_NETWORK_CHANGED" not in str(e) or attempt == attempts - 1:
                 raise
-            print(f"ERR_NETWORK_CHANGED on navigation, retrying ({attempt + 1}/3)...")
-            time.sleep(5)
+            print(f"ERR_NETWORK_CHANGED on navigation, retrying ({attempt + 1}/{attempts})...")
+            time.sleep(delay)
 
-    page.get_by_role("textbox", name="Username").fill(USERNAME)
-    page.get_by_role("textbox", name="Password").fill(PASSWORD)
-    page.get_by_role("button", name="Log in").click()
-    page.wait_for_url("**/dashboard#/**")
-    expect(page).to_have_title("Dashboard | DHIS2")
+
+def login_user(page: Page):
+    def do_login():
+        page.goto(URL + "/login.html")
+        page.get_by_role("textbox", name="Username").fill(USERNAME)
+        page.get_by_role("textbox", name="Password").fill(PASSWORD)
+        page.get_by_role("button", name="Log in").click()
+        page.wait_for_url("**/dashboard#/**")
+        expect(page).to_have_title("Dashboard | DHIS2")
+
+    retry_on_network_change(do_login)
 
 
 @pytest.mark.order(2)
@@ -45,7 +51,7 @@ def test_profile_update(page: Page):
     iframe.get_by_label("Job title").fill("developer")
     iframe.get_by_label("Introduction").click()
 
-    page.reload()
+    retry_on_network_change(page.reload)
     expect(iframe.get_by_label("Job title")).to_have_value("developer")
 
     iframe.get_by_text("Select profile picture").click()
