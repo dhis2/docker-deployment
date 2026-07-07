@@ -15,14 +15,13 @@ http:
         - security
 
     ${PROJECT_NAME}-glowroot:
-      rule: "Host(`glowroot.${APP_HOSTNAME}`)"
+      rule: "Host(`${PROJECT_NAME}.glowroot.internal`)"
       service: ${PROJECT_NAME}-glowroot
       entryPoints:
         - websecure
-      tls:
-        certResolver: letsencrypt
+      tls: {}
       middlewares:
-        - security
+        - security-internal
 
   services:
     ${PROJECT_NAME}-app:

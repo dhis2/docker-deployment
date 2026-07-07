@@ -4,15 +4,12 @@ set -eu
 
 mkcert -install
 
-for host in grafana.internal glowroot.internal; do
-    if [ ! -f "/certs/${host}.crt" ] || [ ! -f "/certs/${host}.key" ]; then
-        mkcert "${host}"
-        mv "${host}.pem" "/certs/${host}.crt"
-        mv "${host}-key.pem" "/certs/${host}.key"
-        chown nobody:nobody "/certs/${host}.key"
-        chmod 640 "/certs/${host}.key"
-    fi
-done
+if [ ! -f "/certs/internal.crt" ] || [ ! -f "/certs/internal.key" ]; then
+    mkcert -cert-file "/certs/internal.crt" -key-file "/certs/internal.key" \
+        grafana.internal "*.glowroot.internal"
+    chown nobody:nobody "/certs/internal.key"
+    chmod 640 "/certs/internal.key"
+fi
 
 # Export the root CA to the shared volume so clients can fetch and trust it.
 # Only present in CAROOT on first-time generation; on subsequent starts the
