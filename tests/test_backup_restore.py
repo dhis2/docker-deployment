@@ -1,13 +1,13 @@
 import os
 import pytest
 from playwright.sync_api import Page, expect
-from test_helpers import assert_no_services_unhealthy, assert_no_services_running, run_make_command, wait_for_service_healthy
+from test_helpers import PROJECT_NAME, assert_no_services_unhealthy, assert_no_services_running, run_make_command, wait_for_service_healthy
 from test_user_update_and_app_install import login_user
 
 
 @pytest.mark.order(1)
 def test_launch_environment():
-    run_make_command("launch COMPOSE_OPTS=-d")
+    run_make_command("start-instance COMPOSE_OPTS=-d")
 
     wait_for_service_healthy("app")
     assert_no_services_unhealthy()
@@ -15,8 +15,8 @@ def test_launch_environment():
 
 @pytest.mark.order(4)
 def test_create_backup(backup_timestamp: str):
-    db_path = f"./backups/{backup_timestamp}.pgc"
-    fs_path = f"./backups/file-storage-{backup_timestamp}"
+    db_path = f"./backups/{PROJECT_NAME}/{backup_timestamp}.pgc"
+    fs_path = f"./backups/{PROJECT_NAME}/file-storage-{backup_timestamp}"
 
     run_make_command("backup", {"BACKUP_TIMESTAMP": backup_timestamp})
 
@@ -33,8 +33,9 @@ def test_clean_environment():
 
 @pytest.mark.order(6)
 def test_launch_fresh_environment():
-    run_make_command("launch COMPOSE_OPTS=-d")
+    run_make_command("start-instance COMPOSE_OPTS=-d")
 
+    wait_for_service_healthy("app")
     assert_no_services_unhealthy()
 
 
