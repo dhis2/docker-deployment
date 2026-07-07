@@ -2,58 +2,63 @@ name: Smoke Test
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, development-2.0 ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, development-2.0 ]
+
+env:
+  PROJECT_NAME: ci
+  APP_HOSTNAME: dhis2-127-0-0-1.nip.io
 
 jobs:
   smoke-test:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+
       - name: Configure environment
         run: |
-          ./scripts/generate-env.sh
-          cat .env | sed '/^#/d' >> $GITHUB_ENV
-
-          ./scripts/install-loki-driver.sh
+          make generate-stack-envs
+          make create-instance
         env:
-          GEN_APP_HOSTNAME: dhis2-127-0-0-1.nip.io
           GEN_LETSENCRYPT_ACME_EMAIL: whatever@dhis2.org
 
-      - name: Start services
+      - name: Start shared stacks and instance
         run: |
-          make launch COMPOSE_OPTS=-d
+          make start-traefik COMPOSE_OPTS=-d
+          make start-monitoring COMPOSE_OPTS=-d
+          make start-instance COMPOSE_OPTS=-d
 
       - name: Ensure services are healthy
         run: ./.github/workflows/scripts/ensure-healthy-services.sh
-        timeout-minutes: 1
+        timeout-minutes: 15
 
       - name: Wait for application to be ready
         run: |
-          until [ "$(curl --insecure --silent --output /dev/null --write-out "%{http_code}" https://dhis2-127-0-0-1.nip.io/dhis-web-login/)" = "200" ]; do
+          until [ "$(curl --insecure --silent --output /dev/null --write-out "%{http_code}" https://${APP_HOSTNAME}/dhis-web-login/)" = "200" ]; do
             sleep 5
           done
-        timeout-minutes: 1
+        timeout-minutes: 10
 
       - name: Verify process isn't running as root
         run: |
-          USER=$(docker compose exec -T app whoami)
+          USER=$(docker compose --project-name "$PROJECT_NAME" --env-file "instances/$PROJECT_NAME/.env" exec -T app whoami)
           echo "Container user: $USER"
           [ "$USER" != "root" ]
 
       - name: Verify process is running as PID 1
         run: |
-          DHIS2_PID=$(docker compose exec -T app pgrep java | head -n 1)
+          DHIS2_PID=$(docker compose --project-name "$PROJECT_NAME" --env-file "instances/$PROJECT_NAME/.env" exec -T app pgrep java | head -n 1)
           echo "DHIS2 process PID: $DHIS2_PID"
           [ "$DHIS2_PID" = "1" ]
 
       - name: Debug on failure
         if: failure()
         run: |
+          COMPOSE="docker compose --project-name $PROJECT_NAME --env-file instances/$PROJECT_NAME/.env"
           echo "=== Container Status ==="
-          docker compose ps -a
+          $COMPOSE ps -a
           echo "=== App Logs (last 50 lines) ==="
-          docker compose logs app --tail=50
+          $COMPOSE logs app --tail=50
           echo "=== Database Logs (last 20 lines) ==="
-          docker compose logs database --tail=20
+          docker compose --project-name "$PROJECT_NAME" --env-file "instances/$PROJECT_NAME/.env" -f stacks/postgres/docker-compose.yml logs database --tail=20
