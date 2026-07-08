@@ -82,18 +82,18 @@ backup: backup-database backup-file-storage
 
 restore-database:
 	$(BACKUP_COMPOSE_CMD) stop app
-	$(BACKUP_COMPOSE_CMD) run --rm restore-database
+	$(BACKUP_COMPOSE_CMD) run -e DB_RESTORE_FILE=$(DB_RESTORE_FILE) --rm restore-database
 	$(BACKUP_COMPOSE_CMD) start app
 
 restore-file-storage:
 	$(BACKUP_COMPOSE_CMD) stop app
-	$(BACKUP_COMPOSE_CMD) run --rm restore-file-storage
+	$(BACKUP_COMPOSE_CMD) run -e FILE_STORAGE_RESTORE_SOURCE_DIR=$(FILE_STORAGE_RESTORE_SOURCE_DIR) --rm restore-file-storage
 	$(BACKUP_COMPOSE_CMD) start app
 
 restore:
 	$(BACKUP_COMPOSE_CMD) stop app
-	$(BACKUP_COMPOSE_CMD) run --rm restore-database
-	$(BACKUP_COMPOSE_CMD) run --rm restore-file-storage
+	$(BACKUP_COMPOSE_CMD) run -e DB_RESTORE_FILE=$(DB_RESTORE_FILE) --rm restore-database
+	$(BACKUP_COMPOSE_CMD) run -e FILE_STORAGE_RESTORE_SOURCE_DIR=$(FILE_STORAGE_RESTORE_SOURCE_DIR) --rm restore-file-storage
 	$(BACKUP_COMPOSE_CMD) start app
 
 docs:
