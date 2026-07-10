@@ -67,8 +67,7 @@ def test_app_install(page: Page):
     login_user(page)
 
     page.get_by_title("Command palette").click()
-    page.locator("#filter").fill("App Management")
-    page.keyboard.press("Enter")
+    page.get_by_text("App Management", exact=True).click()
 
     iframe = page.frame_locator("iframe")
     iframe.locator("body").wait_for(state="visible")
