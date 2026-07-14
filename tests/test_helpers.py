@@ -9,6 +9,18 @@ PROJECT_NAME = os.getenv("PROJECT_NAME") or os.path.basename(os.getcwd())
 ENV_FILE = f"instances/{PROJECT_NAME}/.env"
 
 
+def retry(action, attempts: int = 3, delay: int = 5, exceptions: tuple = (Exception,)):
+    """Run action(), retrying on the given exception(s) with a fixed delay between attempts."""
+    for attempt in range(1, attempts + 1):
+        try:
+            return action()
+        except exceptions as error:
+            if attempt == attempts:
+                raise
+            print(f"Attempt {attempt}/{attempts} failed ({error}); retrying in {delay}s...")
+            time.sleep(delay)
+
+
 def _compose(*args: str) -> List[str]:
     return [
         "docker", "compose",
