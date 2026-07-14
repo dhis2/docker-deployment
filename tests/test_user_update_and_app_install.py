@@ -17,9 +17,13 @@ def login_user(page: Page):
     # churn. Retry the whole login until it reaches the dashboard.
     def do_login():
         page.goto(URL + "/login.html")
-        page.get_by_role("textbox", name="Username").fill(USERNAME)
-        page.get_by_role("textbox", name="Password").fill(PASSWORD)
-        page.get_by_role("button", name="Log in").click()
+        # A prior attempt whose fetch failed client-side may still have created
+        # the session, so /login.html now redirects to the app and shows no
+        # form. Only submit credentials when the login form is actually present.
+        if page.get_by_role("textbox", name="Username").count() > 0:
+            page.get_by_role("textbox", name="Username").fill(USERNAME)
+            page.get_by_role("textbox", name="Password").fill(PASSWORD)
+            page.get_by_role("button", name="Log in").click()
         page.wait_for_url("**/dashboard#/**")
         expect(page).to_have_title("Dashboard | DHIS2")
 
