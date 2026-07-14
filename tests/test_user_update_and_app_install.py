@@ -23,16 +23,25 @@ def retry_on_network_change(action, attempts: int = 3, delay: int = 5):
             time.sleep(delay)
 
 
-def login_user(page: Page):
-    def do_login():
-        page.goto(URL + "/login.html")
-        page.get_by_role("textbox", name="Username").fill(USERNAME)
-        page.get_by_role("textbox", name="Password").fill(PASSWORD)
-        page.get_by_role("button", name="Log in").click()
-        page.wait_for_url("**/dashboard#/**")
-        expect(page).to_have_title("Dashboard | DHIS2")
-
-    retry_on_network_change(do_login)
+def login_user(page: Page, attempts: int = 5, delay: int = 10):
+    # A freshly launched instance reports healthy before the auth backend is
+    # ready to serve a login, so the first attempts can bounce back to the login
+    # page ("Failed to fetch") or raise ERR_NETWORK_CHANGED from Docker bridge
+    # churn. Retry the whole login until it reaches the dashboard.
+    for attempt in range(attempts):
+        try:
+            page.goto(URL + "/login.html")
+            page.get_by_role("textbox", name="Username").fill(USERNAME)
+            page.get_by_role("textbox", name="Password").fill(PASSWORD)
+            page.get_by_role("button", name="Log in").click()
+            page.wait_for_url("**/dashboard#/**")
+            expect(page).to_have_title("Dashboard | DHIS2")
+            return
+        except PlaywrightError as e:
+            if attempt == attempts - 1:
+                raise
+            print(f"Login attempt {attempt + 1}/{attempts} failed ({e}); retrying...")
+            time.sleep(delay)
 
 
 @pytest.mark.order(2)
