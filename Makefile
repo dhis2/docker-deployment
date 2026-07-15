@@ -82,18 +82,18 @@ backup: backup-database backup-file-storage
 
 restore-database:
 	$(BACKUP_COMPOSE_CMD) stop app
-	$(BACKUP_COMPOSE_CMD) run --rm restore-database
+	$(BACKUP_COMPOSE_CMD) run -e DB_RESTORE_FILE=$(DB_RESTORE_FILE) --rm restore-database
 	$(BACKUP_COMPOSE_CMD) start app
 
 restore-file-storage:
 	$(BACKUP_COMPOSE_CMD) stop app
-	$(BACKUP_COMPOSE_CMD) run --rm restore-file-storage
+	$(BACKUP_COMPOSE_CMD) run -e FILE_STORAGE_RESTORE_SOURCE_DIR=$(FILE_STORAGE_RESTORE_SOURCE_DIR) --rm restore-file-storage
 	$(BACKUP_COMPOSE_CMD) start app
 
 restore:
 	$(BACKUP_COMPOSE_CMD) stop app
-	$(BACKUP_COMPOSE_CMD) run --rm restore-database
-	$(BACKUP_COMPOSE_CMD) run --rm restore-file-storage
+	$(BACKUP_COMPOSE_CMD) run -e DB_RESTORE_FILE=$(DB_RESTORE_FILE) --rm restore-database
+	$(BACKUP_COMPOSE_CMD) run -e FILE_STORAGE_RESTORE_SOURCE_DIR=$(FILE_STORAGE_RESTORE_SOURCE_DIR) --rm restore-file-storage
 	$(BACKUP_COMPOSE_CMD) start app
 
 docs:
@@ -232,6 +232,11 @@ clean-all:
 		read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || (echo "Aborted." && exit 1); \
 	fi
 	$(COMPOSE_CMD) down --remove-orphans --volumes
+	$(POSTGRES_COMPOSE_CMD) down --volumes
+	$(DOCKER) network rm $(PROJECT_NAME)-db 2>/dev/null || true
+	rm -f stacks/traefik/conf.d/$(PROJECT_NAME).yml
+	rm -f stacks/monitoring/targets/dhis2/$(PROJECT_NAME).json
+	rm -f stacks/monitoring/targets/postgres/$(PROJECT_NAME).json
 
 config:
 	@$(COMPOSE_CMD) config

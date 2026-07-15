@@ -13,11 +13,11 @@ x-loki-logging: &loki-logging
     loki-url: "http://localhost:3100/loki/api/v1/push"
     loki-timeout: "1s"
     loki-retries: "2"
-    loki-external-labels: "instance=${COMPOSE_PROJECT_NAME}"
+    loki-external-labels: "instance=${COMPOSE_PROJECT_NAME},container_name={{.Name}}"
 
 services:
   app:
-    image: dhis2/core:${DHIS2_VERSION:-42}
+    image: dhis2/core:${DHIS2_VERSION:-43}
     volumes:
       - dhis2:/opt/dhis2/
       #- ./instances/${COMPOSE_PROJECT_NAME}/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro

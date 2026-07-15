@@ -1,8 +1,9 @@
 import os
-import time
 
 import pytest
 from playwright.sync_api import Page, Error as PlaywrightError, expect
+
+from test_helpers import retry
 
 URL = "https://" + os.getenv("APP_HOSTNAME")
 USERNAME = os.getenv("DHIS2_ADMIN_USERNAME")
@@ -10,23 +11,23 @@ PASSWORD = os.getenv("DHIS2_ADMIN_PASSWORD")
 
 
 def login_user(page: Page):
-    # On Linux, Docker bridge network creation triggers netlink address/link
-    # notifications that cause Chromium to raise ERR_NETWORK_CHANGED.
-    for attempt in range(3):
-        try:
-            page.goto(URL + "/login.html")
-            break
-        except PlaywrightError as e:
-            if "ERR_NETWORK_CHANGED" not in str(e) or attempt == 2:
-                raise
-            print(f"ERR_NETWORK_CHANGED on navigation, retrying ({attempt + 1}/3)...")
-            time.sleep(5)
+    # A freshly launched instance reports healthy before the auth backend is
+    # ready to serve a login, so the first attempts can bounce back to the login
+    # page ("Failed to fetch") or raise ERR_NETWORK_CHANGED from Docker bridge
+    # churn. Retry the whole login until it reaches the dashboard.
+    def do_login():
+        page.goto(URL + "/login.html")
+        # A prior attempt whose fetch failed client-side may still have created
+        # the session, so /login.html now redirects to the app and shows no
+        # form. Only submit credentials when the login form is actually present.
+        if page.get_by_role("textbox", name="Username").count() > 0:
+            page.get_by_role("textbox", name="Username").fill(USERNAME)
+            page.get_by_role("textbox", name="Password").fill(PASSWORD)
+            page.get_by_role("button", name="Log in").click()
+        page.wait_for_url("**/dashboard#/**")
+        expect(page).to_have_title("Dashboard | DHIS2")
 
-    page.get_by_role("textbox", name="Username").fill(USERNAME)
-    page.get_by_role("textbox", name="Password").fill(PASSWORD)
-    page.get_by_role("button", name="Log in").click()
-    page.wait_for_url("**/dashboard#/**")
-    expect(page).to_have_title("Dashboard | DHIS2")
+    retry(do_login, attempts=5, delay=10, exceptions=(PlaywrightError,))
 
 
 @pytest.mark.order(2)
@@ -45,7 +46,7 @@ def test_profile_update(page: Page):
     iframe.get_by_label("Job title").fill("developer")
     iframe.get_by_label("Introduction").click()
 
-    page.reload()
+    retry(page.reload, exceptions=(PlaywrightError,))
     expect(iframe.get_by_label("Job title")).to_have_value("developer")
 
     iframe.get_by_text("Select profile picture").click()
@@ -61,8 +62,7 @@ def test_app_install(page: Page):
     login_user(page)
 
     page.get_by_title("Command palette").click()
-    page.locator("#filter").fill("App Management")
-    page.keyboard.press("Enter")
+    page.get_by_text("App Management", exact=True).click()
 
     iframe = page.frame_locator("iframe")
     iframe.locator("body").wait_for(state="visible")

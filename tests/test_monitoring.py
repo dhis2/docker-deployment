@@ -1,9 +1,10 @@
 import pytest
 import json
-import subprocess
 import requests
 from pydantic import BaseModel
 from typing import List
+
+from test_helpers import exec_in_service
 
 
 @pytest.mark.order(8)
@@ -37,10 +38,10 @@ def get_loki_labels() -> Labels:
 
 
 def get_prometheus_labels() -> Labels:
-    result = subprocess.run([
-        "docker", "compose", "exec", "-T", "prometheus",
-        "wget", "-qO-", "http://localhost:9090/api/v1/labels"
-    ], capture_output=True, text=True, timeout=30)
+    result = exec_in_service(
+        "prometheus",
+        ["wget", "-qO-", "http://localhost:9090/api/v1/labels"],
+    )
 
     if result.returncode != 0:
         raise Exception(f"Prometheus command failed: {result.stderr}")
