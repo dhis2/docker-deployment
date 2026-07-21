@@ -3,10 +3,10 @@
 The standalone WireGuard stack provides a private tunnel for reaching admin and
 monitoring UIs that are not exposed publicly:
 
-| Hostname            | Service              |
-| ------------------- | -------------------- |
-| `grafana.internal`  | Grafana (monitoring) |
-| `glowroot.internal` | Glowroot APM UI      |
+| Hostname                            | Service              |
+| ----------------------------------- | -------------------- |
+| `grafana.internal`                  | Grafana (monitoring) |
+| `${PROJECT_NAME}.glowroot.internal` | Glowroot APM UI      |
 
 DHIS2 itself stays public on `${APP_HOSTNAME}` via Let's Encrypt - only admin
 surfaces are moved behind the VPN.
@@ -37,7 +37,7 @@ Client                          Server
   `overlays/wireguard/coredns/Corefile`) answers `*.internal` with `10.8.0.1` for VPN clients.
 - **socat sidecar** (`wireguard-proxy`) runs in the WireGuard container's network namespace and forwards `10.8.0.1:443` to `traefik:443` over the
   `proxy` Docker network. Docker DNS resolves `traefik` on each new connection, so Traefik container restarts don't require any reconfiguration.
-- **mkcert** runs once on first launch to create a self-signed root CA and certs for `grafana.internal` / `glowroot.internal`, stored in the
+- **mkcert** runs once on first launch to create a self-signed root CA and certs for `grafana.internal` / `${PROJECT_NAME}.glowroot.internal`, stored in the
   `wireguard-certs` Docker volume.
 - **Traefik** mounts the same `wireguard-certs` volume read-only at
   `/etc/traefik/certs/` and serves the internal routes defined in
