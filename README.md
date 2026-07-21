@@ -333,10 +333,10 @@ This assumes `make generate-stack-envs` has already been run during server setup
 make start-vpn
 ```
 
-| Hostname            | Service     |
-| ------------------- | ----------- |
-| `grafana.internal`  | Grafana     |
-| `glowroot.internal` | Glowroot    |
+| Hostname                            | Service     |
+| ----------------------------------- | ----------- |
+| `grafana.internal`                  | Grafana     |
+| `${PROJECT_NAME}.glowroot.internal` | Glowroot    |
 
 Once the stack is up, export the self-signed root CA for clients to trust:
 
