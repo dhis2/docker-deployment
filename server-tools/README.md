@@ -14,14 +14,27 @@ start-monitoring`, `make start-vpn`, `make start-instance`, ...).
 - Ansible installed on the control machine (where you run `make deployment`).
 - A target server running Ubuntu 24.04.
 - SSH access to the target server with sudo privileges.
+- Network access to GitHub on the control machine: `make deployment` fetches the shared roles first (see below) and installs the `ansible.posix` collection they need.
 
 ## What it does
 
-- **bootstrap**: installs Docker + Compose and required packages (incl. `make`), optionally creates the operator user, and prepares the deploy directory.
-- **firewall**: configures a default-deny `DOCKER-USER` firewall, allowing only SSH/HTTP/HTTPS, the WireGuard UDP port, and inter-container traffic.
-- **harden**: SSH, kernel and Docker hardening (user-namespace remapping, etc.).
+**bootstrap**, **firewall** and **harden** live in
+[dhis2-sre/server-baseline](https://github.com/dhis2-sre/server-baseline), so the hardening has one
+implementation shared with the other projects that run DHIS2 workloads on plain servers, rather than
+a copy each. `make roles` fetches them at the commit pinned in the
+[`Makefile`](Makefile) into a gitignored `external/` checkout; `make deployment` does it for you.
+Pinning a commit rather than a branch means the hardening cannot change under you between two runs of
+the same playbook.
+
+- **bootstrap** (shared): installs Docker + Compose and required packages (incl. `make`), optionally creates the operator user, and prepares the deploy directory.
+- **firewall** (shared): configures a default-deny `DOCKER-USER` firewall, allowing only SSH/HTTP/HTTPS, the WireGuard UDP port, and inter-container traffic.
+- **harden** (shared): SSH, kernel and Docker hardening (user-namespace remapping, etc.).
 - **repo** (optional, `clone_repo`): clones/updates this repository into
-  `deploy_dir`, owned by the operator user.
+  `deploy_dir`, owned by the operator user. This one is specific to this project and stays here.
+
+Variables for the three shared roles are documented below and defined in their
+`defaults/main.yml` in that repository. To try a change to them before pushing it, point at a
+local clone: `make deployment SERVER_BASELINE_URL=/path/to/server-baseline SERVER_BASELINE_REF=my-branch`.
 
 ## The operator user and `sudo docker`
 
@@ -117,4 +130,4 @@ docker_user_ssh_key: "ssh-ed25519 AAAA... you@host"
 > **Important:** Do **not** use UFW or other firewall frontends alongside this
 > setup. Docker bypasses standard host chains, so UFW rules are ignored or may
 > conflict. All host and container traffic is managed through the `firewall` role.
-> See [roles/firewall/tasks/main.yml](roles/firewall/tasks/main.yml).
+> See [the firewall role](https://github.com/dhis2-sre/server-baseline/blob/master/roles/firewall/tasks/main.yml).
