@@ -7,7 +7,7 @@
 #
 #   make deployment SERVER_BASELINE_URL=/path/to/server-baseline SERVER_BASELINE_REF=my-branch
 SERVER_BASELINE_URL ?= https://github.com/dhis2-sre/server-baseline.git
-SERVER_BASELINE_REF ?= 2626ebed03721e6423d58efed3e67816b1378e70
+SERVER_BASELINE_REF ?= 4ca0745f9bab13fd66b7a5b5caefb405934bb1a1
 
 deployment: roles
 	ansible-playbook --verbose --inventory inventory.ini site.yml --become-password-file ./.ansible_become_pass
