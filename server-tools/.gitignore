@@ -10,3 +10,6 @@ inventory.ini
 
 # Ansible runtime artifacts
 .ansible/
+
+# Checkout of dhis2-sre/server-baseline, fetched by `make roles`
+external/
