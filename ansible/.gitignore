@@ -1,0 +1,13 @@
+# Implementation-specific configuration - do not commit.
+# Defaults live in roles/*/defaults/main.yml and, for the shared baseline, in the sre.server
+# collection; document required overrides in README.md.
+group_vars/all.yml
+
+# Sudo become password file
+.ansible_become_pass
+
+# Ansible runtime artifacts
+.ansible/
+
+# The sre.server collection, installed by `make collections` from ../requirements.yml
+collections/

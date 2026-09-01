@@ -14,27 +14,29 @@ start-monitoring`, `make start-vpn`, `make start-instance`, ...).
 - Ansible installed on the control machine (where you run `make deployment`).
 - A target server running Ubuntu 24.04.
 - SSH access to the target server with sudo privileges.
-- Network access to GitHub on the control machine: `make deployment` fetches the shared roles first (see below) and installs the `ansible.posix` collection they need.
+- Network access to GitHub on the control machine: `make deployment` installs the shared baseline collection first (see below), along with the `ansible.posix` collection it depends on.
 
 ## What it does
 
-**bootstrap**, **firewall** and **harden** live in
+**bootstrap**, **firewall** and **harden** live in the `sre.server` collection in
 [dhis2-sre/server-baseline](https://github.com/dhis2-sre/server-baseline), so the hardening has one
 implementation shared with the other projects that run DHIS2 workloads on plain servers, rather than
-a copy each. `make roles` fetches them at the commit pinned in the
-[`Makefile`](Makefile) into a gitignored `external/` checkout; `make deployment` does it for you.
-Pinning a commit rather than a branch means the hardening cannot change under you between two runs of
-the same playbook.
+a copy each. `make collections` installs it at the tag pinned in
+[`../requirements.yml`](../requirements.yml) into a gitignored `collections/` directory;
+`make deployment` does it for you. Pinning a tag rather than a branch means the hardening cannot
+change under you between two runs of the same playbook.
 
-- **bootstrap** (shared): installs Docker + Compose and required packages (incl. `make`), optionally creates the operator user, and prepares the deploy directory.
-- **firewall** (shared): configures a default-deny `DOCKER-USER` firewall, allowing only SSH/HTTP/HTTPS, the WireGuard UDP port, and inter-container traffic.
-- **harden** (shared): SSH, kernel and Docker hardening (user-namespace remapping, etc.).
-- **repo** (optional, `clone_repo`): clones/updates this repository into
+- **`sre.server.bootstrap`** (shared): installs Docker + Compose and required packages (incl. `make`), optionally creates the operator user, and prepares the deploy directory.
+- **`sre.server.firewall`** (shared): configures a default-deny `DOCKER-USER` firewall, allowing only SSH/HTTP/HTTPS, the WireGuard UDP port, and inter-container traffic.
+- **`sre.server.harden`** (shared): SSH, kernel and Docker hardening (user-namespace remapping, etc.).
+- **`sre.server.baseline`** (shared): the three above, in that order. This is what the playbook lists.
+- **deploy** (optional, `clone_repo`): clones/updates this repository into
   `deploy_dir`, owned by the operator user. This one is specific to this project and stays here.
 
-Variables for the three shared roles are documented below and defined in their
-`defaults/main.yml` in that repository. To try a change to them before pushing it, point at a
-local clone: `make deployment SERVER_BASELINE_URL=/path/to/server-baseline SERVER_BASELINE_REF=my-branch`.
+Variables for the shared roles are documented below and defined in their `defaults/main.yml` in that
+repository; read its `CHANGELOG.md` before bumping the pin across a major. To try a change to them
+before it is tagged, install from somewhere else:
+`make deployment SERVER_BASELINE=/path/to/server-baseline`.
 
 ## The operator user and `sudo docker`
 
@@ -55,9 +57,10 @@ So `make` will prompt for the operator's sudo password when starting containers.
 
 ## Configuration
 
-Two files are **implementation-specific and gitignored** (must not be committed):
-`inventory.ini` (your hosts) and `group_vars/all.yml` (your overrides). Defaults
-for every variable live in each role's `defaults/main.yml`.
+`group_vars/all.yml` (your overrides) is **implementation-specific and gitignored** and must not be
+committed. `inventory/production.ini` is a committed template - edit it for your hosts and keep
+anything sensitive out of it. Defaults for `deploy` live in `roles/deploy/defaults/main.yml`;
+defaults for everything else live in the collection.
 
 ### Inventory
 
@@ -93,22 +96,25 @@ docker_user_ssh_key: "ssh-ed25519 AAAA... you@host"
 
 #### Overridable variables
 
-| Variable | Default | Role | Purpose |
+| Variable | Default | Owned by | Purpose |
 | --- | --- | --- | --- |
-| `docker_user` | inventory `ansible_user` | bootstrap | User that owns `deploy_dir`, runs `make`, and is the userns-remap target |
-| `docker_user_password` | _(none)_ | bootstrap | **Pre-hashed** password; required only when `docker_user` is a dedicated account |
-| `docker_user_ssh_key` | _(none)_ | bootstrap | Optional SSH public key for the dedicated operator account |
-| `clone_repo` | `true` | repo | Whether to clone/check out the repo into `deploy_dir` |
-| `repo_url` | `https://github.com/dhis2/docker-deployment` | repo | Repo to check out |
-| `repo_branch` | `master` | repo | Branch to check out |
-| `deploy_dir` | `/opt/dhis2` | bootstrap | Checkout location on the host |
-| `allowed_ssh_users` | `[ ubuntu ]` | harden | SSH `AllowUsers` (the `docker_user` is added automatically) |
-| `firewall_allowed_ports` | `[ 22, 80, 443 ]` | firewall | Host-facing TCP ports |
-| `firewall_allowed_udp_ports` | `[ 51820 ]` | firewall | Host-facing UDP ports (51820 = WireGuard) |
+| `docker_user` | inventory `ansible_user` | collection | User that owns `deploy_dir`, runs `make`, and is the userns-remap target |
+| `docker_user_password` | _(none)_ | collection | **Pre-hashed** password; required only when `docker_user` is a dedicated account |
+| `docker_user_ssh_key` | _(none)_ | collection | Optional SSH public key for the dedicated operator account |
+| `allowed_ssh_users` | `[ ubuntu ]` | collection | SSH `AllowUsers` (the `docker_user` is added automatically) |
+| `firewall_allowed_ports` | `[ 22, 80, 443 ]` | collection | Host-facing TCP ports |
+| `firewall_allowed_udp_ports` | `[ 51820 ]` | collection | Host-facing UDP ports (51820 = WireGuard) |
+| `clone_repo` | `true` | here | Whether to clone/check out the repo into `deploy_dir` |
+| `repo_url` | `https://github.com/dhis2/docker-deployment` | here | Repo to check out |
+| `repo_branch` | `master` | here | Branch to check out |
+
+`deploy_dir` is `/opt/dhis2`, set in [`playbooks/deploy.yml`](playbooks/deploy.yml) rather than by
+the collection, whose own default is `/opt/deploy`. It is a play variable, so `group_vars` cannot
+override it - change it in the playbook.
 
 ## Usage
 
-1. Create `inventory.ini` and (optionally) `group_vars/all.yml`.
+1. Edit `inventory/production.ini` and (optionally) create `group_vars/all.yml`.
 2. Copy your SSH key to the target server: `ssh-copy-id ubuntu@<server>`.
 3. Store your sudo password in `./.ansible_become_pass` (gitignored).
 4. Run the playbook:
@@ -116,6 +122,8 @@ docker_user_ssh_key: "ssh-ed25519 AAAA... you@host"
     ```bash
     make deployment
     ```
+
+    That installs the pinned collection into `collections/` first. To install it without provisioning anything, run `make collections`.
 
 5. Then, on the server, start the stacks with the `make` workflow (e.g.
    `make start-traefik`, `make start-monitoring`, `make start-vpn`). See the repository root `README.md` and `docs/` for those steps.
@@ -129,5 +137,5 @@ docker_user_ssh_key: "ssh-ed25519 AAAA... you@host"
 
 > **Important:** Do **not** use UFW or other firewall frontends alongside this
 > setup. Docker bypasses standard host chains, so UFW rules are ignored or may
-> conflict. All host and container traffic is managed through the `firewall` role.
+> conflict. All host and container traffic is managed through the collection's `firewall` role.
 > See [the firewall role](https://github.com/dhis2-sre/server-baseline/blob/master/roles/firewall/tasks/main.yml).

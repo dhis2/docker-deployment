@@ -7,6 +7,10 @@
 # The checkout runs as docker_user so the working tree is owned by the user
 # who runs `make` (and who can therefore write generated files such as
 # instances/*/.env and rendered conf.d/*.yml).
+#
+# docker_user comes from the sre.server collection, which creates the account,
+# and deploy_dir is set by the playbook; bootstrap creates the directory and
+# this role fills it.
 
 - name: Check if deploy dir is already a git repo
   ansible.builtin.stat:
