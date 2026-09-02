@@ -1,7 +1,10 @@
 # Implementation-specific configuration - do not commit.
 # Defaults live in roles/*/defaults/main.yml and, for the shared baseline, in the sre.server
 # collection; document required overrides in README.md.
-group_vars/all.yml
+#
+# It has to sit next to the inventory: Ansible reads group_vars adjacent to the inventory or to the
+# playbook and silently ignores it anywhere else, so ansible/group_vars/ would never be loaded.
+inventory/group_vars/all.yml
 
 # Sudo become password file
 .ansible_become_pass

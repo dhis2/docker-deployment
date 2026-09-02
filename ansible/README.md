@@ -57,8 +57,9 @@ So `make` will prompt for the operator's sudo password when starting containers.
 
 ## Configuration
 
-`group_vars/all.yml` (your overrides) is **implementation-specific and gitignored** and must not be
-committed. `inventory/production.ini` is a committed template - edit it for your hosts and keep
+`inventory/group_vars/all.yml` (your overrides) is **implementation-specific and gitignored** and
+must not be committed. It has to live next to the inventory: Ansible reads `group_vars` adjacent to
+the inventory or to the playbook and silently ignores it anywhere else. `inventory/production.ini` is a committed template - edit it for your hosts and keep
 anything sensitive out of it. Defaults for `deploy` live in `roles/deploy/defaults/main.yml`;
 defaults for everything else live in the collection.
 
@@ -76,7 +77,7 @@ ansible_user=ubuntu
 
 ### Variables
 
-`group_vars/all.yml` can be empty (all variables have defaults). Override only
+`inventory/group_vars/all.yml` can be empty (all variables have defaults). Override only
 what you need, for example:
 
 ```yaml
@@ -114,7 +115,7 @@ override it - change it in the playbook.
 
 ## Usage
 
-1. Edit `inventory/production.ini` and (optionally) create `group_vars/all.yml`.
+1. Edit `inventory/production.ini` and (optionally) create `inventory/group_vars/all.yml`.
 2. Copy your SSH key to the target server: `ssh-copy-id ubuntu@<server>`.
 3. Store your sudo password in `./.ansible_become_pass` (gitignored).
 4. Run the playbook:

@@ -14,7 +14,7 @@
 
   # deploy_dir belongs to the collection, which defaults it to /opt/deploy because nothing in the
   # collection is specific to this project. Existing hosts have their checkout at /opt/dhis2, so it
-  # is pinned here rather than left to each operator's gitignored group_vars/all.yml.
+  # is pinned here rather than left to each operator's gitignored inventory/group_vars/all.yml.
   #
   # Play vars outrank group_vars, so this is the one variable in the table in README.md that
   # group_vars cannot override. Change it here.

@@ -1,4 +1,4 @@
-# Defaults for the deploy role. Override per deployment in group_vars/all.yml.
+# Defaults for the deploy role. Override per deployment in inventory/group_vars/all.yml.
 
 # Clone / check out the docker-deployment repository into deploy_dir.
 clone_repo: true
