@@ -11,10 +11,10 @@ start-monitoring`, `make start-vpn`, `make start-instance`, ...).
 
 ## Prerequisites
 
-- Ansible installed on the control machine (where you run `make deployment`).
+- Ansible installed on the control machine (where you run `make provision`).
 - A target server running Ubuntu 24.04.
 - SSH access to the target server with sudo privileges.
-- Network access to GitHub on the control machine: `make deployment` installs the shared baseline collection first (see below), along with the `ansible.posix` collection it depends on.
+- Network access to GitHub on the control machine: `make provision` installs the shared baseline collection first (see below), along with the `ansible.posix` collection it depends on.
 
 ## What it does
 
@@ -23,7 +23,7 @@ start-monitoring`, `make start-vpn`, `make start-instance`, ...).
 implementation shared with the other projects that run DHIS2 workloads on plain servers, rather than
 a copy each. `make collections` installs it at the tag pinned in
 [`../requirements.yml`](../requirements.yml) into a gitignored `collections/` directory;
-`make deployment` does it for you. Pinning a tag rather than a branch means the hardening cannot
+`make provision` does it for you. Pinning a tag rather than a branch means the hardening cannot
 change under you between two runs of the same playbook.
 
 - **`sre.server.bootstrap`** (shared): installs Docker + Compose and required packages (incl. `make`), optionally creates the operator user, and prepares the deploy directory.
@@ -36,7 +36,7 @@ change under you between two runs of the same playbook.
 Variables for the shared roles are documented below and defined in their `defaults/main.yml` in that
 repository; read its `CHANGELOG.md` before bumping the pin across a major. To try a change to them
 before it is tagged, install from somewhere else:
-`make deployment SERVER_BASELINE=/path/to/server-baseline`.
+`make provision SERVER_BASELINE=/path/to/server-baseline`.
 
 ## The operator user and `sudo docker`
 
@@ -109,7 +109,7 @@ docker_user_ssh_key: "ssh-ed25519 AAAA... you@host"
 | `repo_url` | `https://github.com/dhis2/docker-deployment` | here | Repo to check out |
 | `repo_branch` | `master` | here | Branch to check out |
 
-`deploy_dir` is `/opt/dhis2`, set in [`playbooks/deploy.yml`](playbooks/deploy.yml) rather than by
+`deploy_dir` is `/opt/dhis2`, set in [`playbooks/provision.yml`](playbooks/provision.yml) rather than by
 the collection, whose own default is `/opt/deploy`. It is a play variable, so `group_vars` cannot
 override it - change it in the playbook.
 
@@ -121,7 +121,7 @@ override it - change it in the playbook.
 4. Run the playbook:
 
     ```bash
-    make deployment
+    make provision
     ```
 
     That installs the pinned collection into `collections/` first. To install it without provisioning anything, run `make collections`.

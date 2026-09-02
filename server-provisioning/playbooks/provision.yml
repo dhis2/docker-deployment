@@ -3,7 +3,7 @@
 # sre.server.baseline is the shared server baseline from dhis2-sre/server-baseline: base packages,
 # Docker Engine, the operator account, the default deny DOCKER-USER chain, and SSH, kernel and
 # Docker daemon hardening. It is pinned in ../../requirements.yml and installed by `make
-# collections`, which `make deployment` runs for you.
+# collections`, which `make provision` runs for you.
 #
 # deploy is this repository's own, and is the only role here: it checks this repository out into
 # deploy_dir as docker_user. Nothing starts a container. An operator SSHes in and runs the `make

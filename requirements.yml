@@ -2,7 +2,7 @@
 # dhis2-sre/server-baseline and is shared with the other projects that provision Ubuntu hosts. This
 # repository owns only what is specific to deploying DHIS2 on top of it.
 #
-# Installed by `make -C ansible collections`, or directly:
+# Installed by `make -C server-provisioning collections`, or directly:
 #
 #   ansible-galaxy collection install --requirements-file requirements.yml
 #

@@ -167,7 +167,7 @@ Open [http://dhis2.127-0-0-1.nip.io](http://dhis2.127-0-0-1.nip.io) in your favo
 This section is for users planning to deploy DHIS2 in a production environment.
 
 > **Note**
-> Check out this [project](./ansible) if you're deploying on a blank server.
+> Check out this [project](./server-provisioning) if you're deploying on a blank server.
 
 ### Deployment Prerequisites
 
