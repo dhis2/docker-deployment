@@ -1,0 +1,15 @@
+# The generic server baseline - Docker, the DOCKER-USER firewall, SSH and kernel hardening - lives in
+# dhis2-sre/server-baseline and is shared with the other projects that provision Ubuntu hosts. This
+# repository owns only what is specific to deploying DHIS2 on top of it.
+#
+# Installed by `make -C server-provisioning collections`, or directly:
+#
+#   ansible-galaxy collection install --requirements-file requirements.yml
+#
+# Pinned to a tag rather than a branch, so the hardening applied to production cannot change between
+# two runs of the same playbook without a commit here. Bump it deliberately, and read
+# https://github.com/dhis2-sre/server-baseline/blob/master/CHANGELOG.md before a major.
+collections:
+  - name: https://github.com/dhis2-sre/server-baseline.git
+    type: git
+    version: v1.0.0
