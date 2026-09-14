@@ -44,6 +44,11 @@ services:
       TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME: https
       # -- HTTPS entrypoint
       TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS: :443
+      # -- Internal entrypoint, for the VPN-only routes in conf.d/internal.yml.
+      # Deliberately absent from ports: below, so it is reachable only from the
+      # proxy network (the WireGuard socat forwarder) and never from the host or
+      # the internet. Publishing it would undo that.
+      TRAEFIK_ENTRYPOINTS_INTERNAL_ADDRESS: :8443
       # -- Watch conf.d/ for route changes (picks up new instances within ~1s)
       TRAEFIK_PROVIDERS_FILE_DIRECTORY: /etc/traefik/conf.d
       TRAEFIK_PROVIDERS_FILE_WATCH: true

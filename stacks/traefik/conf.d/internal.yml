@@ -1,4 +1,12 @@
 # Internal routes accessible only via VPN (WireGuard).
+#
+# What keeps these private is the 'internal' entrypoint, which Traefik binds on
+# :8443 without publishing it to the host, so only the WireGuard socat forwarder
+# on the proxy network can reach it. Every router here must use that entrypoint:
+# on 'websecure' the route answers on the public :443 to anyone who sends the
+# matching Host header, because *.internal DNS is an inconvenience to an attacker
+# rather than an access control.
+#
 # DNS for *.internal is resolved by CoreDNS inside the WireGuard container.
 # TLS is served using the mkcert certificate from overlays/wireguard/certs/.
 
@@ -13,7 +21,7 @@ http:
       rule: 'Host(`grafana.internal`)'
       service: grafana-internal
       entryPoints:
-        - websecure
+        - internal
       tls: {}
       middlewares:
         - security-internal
