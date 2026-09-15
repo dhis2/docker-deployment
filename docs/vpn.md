@@ -20,7 +20,7 @@ Client                          Server
 │          │                    │  ┌─────────────────────────────────────┐  │
 │  ↓ DNS   │   WireGuard UDP    │  │ wg0 (10.8.0.1)                      │  │
 │ 10.8.0.1 │ ◀───── tunnel ───▶ │  │ CoreDNS  → *.internal → 10.8.0.1    │  │
-│          │                    │  │ socat    → :443 → traefik:443       │  │
+│          │                    │  │ socat    → :443 → traefik:8443      │  │
 │  ↓ TCP   │                    │  └─────────────────────────────────────┘  │
 │ :443     │                    │             │                             │
 └──────────┘                    │             ▼  (proxy network)            │
@@ -35,8 +35,8 @@ Client                          Server
 - **WireGuard** (`linuxserver/wireguard`) terminates the VPN tunnel and generates per-peer client configs under `overlays/wireguard/config/`.
 - **CoreDNS** (bundled in the WireGuard container, configured via
   `overlays/wireguard/coredns/Corefile`) answers `*.internal` with `10.8.0.1` for VPN clients.
-- **socat sidecar** (`wireguard-proxy`) runs in the WireGuard container's network namespace and forwards `10.8.0.1:443` to `traefik:443` over the
-  `proxy` Docker network. Docker DNS resolves `traefik` on each new connection, so Traefik container restarts don't require any reconfiguration.
+- **socat sidecar** (`wireguard-proxy`) runs in the WireGuard container's network namespace and forwards `10.8.0.1:443` to `traefik:8443` over the
+  `proxy` Docker network. `8443` is Traefik's `internal` entrypoint, which is not published to the host, preventing direct internet access under normal Docker bridge networking. The Docker host and other containers on `proxy` can still reach it. Docker DNS resolves `traefik` on each new connection, so Traefik container restarts don't require any reconfiguration.
 - **mkcert** runs once on first launch to create a self-signed root CA and certs for `grafana.internal` / `${PROJECT_NAME}.glowroot.internal`, stored in the
   `wireguard-certs` Docker volume.
 - **Traefik** mounts the same `wireguard-certs` volume read-only at
