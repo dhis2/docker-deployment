@@ -44,22 +44,6 @@ Client                          Server
   `stacks/traefik/conf.d/internal.yml`. Internal routes use the
   `security-internal` middleware (everything `security` has except HSTS) - HSTS on a self-signed cert would lock browsers out unrecoverably if a client hit the route before trusting the CA.
 
-## Upgrading existing deployments
-
-When upgrading from internal routes on `websecure`, recreate Traefik and the
-WireGuard forwarder with `make start-traefik` and `make start-vpn`.
-For every existing instance, run `PROJECT_NAME=<name> make start-instance` with
-its usual environment settings to regenerate `stacks/traefik/conf.d/<name>.yml`.
-Changing the template alone does not update existing route files; each Glowroot
-router must use `internal` instead of `websecure`.
-
-Verify from outside the VPN that HTTPS requests to the public server IP with
-hostnames `grafana.internal` and `<name>.glowroot.internal` return Traefik's 404.
-Use `curl -k --resolve <hostname>:443:<public-ip> https://<hostname>/` to bypass
-DNS while preserving the requested hostname and TLS SNI. Through the VPN, the
-same hostnames should still serve their UIs. Public DHIS2 routes should continue
-working, and port 8443 must remain absent from Traefik's published ports.
-
 ## Configuration
 
 The VPN stack reads `overlays/wireguard/.env`, created by `make generate-stack-envs`
