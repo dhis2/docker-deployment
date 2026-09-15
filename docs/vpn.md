@@ -36,13 +36,29 @@ Client                          Server
 - **CoreDNS** (bundled in the WireGuard container, configured via
   `overlays/wireguard/coredns/Corefile`) answers `*.internal` with `10.8.0.1` for VPN clients.
 - **socat sidecar** (`wireguard-proxy`) runs in the WireGuard container's network namespace and forwards `10.8.0.1:443` to `traefik:8443` over the
-  `proxy` Docker network. `8443` is Traefik's `internal` entrypoint, which is not published to the host, so the internal routes are reachable only through this forwarder and not from the internet. Docker DNS resolves `traefik` on each new connection, so Traefik container restarts don't require any reconfiguration.
+  `proxy` Docker network. `8443` is Traefik's `internal` entrypoint, which is not published to the host, preventing direct internet access under normal Docker bridge networking. The Docker host and other containers on `proxy` can still reach it. Docker DNS resolves `traefik` on each new connection, so Traefik container restarts don't require any reconfiguration.
 - **mkcert** runs once on first launch to create a self-signed root CA and certs for `grafana.internal` / `${PROJECT_NAME}.glowroot.internal`, stored in the
   `wireguard-certs` Docker volume.
 - **Traefik** mounts the same `wireguard-certs` volume read-only at
   `/etc/traefik/certs/` and serves the internal routes defined in
   `stacks/traefik/conf.d/internal.yml`. Internal routes use the
   `security-internal` middleware (everything `security` has except HSTS) - HSTS on a self-signed cert would lock browsers out unrecoverably if a client hit the route before trusting the CA.
+
+## Upgrading existing deployments
+
+When upgrading from internal routes on `websecure`, recreate Traefik and the
+WireGuard forwarder with `make start-traefik` and `make start-vpn`.
+For every existing instance, run `PROJECT_NAME=<name> make start-instance` with
+its usual environment settings to regenerate `stacks/traefik/conf.d/<name>.yml`.
+Changing the template alone does not update existing route files; each Glowroot
+router must use `internal` instead of `websecure`.
+
+Verify from outside the VPN that HTTPS requests to the public server IP with
+hostnames `grafana.internal` and `<name>.glowroot.internal` return Traefik's 404.
+Use `curl -k --resolve <hostname>:443:<public-ip> https://<hostname>/` to bypass
+DNS while preserving the requested hostname and TLS SNI. Through the VPN, the
+same hostnames should still serve their UIs. Public DHIS2 routes should continue
+working, and port 8443 must remain absent from Traefik's published ports.
 
 ## Configuration
 
