@@ -119,7 +119,7 @@ sudo docker ps
 
 **Verify:** `traefik` and the monitoring containers — grafana, prometheus, loki, node-exporter, cadvisor — are all `Up`.
 
-Traefik watches `stacks/traefik/conf.d/` for route changes and Prometheus watches `stacks/monitoring/targets/` for scrape targets, both reloading within about a second. Neither needs restarting when you add or remove an instance.
+Traefik watches `stacks/traefik/conf.d/` for route changes and Prometheus watches `stacks/monitoring/targets/` for scrape targets. Neither needs restarting when you add or remove an instance.
 
 Grafana is **not** published to the internet. It becomes reachable at `https://grafana.internal` once the VPN is up in [step 5](#step-5--put-admin-interfaces-behind-the-vpn).
 
