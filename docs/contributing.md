@@ -46,18 +46,23 @@ PROJECT_NAME=dev SUDO= make test      # headless
 PROJECT_NAME=dev SUDO= make test-ui   # with a visible browser
 ```
 
-The Playwright suite runs against an already-running instance and covers login, user update, app installation, monitoring, profiling traces, and backup and restore. It reads `instances/<name>/.env` itself, so `PROJECT_NAME` is all it needs.
-
-Two constraints:
-
-- **Direct Docker access is required.** The helpers call `docker ps` and `docker exec` themselves, and `SUDO=` does not apply to those calls — though it does reach the `make` targets the backup and restore tests invoke. Run the suite where your user can talk to the Docker socket, which means a laptop or dev container rather than a hardened server.
-- **A fresh instance is expected.** Some assertions assume an instance that has not been used. Clean up first:
-
-    ```shell
-    SUDO= PROJECT_NAME=dev make stop-instance && PROJECT_NAME=dev SUDO= make test
-    ```
+The Playwright suite runs against an already-running instance and covers login, user update, app installation, monitoring, profiling traces, and backup and restore. It reads `instances/<name>/.env` itself, so `PROJECT_NAME` is all it needs. Keep `SUDO=` in the environment: the backup and restore tests shell back out to `make` and pick it up from there.
 
 The suite validates a single running instance. The lifecycle around it — provisioning, multi-instance, VPN, restore — is covered by the guides, which double as manual acceptance walkthroughs: each step has an explicit **Verify** with the result to expect.
+
+Note that this suite tests **this deployment project**, not DHIS2. Testing DHIS2 itself with a disposable instance is the [test environment guide](guides/test-environment.md).
+
+### When the suite fails
+
+**It fails on the Docker socket.** The helpers call `docker ps` and `docker exec` directly, and the `SUDO` override does not reach those calls — though it does reach the `make` targets the backup and restore tests invoke. A server provisioned by `server-provisioning` deliberately keeps the operator out of the `docker` group, so the suite cannot run there without giving up that posture. Run it from a laptop or dev container where your user can talk to the Docker socket, and verify a server deployment by hand instead.
+
+**It fails in ways that look like leftover state.** Some assertions expect a fresh instance. Reset and re-run:
+
+```shell
+SUDO= PROJECT_NAME=dev make stop-instance && PROJECT_NAME=dev SUDO= make test
+```
+
+**A test fails and you want to watch it.** `make test-ui` runs the same suite with a visible browser.
 
 ## Documentation
 

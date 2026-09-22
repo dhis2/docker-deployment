@@ -150,20 +150,6 @@ Restore accepts `.sql.gz` (plain) and `.pgc` (custom), chosen by extension. Rena
 
 Analytics tables are excluded from backups by design, since DHIS2 regenerates them. Run analytics generation after restoring — *Data Administration → Analytics Tables*, or `POST /api/resourceTables/analytics`. See [backup and restore](backup-restore.md).
 
-## The test suite
-
-### `make test` fails on the Docker socket
-
-The Playwright helpers call `docker ps` and `docker exec` directly, and the `SUDO` override does not reach those calls. A server provisioned by `server-provisioning` deliberately keeps the operator out of the `docker` group, so the suite cannot run there without giving up that posture. Run it from a laptop or dev container instead and verify the server by hand.
-
-### `make test` fails in ways that look like leftover state
-
-Some assertions expect a fresh instance. Reset and re-run:
-
-```shell
-SUDO= PROJECT_NAME=<name> make stop-instance && PROJECT_NAME=<name> SUDO= make test
-```
-
 ## Still stuck
 
 Ask in the DHIS2 Community of Practice, in [DHIS2 on Docker](https://community.dhis2.org/c/server-administration/docker/95). Include your DHIS2 version, whether you are on a server or a laptop, the `make` command you ran, and the relevant container log — with credentials removed.

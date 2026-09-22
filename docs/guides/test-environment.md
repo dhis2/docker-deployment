@@ -153,27 +153,6 @@ SUDO= COMPOSE_OPTS=-d PROJECT_NAME=test make start-instance
 
 To keep the instance but reload its data, restore a dump instead — [backup and restore](../reference/backup-restore.md).
 
-## The automated test suite
-
-The repository ships a Playwright suite that exercises a running instance: login, user update, app installation, monitoring, profiling traces, and backup and restore.
-
-```shell
-PROJECT_NAME=test SUDO= make test
-```
-
-It reads `instances/test/.env` itself, so `PROJECT_NAME` is all it needs. Keep `SUDO=` in the environment: the backup and restore tests shell back out to `make`, and pick it up from there.
-
-Two constraints worth knowing:
-
-- **It needs direct Docker access.** The helpers call `docker ps` and `docker exec` themselves, and the `SUDO` override does not reach those calls. Run it on a laptop or dev container where your user is in the `docker` group, not on a hardened server that deliberately keeps operators out of that group.
-- **It expects a fresh instance.** Some assertions assume an instance that has not been poked at. Reset first if the suite fails in a way that looks like leftover state:
-
-    ```shell
-    SUDO= PROJECT_NAME=test make stop-instance && PROJECT_NAME=test SUDO= make test
-    ```
-
-`make test-ui` runs the same suite with a visible browser, which is useful when a test fails and you want to watch what it is doing.
-
 ## Tearing down
 
 ```shell
