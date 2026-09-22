@@ -30,7 +30,7 @@ cd docker-deployment
 ```
 
 > [!IMPORTANT]
-> Every command below ends with, or includes, `SUDO=`. This is not a typo and the trailing `=` matters: it tells `make` to run Docker **without** `sudo`, which is what you want on your own machine where your user can already talk to Docker. Leave `SUDO=` off if you normally type `sudo docker`.
+> Commands that start containers include SUDO=. This is not a typo and the trailing `=` matters: it tells `make` to run Docker **without** `sudo`, which is what you want on your own machine where your user can already talk to Docker. Leave `SUDO=` off if you normally type `sudo docker`.
 
 ## Step 1 — Start the reverse proxy
 
