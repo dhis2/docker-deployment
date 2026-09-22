@@ -7,6 +7,7 @@ x-file-storage-image: &file-storage-image
 services:
   backup-database:
     volumes:
+      # -- Host directory for this instance's backups (./backups/<PROJECT_NAME>)
       - ${BACKUP_DIR}:/backups
       - ./scripts/backup-database.sh:/backup-database.sh:ro
     environment:

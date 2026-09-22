@@ -139,7 +139,7 @@ APP_HOSTNAME=dhis2.example.com PROJECT_NAME=prod make create-instance
 Now **review that env file before starting anything**. In particular:
 
 - **`DHIS2_ADMIN_PASSWORD`** — generated for you. This is how you will log in; note it somewhere safe.
-- **`DHIS2_VERSION`** — pin this to the exact version you intend to run in production, for example `43.0.0`, rather than leaving it on a major-version tag that moves under you.
+- **`DHIS2_VERSION`** — the default is the latest stable release line at the time this repository was last updated, not whatever is newest today, so confirm it is the version you mean to deploy. Pin it to the exact version, for example `43.0.0`, rather than a major-version tag that moves under you. See [DHIS2 versions and upgrades](../reference/dhis2-versions.md).
 - **`POSTGRES_VERSION`** — likewise.
 
 Every variable is documented in [environment variables](../reference/environment-variables.md). Because the file holds credentials, `create-instance` writes it `0600`, readable only by its owner.
@@ -254,6 +254,19 @@ The defaults are not tuned for your hardware or your data. This is one of the ar
 - **PostgreSQL** — memory, connections and logging, set per instance in `instances/<name>/postgresql/conf.d/`. See [PostgreSQL configuration](../reference/postgresql.md).
 - **DHIS2** — `instances/<name>/dhis2/dhis.conf`, including connection pool sizing.
 - **Container resources** — no CPU or memory limits are applied by default, so instances on a shared host can starve each other.
+
+### Upgrading DHIS2
+
+Back up, stop the instance, change `DHIS2_VERSION` in its env file, and start it again — DHIS2 migrates its database on startup. The migration cannot be reversed, so the backup is your only route back, and analytics need regenerating afterwards.
+
+```shell
+PROJECT_NAME=prod BACKUP_TIMESTAMP=before-44-upgrade make backup
+PROJECT_NAME=prod make stop-instance
+# edit DHIS2_VERSION in instances/prod/.env
+COMPOSE_OPTS=-d PROJECT_NAME=prod make start-instance
+```
+
+Skipping versions is fine, but the requirements of the releases you skip still apply. Read the release notes from your current version through to the target, and rehearse the upgrade against a copy of your database in a throwaway instance first. [DHIS2 versions and upgrades](../reference/dhis2-versions.md) covers both, along with pinning and the moving-tag caveat.
 
 ### Keeping an eye on it
 

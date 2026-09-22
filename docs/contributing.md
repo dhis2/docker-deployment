@@ -96,7 +96,10 @@ Markdown is linted by markdownlint and textlint on commit. Line length is not en
 make docs
 ```
 
-Document a variable by adding a `# --` comment above it in the compose file, then regenerating.
+Document a variable by adding a `# --` comment on the line immediately above it in the compose file, then regenerating. The comment has to be directly above the line the variable appears on — one line further up and the generator will not pick it up.
+
+> [!NOTE]
+> This does not work for variables in an `image:` line, which is why the image tags in the generated reference have no descriptions. The `service-keys-order` rule in `.dclintrc` rewrites each service block on commit, and a comment directly above `image:` is dropped in that rewrite; inside an `x-*` anchor block it also breaks the anchor onto its own line. There is no position that satisfies both tools, so image versions are documented in prose instead — `DHIS2_VERSION` in [DHIS2 versions and upgrades](reference/dhis2-versions.md), the monitoring components in [monitoring](reference/monitoring.md).
 
 ### Diagrams
 

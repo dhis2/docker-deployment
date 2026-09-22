@@ -123,6 +123,7 @@ Covered in [contributing](../contributing.md): `init`, `reinit`, `check`, `playw
 
 ## See also
 
+- [DHIS2 versions and upgrades](dhis2-versions.md) — choosing a version, and the upgrade procedure.
 - [Architecture](architecture.md) — the networks these containers join and why.
 - [Environment variables](environment-variables.md) — every variable in the compose files.
 - [Backup and restore](backup-restore.md).

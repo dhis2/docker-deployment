@@ -57,7 +57,7 @@ APP_HOSTNAME=test.dhis2.127-0-0-1.nip.io PROJECT_NAME=test make create-instance
 DHIS2_VERSION=43.0.0
 ```
 
-Any tag published for the [`dhis2/core`](https://hub.docker.com/r/dhis2/core/tags) image works: a full version like `43.0.0`, a major version like `43` that follows the latest patch, or a development tag. `POSTGRES_VERSION` is set in the same file if you need to test against a particular PostgreSQL.
+Any tag published for the [`dhis2/core`](https://hub.docker.com/r/dhis2/core/tags) image works: a full version like `43.0.0`, a major version like `43` that follows the latest patch, or a development tag. [DHIS2 versions and upgrades](../reference/dhis2-versions.md) lists the tag forms and what each one pins. `POSTGRES_VERSION` is set in the same file if you need to test against a particular PostgreSQL.
 
 Then start it:
 

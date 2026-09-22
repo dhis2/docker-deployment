@@ -13,6 +13,7 @@ services:
         condition: service_healthy
     volumes:
       - otel:/otel:ro
+      # -- Instance name; set by make from PROJECT_NAME
       - ./instances/${COMPOSE_PROJECT_NAME}/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
     environment:
       # OpenTelemetry Java Agent configuration
@@ -61,7 +62,9 @@ services:
     volumes:
       - otel:/otel
     environment:
+      # -- OpenTelemetry Java agent version to download
       OTEL_VERSION: ${OTEL_VERSION:-2.11.0}
+      # -- SHA256 the downloaded agent JAR must match
       OTEL_JAR_SHA256: ${OTEL_JAR_SHA256:-4cff4ab46179260a61fc0d884f3f170cfbd9d2962dd260be2cff31262d0c7618}
     networks:
       - monitoring

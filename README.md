@@ -117,6 +117,7 @@ SUDO= COMPOSE_OPTS=-d PROJECT_NAME=demo make start-instance
 ### Reference — look something up
 
 - [Instance lifecycle](docs/reference/instance-lifecycle.md) — every `make` target, and what each one changes.
+- [DHIS2 versions and upgrades](docs/reference/dhis2-versions.md) — choosing a version, and upgrading an instance.
 - [Environment variables](docs/reference/environment-variables.md) — every variable, generated from the compose files.
 - [Architecture](docs/reference/architecture.md) — networks, isolation model, and how instances are routed and scraped.
 - [Backup and restore](docs/reference/backup-restore.md) — database and file storage, including loading a demo dump.

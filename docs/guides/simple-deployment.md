@@ -70,7 +70,7 @@ APP_HOSTNAME=dhis2.example.com PROJECT_NAME=dhis2 make create-instance
 Open that file and note two things:
 
 - **`DHIS2_ADMIN_PASSWORD`** — generated for you; this is your login. Save it in a password manager.
-- **`DHIS2_VERSION`** — pin it to a full version such as `43.0.0` if you would rather decide when to move to a new release. Left as `43`, the image tag follows that major version.
+- **`DHIS2_VERSION`** — the default is the latest stable release line at the time this repository was last updated, so check it is the version you want. Pin it to a full version such as `43.0.0` to decide for yourself when to move to a new release; left as `43`, the tag follows the latest patch of that major line. See [DHIS2 versions and upgrades](../reference/dhis2-versions.md).
 
 The file contains all your credentials and is written readable only by you. Do not commit it, and do not loosen its permissions. Every variable is documented in [environment variables](../reference/environment-variables.md).
 
@@ -163,7 +163,9 @@ COMPOSE_OPTS=-d PROJECT_NAME=dhis2 make start-instance
 
 ### Updating DHIS2
 
-**Back up first**, then change `DHIS2_VERSION` in `instances/dhis2/.env` and restart as above. DHIS2 migrates its database on startup, and that migration is not reversible — if it goes wrong, restoring your backup is the way back. Read the release notes for the version you are moving to, and do not skip major versions.
+**Back up first**, then change `DHIS2_VERSION` in `instances/dhis2/.env` and restart as above. DHIS2 migrates its database on startup, and that migration is not reversible — if it goes wrong, restoring your backup is the way back.
+
+Skipping versions is fine; going from 41 straight to 43 is a normal upgrade. What matters is reading the release notes for the target version **and every release in between**, so you know what the upgrade asks of your instance before you start it. Full procedure and caveats: [DHIS2 versions and upgrades](../reference/dhis2-versions.md).
 
 ## Growing out of this setup
 
