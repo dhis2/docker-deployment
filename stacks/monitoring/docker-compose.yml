@@ -30,6 +30,7 @@ services:
       - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
       - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
     environment:
+      # -- Grafana admin password, generated into stacks/monitoring/.env
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
       GF_SECURITY_ADMIN_USER: admin
       GF_USERS_ALLOW_SIGN_UP: false
@@ -65,6 +66,7 @@ services:
     volumes:
       - loki:/loki
     environment:
+      # -- How long container logs are kept (744h = 31 days)
       LOKI_RETENTION_PERIOD: ${LOKI_RETENTION_PERIOD:-744h}
     # The Docker Logging Driver runs on the host network, so Loki must be exposed on it
     ports:
@@ -106,6 +108,7 @@ services:
     secrets:
       - dhis2_monitor_password
     environment:
+      # -- How long metrics are kept
       PROMETHEUS_RETENTION_TIME: ${PROMETHEUS_RETENTION_TIME:-15d}
     networks:
       - monitoring_internal

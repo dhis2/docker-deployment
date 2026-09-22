@@ -97,8 +97,8 @@ restore:
 	$(BACKUP_COMPOSE_CMD) start app
 
 docs:
-	mkdir -p ./docs
-	$(DOCKER) compose -f stacks/docs/docker-compose.yml run --rm compose-docs > docs/environment-variables.md
+	mkdir -p ./docs/reference
+	$(DOCKER) compose -f stacks/docs/docker-compose.yml run --rm compose-docs > docs/reference/environment-variables.md
 
 COMPOSE_CMD = $(DOCKER) compose \
 	--project-name $(PROJECT_NAME) \
