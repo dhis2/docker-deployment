@@ -37,7 +37,7 @@ You need:
 - **Inbound firewall rules** at your cloud provider allowing TCP 22, 80 and 443, plus UDP 51820 for WireGuard.
 
 > [!NOTE]
-> The requirement for a Ubuntu host is based on the requirements of the provisioning tool in Step 1 below. If you are provisioning your server differently you have more freedom over the host OS.
+> The requirement for a Ubuntu host is based on the requirements of the provisioning tool in Step 1 below. The Ansible provisioning tool has been tested on Ubuntu 24.04. If you are provisioning your server differently you have more freedom over the host OS.
 
 ### DNS and hostnames
 
