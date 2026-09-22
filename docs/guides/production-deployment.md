@@ -29,12 +29,15 @@ With continued development, testing and configuration, the project is intended t
 
 You need:
 
-- **A dedicated host** running Ubuntu 24.04 — a VM or bare metal, reachable over SSH with a sudo-capable user (`ubuntu` by default). Nothing else should be competing for ports 80 and 443.
+- **A dedicated host** running Ubuntu 24.04 or 26.04 (see NOTE below) — a VM or bare metal, reachable over SSH with a sudo-capable user (`ubuntu` by default). Nothing else should be competing for ports 80 and 443.
 - **Ansible on your own machine**, plus this repository checked out locally, to run the provisioning playbook.
 - **Network access to GitHub** from your machine: provisioning installs the pinned `sre.server` baseline collection with `ansible-galaxy` before it touches the server.
 - **A domain name**, with DNS you can edit. See [DNS and hostnames](#dns-and-hostnames) below.
 - **An email address** for Let's Encrypt registration.
 - **Inbound firewall rules** at your cloud provider allowing TCP 22, 80 and 443, plus UDP 51820 for WireGuard.
+
+> [!NOTE]
+> The requirement for a Ubuntu host is based on the requirements of the provisioning tool in Step 1 below. If you are provisioning your server differently you have more freedom over the host OS.
 
 ### DNS and hostnames
 
