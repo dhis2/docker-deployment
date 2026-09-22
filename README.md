@@ -89,7 +89,7 @@ Three variables appear throughout every guide. Setting them correctly is most of
 | Variable                | What it does                                                                                                                                                |
 |:--|:--|
 | `PROJECT_NAME=<name>`   | Names the instance a command applies to. Everything for an instance lives in `instances/<name>/`. Required by every per-instance target.                    |
-| `SUDO=`                 | Runs Docker **without** `sudo`. The default is `sudo docker`, which is the right posture on a server; on a laptop or dev container append `SUDO=` to opt out. |
+| `SUDO=`                 | Runs Docker **without** `sudo`. The default is `sudo docker`, which is the right posture on a server; on a laptop or dev container prepend `SUDO=` to opt out. |
 | `COMPOSE_OPTS=-d`       | Starts containers detached, in the background. Without it, `make start-…` runs in the foreground and holds your terminal.                                    |
 
 ```shell
