@@ -4,7 +4,7 @@ The standalone WireGuard stack provides a private tunnel for reaching admin and
 monitoring UIs that are not exposed publicly:
 
 | Hostname                            | Service              |
-| ----------------------------------- | -------------------- |
+|:--|:--|
 | `grafana.internal`                  | Grafana (monitoring) |
 | `${PROJECT_NAME}.glowroot.internal` | Glowroot APM UI      |
 
@@ -50,7 +50,7 @@ The VPN stack reads `overlays/wireguard/.env`, created by `make generate-stack-e
 from `overlays/wireguard/.env.template`. Edit it before launching:
 
 | Variable                    | Default       | Description                                                            |
-| --------------------------- | ------------- | ---------------------------------------------------------------------- |
+|:--|:--|:--|
 | `WIREGUARD_PEERS`           | `dhis2`       | Comma-separated peer names to generate configs for                     |
 | `WIREGUARD_SERVER_URL`      | `auto`        | Public endpoint clients connect to (use the server's public IP or FQDN) |
 | `WIREGUARD_SERVER_PORT`     | `51820`       | UDP port WireGuard listens on                                          |
