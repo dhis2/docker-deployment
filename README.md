@@ -124,7 +124,7 @@ SUDO= COMPOSE_OPTS=-d PROJECT_NAME=demo make start-instance
 - [Monitoring](docs/reference/monitoring.md) — the shared Grafana / Prometheus / Loki stack.
 - [VPN access](docs/reference/vpn.md) — WireGuard setup, peer enrolment, and trusting the internal CA.
 - [TLS certificates](docs/reference/tls.md) — Let's Encrypt, the staging CA, and self-signed local certificates.
-- [PostgreSQL configuration](docs/reference/postgresql.md) — tuning the database.
+- [PostgreSQL configuration](docs/reference/postgresql.md) — tuning the database, and who can connect to it.
 - [Profiling and APM](docs/reference/profiling.md) — Glowroot and Tempo tracing.
 - [Troubleshooting](docs/reference/troubleshooting.md) — symptoms, causes and fixes.
 

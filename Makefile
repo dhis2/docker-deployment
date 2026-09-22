@@ -19,7 +19,7 @@ BACKUP_DIR ?= ./backups/$(PROJECT_NAME)
 # Extra options for `docker compose down` in the stop-* targets (`clean` and `delete-instance` pass --volumes).
 DOWN_OPTS ?=
 
-.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances start-postgres start-instance start-traefik stop-traefik start-monitoring stop-monitoring start-vpn stop-vpn get-vpn-ca ensure-networks ensure-volumes stop-instance delete-instance stop clean config get-backup-timestamp
+.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances start-postgres start-instance start-traefik stop-traefik start-monitoring stop-monitoring start-vpn stop-vpn get-vpn-ca ensure-networks ensure-volumes check-instance-config stop-instance delete-instance stop clean config get-backup-timestamp
 
 init:
 	@test -d .venv || python3 -m venv .venv
@@ -157,9 +157,28 @@ list-instances:
 		done; \
 	fi
 
+# Verify the instance has the PostgreSQL config the database stack mounts.
+# A missing file would be created as a directory by Docker, and PostgreSQL would
+# fail to start with "could not read file ...: Is a directory". Instances created
+# before a config file was added to config/postgresql/ need it copied in.
+check-instance-config:
+	@for f in postgresql.conf pg_hba.conf; do \
+		path="instances/$(PROJECT_NAME)/postgresql/$$f"; \
+		test -f "$$path" && continue; \
+		test -e "$$path" && echo "Error: $$path exists but is not a file - remove it first." >&2; \
+		test -e "$$path" || echo "Error: $$path is missing." >&2; \
+		echo "  Copy it from the template: cp config/postgresql/$$f instances/$(PROJECT_NAME)/postgresql/" >&2; \
+		exit 1; \
+	done
+	@test -d instances/$(PROJECT_NAME)/postgresql/conf.d || { \
+		echo "Error: instances/$(PROJECT_NAME)/postgresql/conf.d is missing." >&2; \
+		echo "  Copy it from the template: cp -R config/postgresql/conf.d instances/$(PROJECT_NAME)/postgresql/" >&2; \
+		exit 1; \
+	}
+
 # Start the PostgreSQL stack for a named instance.
 # Creates a per-instance db network (PROJECT_NAME-db) and waits until healthy.
-start-postgres:
+start-postgres: check-instance-config
 	$(DOCKER) network create $(PROJECT_NAME)-db 2>/dev/null || true
 	$(POSTGRES_COMPOSE_CMD) up --wait -d
 
