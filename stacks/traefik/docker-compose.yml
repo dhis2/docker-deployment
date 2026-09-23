@@ -57,10 +57,11 @@ services:
       TRAEFIK_API_INSECURE: false
       # -- Enable Prometheus metrics
       TRAEFIK_METRICS_PROMETHEUS: true
-      # -- Let's Encrypt
+      # -- Email address Let's Encrypt registers certificates and expiry notices to
       TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL: ${LETSENCRYPT_ACME_EMAIL}
       TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_STORAGE: /cert/acme.json
       TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_TLSCHALLENGE: true
+      # -- ACME directory URL; point at the staging CA while testing to avoid rate limits
       TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_CASERVER: ${LETSENCRYPT_ACME_CASERVER:-https://acme-v02.api.letsencrypt.org/directory}
     ports:
       - "0.0.0.0:80:80"

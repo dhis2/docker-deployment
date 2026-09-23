@@ -10,6 +10,7 @@ services:
     build:
       context: ./mkcert
       args:
+        # -- mkcert version used to mint the *.internal certificates
         MKCERT_VERSION: ${MKCERT_VERSION:-v1.4.4}
     volumes:
       - wireguard-certs:/certs
@@ -43,12 +44,17 @@ services:
     environment:
       PUID: 1000
       PGID: 1000
+      # -- Public endpoint clients connect to; 'auto' detects it
       SERVERURL: ${WIREGUARD_SERVER_URL:-auto}
+      # -- UDP port WireGuard listens on
       SERVERPORT: ${WIREGUARD_SERVER_PORT:-51820}
       # TODO: default peer?
+      # -- Comma-separated peer names to generate client configs for
       PEERS: ${WIREGUARD_PEERS:-laptop}
       PEERDNS: auto
+      # -- Tunnel subnet; must not overlap the client's local networks
       INTERNAL_SUBNET: ${WIREGUARD_INTERNAL_SUBNET:-10.8.0.0}
+      # -- CIDRs the client routes through the tunnel; the generated .env sets a split tunnel
       ALLOWEDIPS: ${WIREGUARD_ALLOWED_IPS:-0.0.0.0/0}
     ports:
       - "0.0.0.0:${WIREGUARD_SERVER_PORT:-51820}:51820/udp"

@@ -4,5 +4,8 @@ services:
     volumes:
       - ../../:/src:ro
     environment:
-      DOCKER_COMPOSE_FILE_GLOBS: /src/docker-compose.yml;/src/overlays/*/docker-compose.yml
+      DOCKER_COMPOSE_FILE_GLOBS: /src/docker-compose.yml;/src/stacks/*/docker-compose.yml;/src/overlays/*/docker-compose.yml
     network_mode: none
+    # Paths in the generated markdown are relative to the working directory, so
+    # run from the mount point to get repo-relative ones.
+    working_dir: /src

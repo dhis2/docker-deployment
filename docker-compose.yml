@@ -21,6 +21,7 @@ services:
     volumes:
       - dhis2:/opt/dhis2/
       #- ./instances/${COMPOSE_PROJECT_NAME}/dhis2/log4j2.xml:/opt/dhis2/log4j2.xml:ro
+      # -- Instance name; set by make from PROJECT_NAME
       - ./instances/${COMPOSE_PROJECT_NAME}/dhis2/dhis.conf:/opt/dhis2/dhis.conf:ro
       - type: tmpfs
         target: /tmp
@@ -115,10 +116,13 @@ services:
     volumes:
       - ./scripts/create-monitoring-user.sh:/create-monitoring-user.sh:ro
     environment:
+      # -- Base URL the monitoring user is created against
       DHIS2_HOSTNAME: ${DHIS2_HOSTNAME:-http://app:8080}
       DHIS2_ADMIN_USERNAME: ${DHIS2_ADMIN_USERNAME}
       DHIS2_ADMIN_PASSWORD: ${DHIS2_ADMIN_PASSWORD}
+      # -- DHIS2 user Prometheus scrapes as; must match stacks/monitoring/.env
       DHIS2_MONITOR_USERNAME: ${DHIS2_MONITOR_USERNAME}
+      # -- Password for the monitoring user; must match stacks/monitoring/.env
       DHIS2_MONITOR_PASSWORD: ${DHIS2_MONITOR_PASSWORD}
     networks:
       - application
@@ -137,6 +141,7 @@ services:
       create-monitoring-user:
         condition: service_completed_successfully
     environment:
+      # -- Metrics user credentials used to scrape PostgreSQL
       DATA_SOURCE_NAME: "postgresql://${POSTGRES_METRICS_USERNAME}:${POSTGRES_METRICS_PASSWORD}@database:5432/${POSTGRES_DB}?sslmode=disable"
     networks:
       database:
