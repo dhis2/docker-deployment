@@ -4,7 +4,7 @@ Which DHIS2 version an instance runs, how to choose it, and how to move to a dif
 
 ## Setting the version
 
-`DHIS2_VERSION` in `instances/<name>/.env` is the image tag for the [`dhis2/core`](https://hub.docker.com/r/dhis2/core/tags) image. It is per instance, so instances on the same host can run different versions.
+`DHIS2_VERSION` in `instances/<name>/.env` is the image tag, and `DHIS2_IMAGE_REPOSITORY` in the same file is the repository it is pulled from — [`dhis2/core`](https://hub.docker.com/r/dhis2/core/tags) unless you change it. Both are per instance, so instances on the same host can run different versions.
 
 ```dotenv
 DHIS2_VERSION=43.0.0
@@ -22,6 +22,20 @@ The tag forms available, and what each means for you:
 | Timestamped build          | `42.6.0-20260826T150401Z`   | One specific build, pinned harder than a version tag.          |
 
 The shorter the tag, the more it moves under you. `43` picks up new patches whenever you pull; `43.0.0` never changes.
+
+## Choosing the image repository
+
+`DHIS2_IMAGE_REPOSITORY`, in the same env file, selects which repository the image comes from. It defaults to `dhis2/core`, and is per instance, so a development build can run beside a release one on the same host.
+
+| Repository            | Contains                                                  | Tag forms published                                  |
+|:--|:--|:--|
+| `dhis2/core` (default) | Released versions                                         | Bare and prefixed: `43`, `43.0.0`, `2.43`, `2.43.1`  |
+| `dhis2/core-dev`       | Development builds, for testing unreleased changes        | Prefixed only: `2.43`, `2.43.1`, plus `master`, `latest` |
+
+> [!IMPORTANT]
+> **The two repositories do not use the same tag forms.** `dhis2/core-dev` publishes no bare tags, so `DHIS2_IMAGE_REPOSITORY=dhis2/core-dev` with `DHIS2_VERSION=43` fails at pull time with a manifest-unknown error. Change both together: use `2.43` or `master` for development builds.
+
+Development builds are for [testing](../guides/test-environment.md), not for anything carrying real data — they are built from development branches and have not been through release testing.
 
 ## The default, and why to change it
 
