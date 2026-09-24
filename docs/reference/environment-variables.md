@@ -8,6 +8,7 @@
 
 | Variable | Description | Default Value |
 |----------|-------------|---------------|
+| `DHIS2_IMAGE_REPOSITORY` |  | `dhis2/core` |
 | `DHIS2_VERSION` |  | `43` |
 
 #### Volumes
