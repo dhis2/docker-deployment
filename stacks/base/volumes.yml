@@ -1,0 +1,11 @@
+services:
+  init:
+    image: alpine:3.22
+    command: [ "true" ]
+    network_mode: none
+    volumes:
+      - wireguard-certs:/certs
+
+volumes:
+  wireguard-certs:
+    name: wireguard-certs

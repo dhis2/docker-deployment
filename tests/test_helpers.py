@@ -2,7 +2,56 @@ import json
 import os
 import subprocess
 import time
-from typing import Optional, Dict
+from typing import Optional, Dict, List
+
+
+PROJECT_NAME = os.getenv("PROJECT_NAME") or os.path.basename(os.getcwd())
+ENV_FILE = f"instances/{PROJECT_NAME}/.env"
+
+
+def retry(action, attempts: int = 3, delay: int = 5, exceptions: tuple = (Exception,)):
+    """Run action(), retrying on the given exception(s) with a fixed delay between attempts."""
+    for attempt in range(1, attempts + 1):
+        try:
+            return action()
+        except exceptions as error:
+            if attempt == attempts:
+                raise
+            print(f"Attempt {attempt}/{attempts} failed ({error}); retrying in {delay}s...")
+            time.sleep(delay)
+
+
+def _compose(*args: str) -> List[str]:
+    return [
+        "docker", "compose",
+        "--project-name", PROJECT_NAME,
+        "--env-file", ENV_FILE,
+        *args,
+    ]
+
+
+def _container_name(service: str, project: Optional[str] = None) -> str:
+    filters = ["--filter", f"label=com.docker.compose.service={service}", "--filter", "status=running"]
+    if project:
+        filters += ["--filter", f"label=com.docker.compose.project={project}"]
+
+    result = subprocess.run(
+        ["docker", "ps", *filters, "--format", "{{.Names}}"],
+        capture_output=True, text=True, check=True,
+    )
+    names = [n for n in result.stdout.splitlines() if n]
+    if not names:
+        target = f"service '{service}'" + (f" in project '{project}'" if project else "")
+        raise Exception(f"No running container found for {target}")
+    return names[0]
+
+
+def exec_in_service(service: str, command: List[str], project: Optional[str] = None, timeout: int = 30) -> subprocess.CompletedProcess:
+    container = _container_name(service, project)
+    return subprocess.run(
+        ["docker", "exec", container, *command],
+        capture_output=True, text=True, timeout=timeout,
+    )
 
 
 def run_make_command(command: str, env_vars: Optional[Dict[str, str]] = None, check: bool = True) -> subprocess.CompletedProcess:
@@ -27,9 +76,10 @@ def wait_for_service_healthy(service_name: str, max_attempts: int = 30, check_in
     print(f"Waiting for {service_name} to be healthy...")
 
     for attempt in range(1, max_attempts + 1):
-        result = subprocess.run([
-            "docker", "compose", "ps", service_name, "--format", "json"
-        ], capture_output=True, text=True)
+        result = subprocess.run(
+            _compose("ps", service_name, "--format", "json"),
+            capture_output=True, text=True,
+        )
 
         if result.returncode == 0 and '"Health":"healthy"' in result.stdout:
             print(f"{service_name} is healthy")
@@ -43,7 +93,7 @@ def wait_for_service_healthy(service_name: str, max_attempts: int = 30, check_in
 
 def get_services() -> list[dict]:
     result = subprocess.run(
-        ["docker", "compose", "ps", "--format", "json"],
+        _compose("ps", "--format", "json"),
         capture_output=True,
         text=True,
         check=True
