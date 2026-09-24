@@ -14,11 +14,15 @@ http:
       middlewares:
         - security
 
+    # Glowroot is VPN-only: it serves JVM internals, configuration and captured
+    # slow queries with no authentication of its own, so it goes on the
+    # unpublished 'internal' entrypoint. On 'websecure' it would answer on the
+    # public :443 to anyone sending this Host header.
     ${PROJECT_NAME}-glowroot:
       rule: "Host(`${PROJECT_NAME}.glowroot.internal`)"
       service: ${PROJECT_NAME}-glowroot
       entryPoints:
-        - websecure
+        - internal
       tls: {}
       middlewares:
         - security-internal

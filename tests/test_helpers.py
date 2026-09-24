@@ -30,7 +30,7 @@ def _compose(*args: str) -> List[str]:
     ]
 
 
-def _container_name(service: str, project: Optional[str] = None) -> str:
+def container_name(service: str, project: Optional[str] = None) -> str:
     filters = ["--filter", f"label=com.docker.compose.service={service}", "--filter", "status=running"]
     if project:
         filters += ["--filter", f"label=com.docker.compose.project={project}"]
@@ -47,7 +47,7 @@ def _container_name(service: str, project: Optional[str] = None) -> str:
 
 
 def exec_in_service(service: str, command: List[str], project: Optional[str] = None, timeout: int = 30) -> subprocess.CompletedProcess:
-    container = _container_name(service, project)
+    container = container_name(service, project)
     return subprocess.run(
         ["docker", "exec", container, *command],
         capture_output=True, text=True, timeout=timeout,
