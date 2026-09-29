@@ -46,9 +46,9 @@ Run once per host, not per instance.
 |:--|:--|
 | `generate-stack-envs`  | Writes `stacks/traefik/.env`, `stacks/monitoring/.env` and `overlays/wireguard/.env` with generated passwords. Requires `GEN_LETSENCRYPT_ACME_EMAIL`. Refuses to overwrite existing files. |
 | `start-traefik`        | Creates the shared networks and volumes, then starts Traefik. Watches `stacks/traefik/conf.d/` for route changes.                |
-| `clean-traefik`        | Stops and removes the Traefik containers. Volumes, including issued certificates, are kept.                                      |
+| `stop-traefik`         | Stops and removes the Traefik containers. Volumes, including issued certificates, are kept.                                      |
 | `start-monitoring`     | Starts Grafana, Prometheus, Loki, node-exporter and cAdvisor. Watches `stacks/monitoring/targets/` for new scrape targets.        |
-| `clean-monitoring`     | Stops and removes the monitoring containers. Volumes, including collected metrics and logs, are kept.                            |
+| `stop-monitoring`      | Stops and removes the monitoring containers. Volumes, including collected metrics and logs, are kept.                            |
 | `start-vpn`            | Starts WireGuard and its proxy, minting the `*.internal` certificates on first run.                                              |
 | `stop-vpn`             | Stops the VPN. Peer configurations and certificates persist.                                                                     |
 | `get-vpn-ca`           | Writes `rootCA.pem` to the current directory, for installing in a client's trust store.                                          |
@@ -68,9 +68,16 @@ The three `.env` files created by `generate-stack-envs` are written `0600` and c
 | `delete-instance`  | Everything `stop-instance` does, plus removing the data volumes and the `instances/<name>/` directory. **Irreversible.** Prompts for confirmation when run interactively. |
 | `list-instances`   | Prints every configured instance with its hostname and running container count.                                                                |
 | `start-postgres`   | Creates the `<name>-db` network and starts only PostgreSQL, waiting for health. A prerequisite of `start-instance`.                             |
-| `clean`            | Brings the app and overlay containers down, leaving PostgreSQL running and routes and targets in place. `stop-instance` is normally what you want. |
-| `clean-all`        | Like `delete-instance` but keeps `instances/<name>/`, so the configuration and credentials survive while the data does not. **Irreversible.** Prompts when interactive. Despite the warning it prints, it does not touch the shared monitoring or Traefik volumes. |
 | `config`           | Prints the fully resolved Compose configuration for the instance. Useful for checking what a variable actually evaluated to.                    |
+
+## Server-wide targets
+
+Act on every instance in `instances/` and all shared stacks at once.
+
+| Target  | What it does |
+|:--|:--|
+| `stop`  | Runs `stop-instance` for every instance, then `stop-vpn`, `stop-monitoring` and `stop-traefik`. All volumes and `instances/*/` are kept. |
+| `clean` | Like `stop`, but also removes every volume: each instance's data, monitoring data, Traefik certificates and the `*.internal` certificates. `instances/*/`, the stack `.env` files and the VPN peer configurations are kept, so everything can be started again from scratch. **Irreversible.** Prompts when interactive. |
 
 ### What `start-instance` does
 
@@ -115,7 +122,7 @@ Starting an instance is idempotent. Running `start-instance` against a running i
 | `stacks/monitoring/targets/postgres/<name>.json`   | `start-instance`  | Prometheus scrape target for the database exporter    |
 | `backups/<name>/`                                  | `backup`          | Database dumps and file storage archives              |
 
-Docker volumes hold the database, DHIS2 file storage, and each shared stack's data. They are named after the Compose project, so they survive `stop-instance` and are removed by `delete-instance` and `clean-all`.
+Docker volumes hold the database, DHIS2 file storage, and each shared stack's data. They are named after the Compose project, so they survive `stop-instance` and are removed by `delete-instance` and `clean`.
 
 ## Development targets
 

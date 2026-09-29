@@ -149,7 +149,7 @@ To remove it completely, including the database:
 
 ```shell
 SUDO= PROJECT_NAME=demo make delete-instance   # irreversible
-SUDO= make clean-traefik
+SUDO= make stop-traefik
 rm -f backups/demo/dhis2-demo.sql.gz
 ```
 

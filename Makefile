@@ -16,8 +16,10 @@ DOCKER = $(SUDO) docker
 PROJECT_NAME ?= $(notdir $(CURDIR))
 ENV_FILE = instances/$(PROJECT_NAME)/.env
 BACKUP_DIR ?= ./backups/$(PROJECT_NAME)
+# Extra options for `docker compose down` in the stop-* targets (`clean` and `delete-instance` pass --volumes).
+DOWN_OPTS ?=
 
-.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances start-postgres start-instance start-traefik clean-traefik start-monitoring clean-monitoring start-vpn stop-vpn get-vpn-ca ensure-networks ensure-volumes stop-instance delete-instance clean clean-all config get-backup-timestamp
+.PHONY: init playwright test reinit check backup-database backup-file-storage backup restore-database restore-file-storage restore docs generate-stack-envs create-instance list-instances start-postgres start-instance start-traefik stop-traefik start-monitoring stop-monitoring start-vpn stop-vpn get-vpn-ca ensure-networks ensure-volumes stop-instance delete-instance stop clean config get-backup-timestamp
 
 init:
 	@test -d .venv || python3 -m venv .venv
@@ -120,16 +122,16 @@ start-traefik: ensure-networks ensure-volumes
 	$(DOCKER) compose -f stacks/traefik/docker-compose.yml --env-file stacks/traefik/.env up $(COMPOSE_OPTS)
 
 # Stop and remove the Traefik stack containers (preserves volumes).
-clean-traefik:
-	$(DOCKER) compose -f stacks/traefik/docker-compose.yml --env-file stacks/traefik/.env down --remove-orphans
+stop-traefik:
+	$(DOCKER) compose -f stacks/traefik/docker-compose.yml --env-file stacks/traefik/.env down --remove-orphans $(DOWN_OPTS)
 
 # Start the standalone monitoring stack (run once; watches stacks/monitoring/targets/ for new instances)
 start-monitoring: ensure-networks
 	$(DOCKER) compose -f stacks/monitoring/docker-compose.yml --env-file stacks/monitoring/.env up $(COMPOSE_OPTS)
 
 # Stop and remove the monitoring stack containers (preserves volumes).
-clean-monitoring:
-	$(DOCKER) compose -f stacks/monitoring/docker-compose.yml --env-file stacks/monitoring/.env down --remove-orphans
+stop-monitoring:
+	$(DOCKER) compose -f stacks/monitoring/docker-compose.yml --env-file stacks/monitoring/.env down --remove-orphans $(DOWN_OPTS)
 
 # Generate the env file for a new instance.
 # Example: APP_HOSTNAME=dhis2.example.com PROJECT_NAME=prod make create-instance
@@ -177,8 +179,8 @@ start-instance: ensure-networks install-loki-driver start-postgres
 # Stop a named DHIS2 instance and remove its Traefik routes and Prometheus targets.
 # Example: PROJECT_NAME=dev make stop-instance
 stop-instance:
-	$(COMPOSE_CMD) down --remove-orphans
-	$(POSTGRES_COMPOSE_CMD) down
+	$(COMPOSE_CMD) down --remove-orphans $(DOWN_OPTS)
+	$(POSTGRES_COMPOSE_CMD) down $(DOWN_OPTS)
 	$(DOCKER) network rm $(PROJECT_NAME)-db 2>/dev/null || true
 	rm -f stacks/traefik/conf.d/$(PROJECT_NAME).yml
 	rm -f stacks/monitoring/targets/dhis2/$(PROJECT_NAME).json
@@ -193,16 +195,8 @@ delete-instance:
 		echo "This action is irreversible."; \
 		read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || (echo "Aborted." && exit 1); \
 	fi
-	$(COMPOSE_CMD) down --remove-orphans --volumes
-	$(POSTGRES_COMPOSE_CMD) down --volumes
-	$(DOCKER) network rm $(PROJECT_NAME)-db 2>/dev/null || true
-	rm -f stacks/traefik/conf.d/$(PROJECT_NAME).yml
-	rm -f stacks/monitoring/targets/dhis2/$(PROJECT_NAME).json
-	rm -f stacks/monitoring/targets/postgres/$(PROJECT_NAME).json
+	$(MAKE) --no-print-directory stop-instance DOWN_OPTS=--volumes
 	rm -rf instances/$(PROJECT_NAME)
-
-clean:
-	$(COMPOSE_CMD) down --remove-orphans
 
 COMPOSE_CMD_VPN = $(DOCKER) compose -p wireguard --env-file overlays/wireguard/.env -f overlays/wireguard/docker-compose.yml
 
@@ -217,7 +211,7 @@ start-vpn: ensure-networks ensure-volumes install-loki-driver
 	touch stacks/traefik/conf.d/internal.yml
 
 stop-vpn:
-	$(COMPOSE_CMD_VPN) down --remove-orphans
+	$(COMPOSE_CMD_VPN) down --remove-orphans $(DOWN_OPTS)
 
 # Export the *.internal root CA from the wireguard-certs volume so it can be installed
 # in a client's OS / browser trust store. Writes rootCA.pem to the current directory.
@@ -225,18 +219,24 @@ get-vpn-ca:
 	$(COMPOSE_CMD_VPN) run --rm --entrypoint cat mkcert /certs/rootCA.pem > rootCA.pem
 	@echo "Wrote rootCA.pem - install it in your OS trust store, then restart your browser."
 
-clean-all:
+INSTANCES = $(patsubst instances/%/.env,%,$(wildcard instances/*/.env))
+
+# Stop every instance and the VPN, monitoring and Traefik stacks (preserves volumes).
+stop:
+	@for name in $(INSTANCES); do $(MAKE) --no-print-directory stop-instance PROJECT_NAME=$$name || exit 1; done
+	$(MAKE) --no-print-directory stop-vpn stop-monitoring stop-traefik
+
+# Like `stop`, but also removes all volumes (every instance's data, monitoring data, certificates).
+# Keeps instances/*/ and the stack .env files, so everything can be started again from scratch.
+# WARNING: This permanently destroys all data on the server.
+clean:
 	@if [ -t 0 ]; then \
-		echo "WARNING: This will destroy all Docker volumes (database, file storage, monitoring data, etc.)."; \
+		echo "WARNING: This will destroy all data of every instance and the shared stacks (databases, file storage, monitoring data, certificates)."; \
 		echo "This action is irreversible."; \
 		read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || (echo "Aborted." && exit 1); \
 	fi
-	$(COMPOSE_CMD) down --remove-orphans --volumes
-	$(POSTGRES_COMPOSE_CMD) down --volumes
-	$(DOCKER) network rm $(PROJECT_NAME)-db 2>/dev/null || true
-	rm -f stacks/traefik/conf.d/$(PROJECT_NAME).yml
-	rm -f stacks/monitoring/targets/dhis2/$(PROJECT_NAME).json
-	rm -f stacks/monitoring/targets/postgres/$(PROJECT_NAME).json
+	$(MAKE) --no-print-directory stop DOWN_OPTS=--volumes
+	$(DOCKER) compose -p shared-volumes -f stacks/base/volumes.yml down --volumes
 
 config:
 	@$(COMPOSE_CMD) config

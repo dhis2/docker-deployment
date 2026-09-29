@@ -12,7 +12,7 @@ Part of the one-time host setup. It needs `stacks/monitoring/.env`, written by `
 COMPOSE_OPTS=-d make start-monitoring
 ```
 
-`make clean-monitoring` stops it. Volumes persist, so collected metrics and logs survive a restart.
+`make stop-monitoring` stops it. Volumes persist, so collected metrics and logs survive a restart.
 
 Starting it is optional. Instances run perfectly well without it — they still attach to the `monitoring` network, so nothing fails; Prometheus and Loki simply are not collecting, and the Loki log driver's pushes fail silently on their short timeout. Add it later at any time.
 

@@ -26,7 +26,8 @@ def test_create_backup(backup_timestamp: str):
 
 @pytest.mark.order(5)
 def test_clean_environment():
-    run_make_command("clean-all")
+    run_make_command("delete-instance")
+    run_make_command("create-instance")
 
     assert_no_services_running()
 

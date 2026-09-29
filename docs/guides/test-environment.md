@@ -166,12 +166,10 @@ To keep the instance but reload its data, restore a dump instead — [backup and
 ## Tearing down
 
 ```shell
-for n in test v42 v43; do SUDO= PROJECT_NAME=$n make stop-instance; done
-SUDO= make clean-traefik
-SUDO= make clean-monitoring
+SUDO= make stop
 ```
 
-That keeps every instance's configuration and data, ready to restart. For a full wipe:
+That keeps every instance's configuration and data, ready to restart. `SUDO= make clean` destroys all data but keeps the configuration. For a full wipe:
 
 ```shell
 for n in test v42 v43; do SUDO= PROJECT_NAME=$n make delete-instance; done
