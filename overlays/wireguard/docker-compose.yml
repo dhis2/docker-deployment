@@ -25,7 +25,7 @@ services:
     depends_on:
       - wireguard
     network_mode: "service:wireguard"
-    command: TCP-LISTEN:443,fork,bind=10.8.0.1,reuseaddr TCP:traefik:443
+    command: TCP-LISTEN:443,fork,bind=10.8.0.1,reuseaddr TCP:traefik:8443
     restart: unless-stopped
     logging: *loki-logging
 
