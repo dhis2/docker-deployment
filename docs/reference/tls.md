@@ -6,7 +6,7 @@ Traefik terminates TLS for everything. HTTP on port 80 is redirected to HTTPS on
 
 ## Public hostnames — Let's Encrypt
 
-Each instance's route requests a certificate from Let's Encrypt for its `APP_HOSTNAME`, using the TLS-ALPN-01 challenge on port 443. It happens automatically on first request, and renewal is automatic too. Issued certificates are stored in Traefik's `cert` volume, in `acme.json`, which survives `clean-traefik` — so restarting Traefik does not re-issue anything.
+Each instance's route requests a certificate from Let's Encrypt for its `APP_HOSTNAME`, using the TLS-ALPN-01 challenge on port 443. It happens automatically on first request, and renewal is automatic too. Issued certificates are stored in Traefik's `cert` volume, in `acme.json`, which survives `stop-traefik` — so restarting Traefik does not re-issue anything.
 
 For this to work:
 

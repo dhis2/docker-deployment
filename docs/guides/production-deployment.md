@@ -275,10 +275,7 @@ Grafana's preloaded dashboards cover Traefik, PostgreSQL and the host. Logs from
 ## Tearing it all down
 
 ```shell
-make stop-vpn
-PROJECT_NAME=prod make stop-instance     # keeps instances/prod/.env and data
-make clean-traefik
-make clean-monitoring
+make stop     # every instance, the VPN, monitoring and Traefik; keeps instances/prod/.env and data
 ```
 
 To destroy an instance's data as well — irreversible:

@@ -33,7 +33,7 @@ APP_HOSTNAME=dhis2.127-0-0-1.nip.io PROJECT_NAME=dev make create-instance
 SUDO= COMPOSE_OPTS=-d PROJECT_NAME=dev make start-instance
 ```
 
-Tear it down with `SUDO= PROJECT_NAME=dev make stop-instance`, or `SUDO= PROJECT_NAME=dev make clean-all` to destroy the volumes as well and start from nothing.
+Tear it down with `SUDO= PROJECT_NAME=dev make stop-instance`, or `SUDO= make clean` to destroy the data of every instance and shared stack and start from nothing.
 
 `make config` prints the fully resolved Compose configuration for an instance, which is the quickest way to see what a variable actually evaluated to after overlays are applied.
 
