@@ -107,19 +107,17 @@ The slow query log is the most useful diagnostic when DHIS2 feels slow. Its thre
 ### Write-ahead log — `35-wal.conf`
 
 ```conf
-checkpoint_completion_target = 0.8
 synchronous_commit = off
-wal_writer_delay = 10000ms
 ```
 
-These trade durability for commit throughput. `checkpoint_completion_target` spreads checkpoint writes over 80% of the interval between checkpoints (default `0.9`). `wal_writer_delay` sets how often WAL is flushed to disk; 10 seconds is the maximum (default 200 ms). All three are reloadable.
+This trades durability for commit throughput: a commit is reported before its WAL reaches disk, and the WAL writer flushes it shortly after. It is reloadable.
 
 > [!WARNING]
-> With `synchronous_commit = off`, a commit is reported before it reaches disk. A crash of PostgreSQL or the host, including an out-of-memory kill, loses the transactions committed in the last three `wal_writer_delay` intervals: **up to 30 seconds**. The database is not corrupted; those transactions are gone. A clean shutdown loses nothing, but Docker killing the container after its stop timeout counts as a crash. If that is unacceptable, set `synchronous_commit = on` in your own `conf.d/` file.
+> With `synchronous_commit = off`, a commit is reported before it reaches disk. A crash of PostgreSQL or the host, including an out-of-memory kill, loses the transactions committed in the last three `wal_writer_delay` intervals: **about 0.6 seconds** at the default of 200 ms. The database is not corrupted; those transactions are gone. A clean shutdown loses nothing. The database service allows two minutes for one (`stop_grace_period`); if Docker kills the container after that, it counts as a crash. If losing those transactions is unacceptable, set `synchronous_commit = on` in your own `conf.d/` file.
 
 ## Tuning it for real
 
-Start from a tool that accounts for your hardware and workload — [PGTune](https://pgtune.leopard.in.ua/) is a reasonable baseline, choosing a "Data warehouse" profile, since DHIS2's analytics workload resembles one more than it does a transactional application. Write the result into a new `conf.d/40-tuning.conf` and restart. PGTune also sets `checkpoint_completion_target` and `random_page_cost`; your file is read last, so its values win.
+Start from a tool that accounts for your hardware and workload — [PGTune](https://pgtune.leopard.in.ua/) is a reasonable baseline, choosing a "Data warehouse" profile, since DHIS2's analytics workload resembles one more than it does a transactional application. Write the result into a new `conf.d/40-tuning.conf` and restart. PGTune also sets `random_page_cost`; your file is read last, so its value wins.
 
 Then measure rather than guess: the PostgreSQL dashboard in Grafana, the slow query log, and `pg_stat_statements` if you enable it. Cache hit ratios, connection counts and slow queries will tell you what to change next more reliably than a settings calculator will.
 
