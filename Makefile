@@ -157,16 +157,24 @@ list-instances:
 		done; \
 	fi
 
-# Verify the instance has the PostgreSQL config the database stack mounts.
-# A missing file would be created as a directory by Docker, and PostgreSQL would
-# fail to start with "could not read file ...: Is a directory". Instances created
-# before a config file was added to config/postgresql/ need it copied in.
+# Verify the instance exists and has the PostgreSQL config the database stack
+# mounts. A missing file would be created as a directory by Docker, and PostgreSQL
+# would fail to start with "could not read file ...: Is a directory". Instances
+# created before a config file was added to config/postgresql/ need it copied in.
 check-instance-config:
+	@test -f $(ENV_FILE) || { \
+		echo "Error: no instance named '$(PROJECT_NAME)': $(ENV_FILE) is missing." >&2; \
+		echo "  Check PROJECT_NAME (make list-instances), or create it with make create-instance." >&2; \
+		exit 1; \
+	}
 	@for f in postgresql.conf pg_hba.conf; do \
 		path="instances/$(PROJECT_NAME)/postgresql/$$f"; \
 		test -f "$$path" && continue; \
-		test -e "$$path" && echo "Error: $$path exists but is not a file - remove it first." >&2; \
-		test -e "$$path" || echo "Error: $$path is missing." >&2; \
+		if test -e "$$path"; then \
+			echo "Error: $$path exists but is not a file - remove it first." >&2; \
+		else \
+			echo "Error: $$path is missing." >&2; \
+		fi; \
 		echo "  Copy it from the template: cp config/postgresql/$$f instances/$(PROJECT_NAME)/postgresql/" >&2; \
 		exit 1; \
 	done

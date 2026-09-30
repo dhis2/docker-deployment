@@ -64,7 +64,7 @@ sudo ss -tlnp '( sport = :80 or sport = :443 )'
 
 Stop it, then `make start-traefik` again.
 
-### `error while creating mount source` or a missing `instances/<name>/dhis2`
+### `no instance named`, `error while creating mount source`, or a missing `instances/<name>/dhis2`
 
 `start-instance` was run without `create-instance` having been run first, or with the wrong `PROJECT_NAME`. Since `PROJECT_NAME` defaults to the name of the current directory, a forgotten `PROJECT_NAME=` silently targets an instance named after your checkout. Check `make list-instances`.
 
@@ -77,7 +77,7 @@ Error: instances/<name>/postgresql/pg_hba.conf is missing.
   Copy it from the template: cp config/postgresql/pg_hba.conf instances/<name>/postgresql/
 ```
 
-The instance was created before `pg_hba.conf` was added. `create-instance` copies the configuration once, so a `git pull` does not add it to existing instances. Run the `cp` from the message and start again. The same check covers `postgresql.conf` and `conf.d/`. If `instances/<name>/` does not exist at all, the instance name is wrong; see the previous entry.
+The instance was created before `pg_hba.conf` was added. `create-instance` copies the configuration once, so a `git pull` does not add it to existing instances. Run the `cp` from the message and start again. The same check covers `postgresql.conf` and `conf.d/`.
 
 If the database was started without the check, Docker creates an empty directory in place of the file and the database never becomes healthy:
 

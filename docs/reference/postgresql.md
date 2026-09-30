@@ -110,21 +110,20 @@ Also worth knowing: no CPU or memory limits are applied to containers, so a data
 
 `instances/<name>/postgresql/pg_hba.conf` controls who can connect and how. It is mounted at `/etc/postgresql/pg_hba.conf` and the server's `hba_file` points at it; the copy `initdb` writes into the data directory is not used. `SHOW hba_file;` confirms which file is in use.
 
-| Connection                                      | Database      | Method          |
+| Connection         | Database             | Method          |
 |:--|:--|:--|
-| Unix domain socket                              | all           | `trust`         |
-| TCP, any address                                | all           | `scram-sha-256` |
-| Replication — socket, `127.0.0.1/32`, `::1/128` | `replication` | `scram-sha-256` |
+| Unix domain socket | all, and replication | `trust`         |
+| TCP, any address   | all                  | `scram-sha-256` |
 
 **Socket.** `trust` lets `psql` inside the container connect without a password. The socket is on a tmpfs inside the container and is not published, so using it requires `exec` into the container, which already means root-equivalent access to Docker. Anyone with that access can connect as any role.
 
 **TCP.** The application, `postgres-exporter`, and the backup, restore and admin-password containers connect over TCP with a password. The rule accepts any source address, but the database publishes no port and is only on the `<name>-db` network. Exposing it further is a Compose change (a published port or another network); narrow the address range here before doing that.
 
-**Replication.** Physical replication connections name no database, so only the `replication` rows match them, and those cover the socket and loopback only. A remote standby needs its own `host replication` record. These rows require a password, so `pg_basebackup` over the socket prompts where `psql` does not. Logical replication names a database and is matched by the ordinary rows.
+**Replication.** `all` does not match physical replication, so it has its own socket rule. Over TCP there is none: a standby needs its own `host replication` rule. Logical replication names a database and is matched by the ordinary rules.
 
 Changes apply on a [reload](#applying-a-change), provided the file was [edited in place](#edit-postgresqlconf-and-pg_hbaconf-in-place).
 
-`POSTGRES_INITDB_ARGS` in `stacks/postgres/docker-compose.yml` still sets `--auth-host` and `--auth-local`. They only affect the unused data directory copy, and are kept so it stays restrictive if the `hba_file` override is removed.
+`POSTGRES_INITDB_ARGS` in `stacks/postgres/docker-compose.yml` still sets `--auth-host` and `--auth-local`. They only affect the unused data directory copy.
 
 Instances created before `pg_hba.conf` was added don't have it, and `make start-postgres` refuses to start them until it is copied in. See [troubleshooting](troubleshooting.md#pg_hbaconf-is-missing-or-postgresql-fails-with-is-a-directory).
 
