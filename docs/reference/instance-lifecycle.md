@@ -67,7 +67,8 @@ The three `.env` files created by `generate-stack-envs` are written `0600` and c
 | `stop-instance`    | Brings the app, overlay and database containers down, removes the `<name>-db` network, and deletes the Traefik route and both Prometheus target files. Volumes and `instances/<name>/` are kept. |
 | `delete-instance`  | Everything `stop-instance` does, plus removing the data volumes and the `instances/<name>/` directory. **Irreversible.** Prompts for confirmation when run interactively. |
 | `list-instances`   | Prints every configured instance with its hostname and running container count.                                                                |
-| `start-postgres`   | Creates the `<name>-db` network and starts only PostgreSQL, waiting for health. A prerequisite of `start-instance`.                             |
+| `start-postgres`   | Runs `check-instance-config`, creates the `<name>-db` network and starts only PostgreSQL, waiting for health. A prerequisite of `start-instance`. |
+| `check-instance-config` | Fails if the instance does not exist, or if `instances/<name>/postgresql/` is missing `postgresql.conf`, `pg_hba.conf` or `conf.d/`, printing the fix. Changes nothing. Run by `start-postgres`. |
 | `config`           | Prints the fully resolved Compose configuration for the instance. Useful for checking what a variable actually evaluated to.                    |
 
 ## Server-wide targets

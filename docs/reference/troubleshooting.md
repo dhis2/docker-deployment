@@ -64,9 +64,40 @@ sudo ss -tlnp '( sport = :80 or sport = :443 )'
 
 Stop it, then `make start-traefik` again.
 
-### `error while creating mount source` or a missing `instances/<name>/dhis2`
+### `no instance named`, `error while creating mount source`, or a missing `instances/<name>/dhis2`
 
 `start-instance` was run without `create-instance` having been run first, or with the wrong `PROJECT_NAME`. Since `PROJECT_NAME` defaults to the name of the current directory, a forgotten `PROJECT_NAME=` silently targets an instance named after your checkout. Check `make list-instances`.
+
+### `pg_hba.conf is missing`, or PostgreSQL fails with `Is a directory`
+
+`start-postgres`, and so `start-instance`, stops before starting anything:
+
+```text
+Error: instances/<name>/postgresql/pg_hba.conf is missing.
+  Copy it from the template: cp config/postgresql/pg_hba.conf instances/<name>/postgresql/
+```
+
+The instance was created before `pg_hba.conf` was added. `create-instance` copies the configuration once, so a `git pull` does not add it to existing instances. Run the `cp` from the message and start again. The same check covers `postgresql.conf` and `conf.d/`.
+
+If the database was started without the check, Docker creates an empty directory in place of the file and the database never becomes healthy:
+
+```text
+LOG:  could not read file "/etc/postgresql/pg_hba.conf": Is a directory
+FATAL:  could not load /etc/postgresql/pg_hba.conf
+```
+
+`start-postgres` then reports `exists but is not a file`. Remove the directory (Docker created it as root) and copy the file in:
+
+```shell
+sudo rmdir instances/<name>/postgresql/pg_hba.conf
+cp config/postgresql/pg_hba.conf instances/<name>/postgresql/
+```
+
+## The database
+
+### A PostgreSQL configuration change has no effect
+
+After editing `postgresql.conf` or `pg_hba.conf` and reloading, `SHOW` reports the old value or the old authentication rules still apply. The file was replaced rather than edited in place (by `sed -i`, or an editor that saves by renaming), and the container still sees the old one. Restart the instance. See [editing those files in place](postgresql.md#edit-postgresqlconf-and-pg_hbaconf-in-place).
 
 ## Certificates and reaching the site
 
