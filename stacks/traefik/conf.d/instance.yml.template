@@ -1,0 +1,39 @@
+# Generated per-instance Traefik routing configuration.
+# Created by `make launch-instance` - do not edit manually.
+# Remove with `make stop-instance PROJECT_NAME=<name>`.
+
+http:
+  routers:
+    ${PROJECT_NAME}-app:
+      rule: "Host(`${APP_HOSTNAME}`)"
+      service: ${PROJECT_NAME}-app
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - security
+
+    # Glowroot is VPN-only: it serves JVM internals, configuration and captured
+    # slow queries with no authentication of its own, so it goes on the
+    # unpublished 'internal' entrypoint. On 'websecure' it would answer on the
+    # public :443 to anyone sending this Host header.
+    ${PROJECT_NAME}-glowroot:
+      rule: "Host(`${PROJECT_NAME}.glowroot.internal`)"
+      service: ${PROJECT_NAME}-glowroot
+      entryPoints:
+        - internal
+      tls: {}
+      middlewares:
+        - security-internal
+
+  services:
+    ${PROJECT_NAME}-app:
+      loadBalancer:
+        servers:
+          - url: "http://${PROJECT_NAME}-app:8080"
+
+    ${PROJECT_NAME}-glowroot:
+      loadBalancer:
+        servers:
+          - url: "http://${PROJECT_NAME}-app:4000"

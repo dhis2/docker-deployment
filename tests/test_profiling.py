@@ -1,8 +1,9 @@
 import pytest
 import json
-import subprocess
 from pydantic import BaseModel
 from typing import List
+
+from test_helpers import PROJECT_NAME, exec_in_service
 
 
 @pytest.mark.order(11)
@@ -53,21 +54,10 @@ class TagValues(BaseModel):
 
 def get_tempo_ready() -> bool:
     """Check if Tempo is ready by querying the /ready endpoint."""
-    result = subprocess.run(
-        [
-            "docker",
-            "compose",
-            "exec",
-            "-T",
-            "tempo",
-            "wget",
-            "-qO-",
-            "--spider",
-            "http://localhost:3200/ready",
-        ],
-        capture_output=True,
-        text=True,
-        timeout=30,
+    result = exec_in_service(
+        "tempo",
+        ["wget", "-qO-", "--spider", "http://localhost:3200/ready"],
+        project=PROJECT_NAME,
     )
 
     return result.returncode == 0
@@ -75,20 +65,10 @@ def get_tempo_ready() -> bool:
 
 def get_tempo_tags() -> SearchTagsV2Response:
     """Query Tempo for available search tags grouped by scope."""
-    result = subprocess.run(
-        [
-            "docker",
-            "compose",
-            "exec",
-            "-T",
-            "tempo",
-            "wget",
-            "-qO-",
-            "http://localhost:3200/api/v2/search/tags",
-        ],
-        capture_output=True,
-        text=True,
-        timeout=30,
+    result = exec_in_service(
+        "tempo",
+        ["wget", "-qO-", "http://localhost:3200/api/v2/search/tags"],
+        project=PROJECT_NAME,
     )
 
     if result.returncode != 0:
@@ -99,20 +79,10 @@ def get_tempo_tags() -> SearchTagsV2Response:
 
 def get_tempo_service_names() -> TagValues:
     """Query Tempo for discovered service names in traces."""
-    result = subprocess.run(
-        [
-            "docker",
-            "compose",
-            "exec",
-            "-T",
-            "tempo",
-            "wget",
-            "-qO-",
-            "http://localhost:3200/api/search/tag/service.name/values",
-        ],
-        capture_output=True,
-        text=True,
-        timeout=30,
+    result = exec_in_service(
+        "tempo",
+        ["wget", "-qO-", "http://localhost:3200/api/search/tag/service.name/values"],
+        project=PROJECT_NAME,
     )
 
     if result.returncode != 0:

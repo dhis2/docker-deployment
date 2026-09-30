@@ -14,12 +14,14 @@ Traces are collected by Grafana Tempo and can be visualized in Grafana, providin
 
 ## Prerequisites
 
-The monitoring overlay must be enabled, as this overlay depends on Grafana for visualization.
+The monitoring stack must be running (`make start-monitoring`), since traces are viewed in Grafana.
 
 ## Deployment
 
+This overlay is applied unconditionally by `make start-instance`, so no extra flag is needed:
+
 ```shell
-docker compose -f docker-compose.yml -f overlays/monitoring/docker-compose.yml -f overlays/profiling/docker-compose.yml up
+PROJECT_NAME=<name> make start-instance
 ```
 
 ## Components
@@ -70,7 +72,7 @@ The `config/dhis2/log4j2.xml` configuration includes trace context (trace_id and
 
 ## Viewing Traces
 
-1. Open Grafana at `https://grafana.{APP_HOSTNAME}`
+1. Open Grafana at `https://grafana.internal` (over the VPN)
 2. Navigate to **Explore**
 3. Select **Tempo** as the data source
 4. Search for traces by service name, trace ID, or duration
