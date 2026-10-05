@@ -2,38 +2,41 @@
 
 set -euo pipefail
 
-# Collect all services that define a healthcheck
-mapfile -t SERVICES < <(
-  make config \
-  | yq -o=json \
-  | jq -r '.services | to_entries[] | select(.value.healthcheck) | .key'
-)
+PROJECT_NAME="${PROJECT_NAME:?PROJECT_NAME must be set}"
 
-echo "Services with health checks: ${SERVICES[*]}"
-echo "Waiting for services with health checks to be healthy..."
+echo "Waiting for services in project '$PROJECT_NAME' with health checks to be healthy..."
 
 while true; do
   all_healthy=true
 
-  for service in "${SERVICES[@]}"; do
-    name=$(docker compose ps --format "table {{.Name}}\t{{.Service}}" \
-             | awk -v s="$service" '$2 == s {print $1}')
+  mapfile -t CONTAINERS < <(
+    docker ps \
+      --filter "label=com.docker.compose.project=$PROJECT_NAME" \
+      --format '{{.Names}}'
+  )
 
-    if [ -z "$name" ]; then
-      echo "Service $service not running, skipping..."
-      continue
-    fi
+  if [ "${#CONTAINERS[@]}" -eq 0 ]; then
+    echo "No containers running yet for project '$PROJECT_NAME'..."
+    sleep 5
+    continue
+  fi
 
-    echo -n "Checking $name... "
-    status=$(docker inspect "$name" --format "{{.State.Health.Status}}")
+  for name in "${CONTAINERS[@]}"; do
+    status=$(docker inspect "$name" \
+      --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}')
 
-    if [ "$status" = "healthy" ]; then
-      echo "✅ healthy"
-    else
-      echo "❌ $status"
-      all_healthy=false
-      break
-    fi
+    case "$status" in
+      none)
+        ;;
+      healthy)
+        echo "✅ $name healthy"
+        ;;
+      *)
+        echo "❌ $name $status"
+        all_healthy=false
+        break
+        ;;
+    esac
   done
 
   if $all_healthy; then

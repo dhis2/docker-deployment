@@ -1,0 +1,27 @@
+# Provisions a host and puts this repository on it, in one run.
+#
+# sre.server.baseline is the shared server baseline from dhis2-sre/server-baseline: base packages,
+# Docker Engine, the operator account, the default deny DOCKER-USER chain, and SSH, kernel and
+# Docker daemon hardening. It is pinned in ../../requirements.yml and installed by `make
+# collections`, which `make provision` runs for you.
+#
+# deploy is this repository's own, and is the only role here: it checks this repository out into
+# deploy_dir as docker_user. Nothing starts a container. An operator SSHes in and runs the `make
+# start-*` targets from the checkout - see DEVOPS-687 for why.
+- name: Provision DHIS2 server
+  hosts: all
+  become: true
+
+  # deploy_dir belongs to the collection, which defaults it to /opt/deploy because nothing in the
+  # collection is specific to this project. Existing hosts have their checkout at /opt/dhis2, so it
+  # is pinned here rather than left to each operator's gitignored inventory/group_vars/all.yml.
+  #
+  # Play vars outrank group_vars, so this is the one variable in the table in README.md that
+  # group_vars cannot override. Change it here.
+  vars:
+    deploy_dir: /opt/dhis2
+
+  roles:
+    - sre.server.baseline
+    - role: deploy
+      when: clone_repo | default(true) | bool
