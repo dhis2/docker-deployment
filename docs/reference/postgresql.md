@@ -13,14 +13,15 @@ The image is [PostGIS](https://hub.docker.com/r/postgis/postgis), pinned by `POS
 
 ```text
 instances/<name>/postgresql/
-├── postgresql.conf        # do not edit: sets listen_addresses and includes conf.d
+├── postgresql.conf        # do not edit: settings DHIS2 requires, then includes conf.d
 └── conf.d/
     ├── 10-memory.conf
     ├── 20-connections.conf
-    └── 30-logging.conf
+    ├── 30-logging.conf
+    └── 35-wal.conf
 ```
 
-`postgresql.conf` exists only to include `conf.d/`. Put your settings in files under `conf.d/`, where later files win over earlier ones by numeric prefix. **Add a new file** rather than editing the shipped ones — `40-tuning.conf`, say — so your changes stay separate from the defaults and survive an update to them.
+`postgresql.conf` holds the settings DHIS2 depends on, then includes `conf.d/`, so `conf.d/` can still override it. PostgreSQL reads `conf.d/` in file name order and later files win. The shipped files are numbered below 40, so **add your own file numbered 40 or higher** — `40-tuning.conf`, say — rather than editing the shipped ones. It then overrides the defaults and survives an update to them.
 
 Editing `config/postgresql/` instead affects only instances you create *afterwards*.
 
@@ -45,6 +46,18 @@ sudo docker compose --project-name <name> --env-file instances/<name>/.env \
 
 ## What is set by default
 
+### Required by DHIS2 — `postgresql.conf`
+
+```conf
+listen_addresses = '*'
+jit = off
+max_locks_per_transaction = 128
+```
+
+- **`listen_addresses`** — the application, exporter and backup containers connect over TCP on the instance's `<name>-db` network. No port is published to the host; see [reaching the database directly](#reaching-the-database-directly).
+- **`jit = off`** — JIT compilation slows down the queries DHIS2 generates for program indicators.
+- **`max_locks_per_transaction = 128`** — DHIS2's Flyway migrations touch many tables in one transaction and can fail with `out of shared memory` at the default of 64. Needs a restart.
+
 ### Memory — `10-memory.conf`
 
 ```conf
@@ -52,6 +65,7 @@ shared_buffers = 2GB        # usually 25-40% of RAM
 work_mem = 16MB             # memory per sort/hash operation
 maintenance_work_mem = 128MB
 effective_cache_size = 6GB  # usually ~75% of RAM
+random_page_cost = 1.1      # locally attached SSD/NVMe
 ```
 
 The two to get right first:
@@ -62,6 +76,8 @@ The two to get right first:
 **`work_mem` is per operation, not per connection.** A single query with several sorts or hash joins can use it several times over, and with `max_connections = 200` the worst case is far more memory than most machines have. Raise it cautiously, or raise it for a single session when running a heavy report rather than globally.
 
 DHIS2 analytics generation is the most memory-hungry thing the database does; `maintenance_work_mem` matters there, and can be raised temporarily for a large analytics run.
+
+**`random_page_cost = 1.1`** suits locally attached SSD or NVMe storage, where random reads cost about the same as sequential ones, and makes the planner more willing to use indexes. On spinning disks or network storage, raise it towards the default of `4.0`.
 
 ### Connections — `20-connections.conf`
 
@@ -78,17 +94,30 @@ This has to be at least as large as DHIS2's connection pool, set in `instances/<
 log_destination = 'stderr'
 logging_collector = off            # disable writing to files
 log_statement = 'none'             # or 'all' if you want full query logging
-log_min_duration_statement = 500   # log queries slower than 500ms
+log_min_duration_statement = 300s  # log queries slower than 5 minutes
 log_timezone = 'UTC'
 ```
 
 Logs go to stderr and from there to the Docker Loki driver, so they are queryable in Grafana alongside everything else. `logging_collector` is deliberately off: writing log files inside the container would mean they are neither collected nor rotated.
 
-The slow query log at 500 ms is the single most useful diagnostic here when DHIS2 feels slow. `log_statement = 'all'` logs everything, which is occasionally invaluable and otherwise a way to fill a disk.
+The slow query log is the most useful diagnostic when DHIS2 feels slow. Its threshold is high on purpose: analytics and program indicator queries of several seconds to a minute are normal, so a few hundred milliseconds would flood the log, while a query over five minutes is worth looking at. Lower it temporarily when investigating; it is reloadable. Logged statements include their literal values, which can be health data.
+
+`log_statement = 'all'` logs everything, which is occasionally invaluable and otherwise a way to fill a disk.
+
+### Write-ahead log — `35-wal.conf`
+
+```conf
+synchronous_commit = off
+```
+
+This trades durability for commit throughput: a commit is reported before its WAL reaches disk, and the WAL writer flushes it shortly after. It is reloadable.
+
+> [!WARNING]
+> With `synchronous_commit = off`, a commit is reported before it reaches disk. A crash of PostgreSQL or the host, including an out-of-memory kill, loses the transactions committed in the last three `wal_writer_delay` intervals: **about 0.6 seconds** at the default of 200 ms. The database is not corrupted; those transactions are gone. A clean shutdown loses nothing. The database service allows two minutes for one (`stop_grace_period`); if Docker kills the container after that, it counts as a crash. If losing those transactions is unacceptable, set `synchronous_commit = on` in your own `conf.d/` file.
 
 ## Tuning it for real
 
-Start from a tool that accounts for your hardware and workload — [PGTune](https://pgtune.leopard.in.ua/) is a reasonable baseline, choosing a "Data warehouse" profile, since DHIS2's analytics workload resembles one more than it does a transactional application. Write the result into a new `conf.d/40-tuning.conf` and restart.
+Start from a tool that accounts for your hardware and workload — [PGTune](https://pgtune.leopard.in.ua/) is a reasonable baseline, choosing a "Data warehouse" profile, since DHIS2's analytics workload resembles one more than it does a transactional application. Write the result into a new `conf.d/40-tuning.conf` and restart. PGTune also sets `random_page_cost`; your file is read last, so its value wins.
 
 Then measure rather than guess: the PostgreSQL dashboard in Grafana, the slow query log, and `pg_stat_statements` if you enable it. Cache hit ratios, connection counts and slow queries will tell you what to change next more reliably than a settings calculator will.
 
