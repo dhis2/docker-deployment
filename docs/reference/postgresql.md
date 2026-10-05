@@ -14,6 +14,7 @@ The image is [PostGIS](https://hub.docker.com/r/postgis/postgis), pinned by `POS
 ```text
 instances/<name>/postgresql/
 ├── postgresql.conf        # do not edit: settings DHIS2 requires, then includes conf.d
+├── pg_hba.conf            # client authentication: who may connect, and how
 └── conf.d/
     ├── 10-memory.conf
     ├── 20-connections.conf
@@ -43,6 +44,17 @@ sudo docker compose --project-name <name> --env-file instances/<name>/.env \
 ```
 
 `shared_buffers` and `max_connections` are **not** reloadable and always need a restart. `SHOW <setting>;` tells you what the server is actually running with, which is the quickest way to confirm a change landed.
+
+### Edit `postgresql.conf` and `pg_hba.conf` in place
+
+Both are bind-mounted as single files, and a single-file mount follows the inode, not the name. Tools that save by writing a new file and renaming it over the old one, such as `sed -i` or vim without `backupcopy=yes`, leave the container on the old inode:
+
+- **Linux host:** the container keeps reading the old content. A reload logs only `received SIGHUP, reloading configuration files` and changes nothing.
+- **Docker Desktop:** the file disappears from the container and the reload logs `No such file or directory`. The server keeps its current configuration.
+
+Edit in place instead: append with `>>`, or `cp` the new content over the file. If the file may have been replaced, restart the instance as above to recreate the container. `make start-postgres` alone does nothing, since the running container is unchanged.
+
+`conf.d/` is a directory mount and is not affected.
 
 ## What is set by default
 
@@ -123,6 +135,27 @@ Then measure rather than guess: the PostgreSQL dashboard in Grafana, the slow qu
 
 Also worth knowing: no CPU or memory limits are applied to containers, so a database configured to use more memory than the host has will not be constrained by Docker — it will be killed by the kernel, or take the host down with it.
 
+## Client authentication — `pg_hba.conf`
+
+`instances/<name>/postgresql/pg_hba.conf` controls who can connect and how. It is mounted at `/etc/postgresql/pg_hba.conf` and the server's `hba_file` points at it; the copy `initdb` writes into the data directory is not used. `SHOW hba_file;` confirms which file is in use.
+
+| Connection         | Database             | Method          |
+|:--|:--|:--|
+| Unix domain socket | all, and replication | `trust`         |
+| TCP, any address   | all                  | `scram-sha-256` |
+
+**Socket.** `trust` lets `psql` inside the container connect without a password. The socket is on a tmpfs inside the container and is not published, so using it requires `exec` into the container, which already means root-equivalent access to Docker. Anyone with that access can connect as any role.
+
+**TCP.** The application, `postgres-exporter`, and the backup, restore and admin-password containers connect over TCP with a password. The rule accepts any source address, but the database publishes no port and is only on the `<name>-db` network. Exposing it further is a Compose change (a published port or another network); narrow the address range here before doing that.
+
+**Replication.** `all` does not match physical replication, so it has its own socket rule. Over TCP there is none: a standby needs its own `host replication` rule. Logical replication names a database and is matched by the ordinary rules.
+
+Changes apply on a [reload](#applying-a-change), provided the file was [edited in place](#edit-postgresqlconf-and-pg_hbaconf-in-place).
+
+`POSTGRES_INITDB_ARGS` in `stacks/postgres/docker-compose.yml` still sets `--auth-host` and `--auth-local`. They only affect the unused data directory copy.
+
+Instances created before `pg_hba.conf` was added don't have it, and `make start-postgres` refuses to start them until it is copied in. See [troubleshooting](troubleshooting.md#pg_hbaconf-is-missing-or-postgresql-fails-with-is-a-directory).
+
 ## Reaching the database directly
 
 The database is not published to the host. It is on the instance's own `<name>-db` network, reachable only from that instance's containers. For a `psql` session:
@@ -133,7 +166,7 @@ sudo docker compose --project-name <name> --env-file instances/<name>/.env \
   psql -U postgres -d dhis
 ```
 
-Credentials are in `instances/<name>/.env`. Direct database access is powerful and unguarded — `dhis` is the application's own schema, and changing it by hand is a good way to corrupt an instance. Take a backup first.
+This uses the container's Unix socket, so no password is needed; the credentials in `instances/<name>/.env` are for TCP connections. Direct database access is powerful and unguarded — `dhis` is the application's own schema, and changing it by hand is a good way to corrupt an instance. Take a backup first.
 
 ## See also
 
