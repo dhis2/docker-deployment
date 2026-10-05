@@ -13,7 +13,7 @@ The image is [PostGIS](https://hub.docker.com/r/postgis/postgis), pinned by `POS
 
 ```text
 instances/<name>/postgresql/
-├── postgresql.conf        # do not edit: sets listen_addresses and includes conf.d
+├── postgresql.conf        # do not edit: settings DHIS2 requires, then includes conf.d
 ├── pg_hba.conf            # client authentication: who may connect, and how
 └── conf.d/
     ├── 10-memory.conf
