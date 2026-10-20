@@ -21,8 +21,22 @@ mkdir --parents /opt/glowroot/data /opt/glowroot/logs /opt/glowroot/tmp
 chown --recursive "$APP_UID:$APP_GID" /opt/glowroot/data /opt/glowroot/logs /opt/glowroot/tmp
 
 : "${GLOWROOT_ADMIN_PASSWORD:?Add GLOWROOT_ADMIN_PASSWORD to the instance .env file}"
-# Same format as Glowroot's PasswordHash: base64(key):base64(salt):iterations
-HASH=$(python3 -c 'import base64,hashlib,os; s=os.urandom(16); k=hashlib.pbkdf2_hmac("sha1", os.environ["GLOWROOT_ADMIN_PASSWORD"].encode(), s, 500000, 16); b=lambda x: base64.b64encode(x).decode().rstrip("="); print(f"{b(k)}:{b(s)}:500000")')
+
+# Hash the password the way Glowroot's PasswordHash does: base64(key):base64(salt):iterations
+HASH=$(
+  python3 - <<'EOF'
+import base64, hashlib, os
+
+def b64(data):
+    return base64.b64encode(data).decode().rstrip("=")
+
+iterations = 500000
+salt = os.urandom(16)
+key = hashlib.pbkdf2_hmac("sha1", os.environ["GLOWROOT_ADMIN_PASSWORD"].encode(), salt, iterations, dklen=16)
+print(f"{b64(key)}:{b64(salt)}:{iterations}")
+EOF
+)
+
 sed "s|GLOWROOT_ADMIN_PASSWORD_HASH|$HASH|" /tmp/admin.json >/opt/glowroot/admin.json
 chown "$APP_UID:$APP_GID" /opt/glowroot/admin.json
 
