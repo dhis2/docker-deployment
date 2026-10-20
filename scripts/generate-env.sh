@@ -38,6 +38,7 @@ fi
 : "${GEN_APP_HOSTNAME:?Environment variable GEN_APP_HOSTNAME must be set}"
 
 DHIS2_ADMIN_PASSWORD=$(generate_password)
+GLOWROOT_ADMIN_PASSWORD=$(generate_password)
 POSTGRES_PASSWORD=$(generate_password)
 POSTGRES_DB_PASSWORD=$(generate_password)
 POSTGRES_METRICS_PASSWORD=$(generate_password)
@@ -52,6 +53,7 @@ cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
 sed "${SED_FLAGS[@]}" -e '/^# NOTE!!!:/d' -e '/./,$!d' "$OUTPUT_FILE"
 
 update_env_var "$OUTPUT_FILE" "DHIS2_ADMIN_PASSWORD" "$DHIS2_ADMIN_PASSWORD"
+update_env_var "$OUTPUT_FILE" "GLOWROOT_ADMIN_PASSWORD" "$GLOWROOT_ADMIN_PASSWORD"
 update_env_var "$OUTPUT_FILE" "DHIS2_MONITOR_USERNAME" "$DHIS2_MONITOR_USERNAME"
 update_env_var "$OUTPUT_FILE" "DHIS2_MONITOR_PASSWORD" "$DHIS2_MONITOR_PASSWORD"
 update_env_var "$OUTPUT_FILE" "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD"
