@@ -87,7 +87,7 @@
 
 | Variable | Description | Default Value |
 |----------|-------------|---------------|
-| `CURL_VERSION` |  | `8.10.1` |
+| `PYTHON_VERSION` |  | `3.13-alpine` |
 
 #### Environment
 
@@ -97,6 +97,7 @@
 | `EXPECTED_SHA` | SHA256 the downloaded Glowroot agent must match | `3b9db6b0fc0903233c5e17b6cfa7b022ef8ba6d71ae7d39a9fff6f637608f20c` |
 | `APP_UID` | User ID owning the agent files; match the app container's user | `65534` |
 | `APP_GID` | Group ID owning the agent files; match the app container's group | `65534` |
+| `GLOWROOT_ADMIN_PASSWORD` | Password for the Glowroot 'admin' user | `-` |
 
 ## File: `overlays/profiling/docker-compose.yml`
 

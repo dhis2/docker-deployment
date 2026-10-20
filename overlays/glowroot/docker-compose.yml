@@ -10,10 +10,11 @@ services:
       JDK_JAVA_OPTIONS: "${JDK_JAVA_OPTIONS:-} -javaagent:/opt/glowroot/glowroot.jar"
 
   glowroot-init:
-    image: curlimages/curl:${CURL_VERSION:-8.10.1}
+    image: python:${PYTHON_VERSION:-3.13-alpine}
     volumes:
       - glowroot-data:/opt/glowroot
       - ./overlays/glowroot/config/admin.json:/tmp/admin.json:ro
+      - ./overlays/glowroot/glowroot-admin.py:/tmp/glowroot-admin.py:ro
       - ./overlays/glowroot/glowroot-init.sh:/tmp/glowroot-init.sh:ro
     environment:
       # -- Glowroot agent version to download
@@ -24,6 +25,8 @@ services:
       APP_UID: ${APP_UID:-65534}
       # -- Group ID owning the agent files; match the app container's group
       APP_GID: ${APP_GID:-65534}
+      # -- Password for the Glowroot 'admin' user
+      GLOWROOT_ADMIN_PASSWORD: ${GLOWROOT_ADMIN_PASSWORD}
     command: [ "sh", "/tmp/glowroot-init.sh" ]
     user: root
     security_opt:

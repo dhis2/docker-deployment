@@ -3,7 +3,7 @@
 set -e
 
 if [ ! -f /opt/glowroot/glowroot.jar ]; then
-  curl --location "https://github.com/glowroot/glowroot/releases/download/v$GLOWROOT_VERSION/glowroot-$GLOWROOT_VERSION-dist.zip" --output /tmp/glowroot.zip
+  wget "https://github.com/glowroot/glowroot/releases/download/v$GLOWROOT_VERSION/glowroot-$GLOWROOT_VERSION-dist.zip" -O /tmp/glowroot.zip
 
   echo "${EXPECTED_SHA}  /tmp/glowroot.zip" | sha256sum -c
 
@@ -20,7 +20,7 @@ fi
 mkdir --parents /opt/glowroot/data /opt/glowroot/logs /opt/glowroot/tmp
 chown --recursive "$APP_UID:$APP_GID" /opt/glowroot/data /opt/glowroot/logs /opt/glowroot/tmp
 
-cp /tmp/admin.json /opt/glowroot/admin.json
+python3 /tmp/glowroot-admin.py
 chown "$APP_UID:$APP_GID" /opt/glowroot/admin.json
 
 touch /opt/glowroot/config.json
