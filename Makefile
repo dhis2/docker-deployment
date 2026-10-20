@@ -191,12 +191,15 @@ start-postgres: check-instance-config
 	$(POSTGRES_COMPOSE_CMD) up --wait -d
 
 # Start a named DHIS2 instance connected to the standalone Traefik, monitoring, and postgres stacks.
+# The Traefik route is unpublished first and only published again by the
+# publish-route service, after the admin password has been set.
 # Requires: PROJECT_NAME to be set, ensure-networks and start-traefik and
 #           start-monitoring to have been run first.
 # Example: PROJECT_NAME=dev make start-instance
 start-instance: ensure-networks install-loki-driver start-postgres
+	rm -f stacks/traefik/conf.d/$(PROJECT_NAME).yml
 	PROJECT_NAME=$(PROJECT_NAME) APP_HOSTNAME=$$(grep -E '^APP_HOSTNAME=' $(ENV_FILE) | cut -d= -f2-) \
-		envsubst < stacks/traefik/conf.d/instance.yml.template > stacks/traefik/conf.d/$(PROJECT_NAME).yml
+		envsubst < stacks/traefik/conf.d/instance.yml.template > instances/$(PROJECT_NAME)/traefik.yml
 	PROJECT_NAME=$(PROJECT_NAME) \
 		envsubst < stacks/monitoring/targets/dhis2/instance.json.template > stacks/monitoring/targets/dhis2/$(PROJECT_NAME).json
 	PROJECT_NAME=$(PROJECT_NAME) \

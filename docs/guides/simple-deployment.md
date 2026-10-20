@@ -80,7 +80,7 @@ The file contains all your credentials and is written readable only by you. Do n
 COMPOSE_OPTS=-d PROJECT_NAME=dhis2 make start-instance
 ```
 
-This creates an isolated network for the database, starts PostgreSQL, registers your hostname with Traefik, and starts DHIS2. The first start also fetches the OpenTelemetry Java agent from GitHub, so the server needs outbound internet access.
+This creates an isolated network for the database, starts PostgreSQL, starts DHIS2, and registers your hostname with Traefik once the admin password is set. The first start also fetches the OpenTelemetry Java agent from GitHub, so the server needs outbound internet access.
 
 DHIS2 then builds its database schema, which takes a few minutes on a first run. Check on it:
 
