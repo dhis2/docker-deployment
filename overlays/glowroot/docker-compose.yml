@@ -14,7 +14,6 @@ services:
     volumes:
       - glowroot-data:/opt/glowroot
       - ./overlays/glowroot/config/admin.json:/tmp/admin.json:ro
-      - ./overlays/glowroot/glowroot-admin.py:/tmp/glowroot-admin.py:ro
       - ./overlays/glowroot/glowroot-init.sh:/tmp/glowroot-init.sh:ro
     environment:
       # -- Glowroot agent version to download
