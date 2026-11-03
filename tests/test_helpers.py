@@ -21,6 +21,17 @@ def retry(action, attempts: int = 3, delay: int = 5, exceptions: tuple = (Except
             time.sleep(delay)
 
 
+def read_instance_env(key: str) -> str:
+    """Read a value from the instance .env file. Read it when needed rather than at
+    import: test_clean_environment recreates the instance with new passwords."""
+    with open(ENV_FILE) as env_file:
+        for line in env_file:
+            name, _, value = line.strip().partition("=")
+            if name == key:
+                return value
+    raise KeyError(f"{key} not found in {ENV_FILE}")
+
+
 def _compose(*args: str) -> List[str]:
     return [
         "docker", "compose",

@@ -207,7 +207,7 @@ On a client machine, import the peer configuration into a WireGuard client, inst
 - You can log in as `admin` with `GRAFANA_ADMIN_PASSWORD` from `stacks/monitoring/.env`.
 - The preloaded Traefik, PostgreSQL and host dashboards render with data.
 - In Prometheus, the `prod` app and postgres targets are both **UP**.
-- `https://prod.glowroot.internal` shows the Glowroot profiler for the instance. There is one route per instance, named `<instance>.glowroot.internal`.
+- `https://prod.glowroot.internal` shows the Glowroot login for the instance, and you can log in as `admin` with `GLOWROOT_ADMIN_PASSWORD` from `instances/prod/.env`. There is one route per instance, named `<instance>.glowroot.internal`.
 
 Change the Grafana admin password after your first login.
 

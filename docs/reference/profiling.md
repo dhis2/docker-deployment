@@ -19,10 +19,15 @@ https://<name>.glowroot.internal
 
 So an instance named `prod` is at `https://prod.glowroot.internal`. The route is created by `start-instance` alongside the public one. Connect to the VPN and trust the internal certificate authority first — see [VPN access](vpn.md).
 
+Log in as `admin` with `GLOWROOT_ADMIN_PASSWORD` from `instances/<name>/.env`. `glowroot-init` writes this user into Glowroot's `admin.json` on every start, so users or passwords changed in the Glowroot UI are reset on the next `start-instance`; change the env file instead.
+
 Glowroot's data lives in a per-instance `glowroot-data` volume and survives restarts. Configuration is in `overlays/glowroot/config/admin.json`.
 
 > [!WARNING]
-> Glowroot's UI has **no authentication** in this deployment. It is protected only by being unreachable outside the VPN. Anyone on the tunnel can read it, and it shows query text and request details — potentially including data. Treat VPN access as equivalent to read access to your instances' internals.
+> Glowroot listens on port 4000 of the app container, which is on the shared `proxy` and `monitoring` networks so Traefik can reach it. Any container on those networks, including other instances, can reach the login page; the password is what keeps them out. It shows query text and request details, potentially including data.
+
+> [!NOTE]
+> Instances created before `GLOWROOT_ADMIN_PASSWORD` existed need it added to `instances/<name>/.env`, for example with a value from `openssl rand -base64 24`. Without it `glowroot-init` fails and the instance does not start.
 
 ## Tracing with Tempo
 
