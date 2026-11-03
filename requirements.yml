@@ -12,4 +12,4 @@
 collections:
   - name: https://github.com/dhis2-sre/server-baseline.git
     type: git
-    version: v1.0.0
+    version: v1.1.0
