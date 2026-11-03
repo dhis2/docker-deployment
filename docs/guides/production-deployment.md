@@ -153,9 +153,9 @@ Every variable is documented in [environment variables](../reference/environment
 COMPOSE_OPTS=-d PROJECT_NAME=prod make start-instance
 ```
 
-This creates a `prod-db` network, starts PostgreSQL and waits for it to become healthy, writes the Traefik route and the two Prometheus target files, and then starts DHIS2 along with the profiling and Glowroot containers. The Loki log driver plugin is installed if it is missing. The first start needs GitHub access, to fetch the OpenTelemetry Java agent.
+This creates a `prod-db` network, starts PostgreSQL and waits for it to become healthy, writes the two Prometheus target files, and then starts DHIS2 along with the profiling and Glowroot containers. The Traefik route is written only after DHIS2 is healthy and the admin password has been set. The Loki log driver plugin is installed if it is missing. The first start needs GitHub access, to fetch the OpenTelemetry Java agent.
 
-**Verify:** the route file `stacks/traefik/conf.d/prod.yml` and the target files `stacks/monitoring/targets/dhis2/prod.json` and `stacks/monitoring/targets/postgres/prod.json` have been written, and `sudo docker ps` shows the app, database, `postgres-exporter` and `tempo` containers for the instance.
+**Verify:** the target files `stacks/monitoring/targets/dhis2/prod.json` and `stacks/monitoring/targets/postgres/prod.json` have been written, and `sudo docker ps` shows the app, database, `postgres-exporter` and `tempo` containers for the instance. The route file `stacks/traefik/conf.d/prod.yml` appears once DHIS2 has finished initialising.
 
 First-run initialisation on a blank database takes a few minutes — DHIS2 is creating its schema. Health checks are not enforced for the first 120 seconds. Then:
 

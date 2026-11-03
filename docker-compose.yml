@@ -106,6 +106,26 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  # Publishes the instance's Traefik route once the admin password is set, so the
+  # app is never publicly reachable with the default credentials.
+  publish-route:
+    image: busybox:1.37.0
+    depends_on:
+      update-admin-password:
+        condition: service_completed_successfully
+    volumes:
+      - ./instances/${COMPOSE_PROJECT_NAME}/traefik.yml:/route.yml:ro
+      - ./stacks/traefik/conf.d:/conf.d
+    network_mode: none
+    command: [ "cp", "/route.yml", "/conf.d/${COMPOSE_PROJECT_NAME}.yml" ]
+    logging: *loki-logging
+    cap_add:
+      - DAC_OVERRIDE
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
   # Creates the DHIS2 monitoring user used by Prometheus to scrape /api/metrics.
   # Runs once per instance after the admin password is set.
   create-monitoring-user:

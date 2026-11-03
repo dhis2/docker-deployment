@@ -3,8 +3,8 @@
 # Deploy this stack once before launching any DHIS2 instances:
 #   make start-traefik
 #
-# Routes are added automatically to traefik/conf.d/ by `make start-instance`
-# and removed by `make stop-instance`. Traefik watches the directory and reloads
+# Routes are added automatically to traefik/conf.d/ by `make start-instance`,
+# once the instance's admin password is set, and removed by `make stop-instance`. Traefik watches the directory and reloads
 # within ~1 second of any change - no restart required.
 #
 # The proxy external network must exist before starting this stack:

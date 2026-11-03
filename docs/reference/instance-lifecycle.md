@@ -96,18 +96,22 @@ sequenceDiagram
     Make->>Docker: create name-db network
     Make->>Docker: compose up postgres --wait
     Docker-->>Make: PostgreSQL healthy
-    Make->>Traefik: write conf.d/name.yml
-    Note right of Traefik: route live within ~1s
+    Make->>Traefik: remove conf.d/name.yml
     Make->>Prometheus: write targets/dhis2/name.json
     Make->>Prometheus: write targets/postgres/name.json
     Note right of Prometheus: scraping begins
     Make->>Docker: compose up app + overlays
+    Docker->>Docker: app healthy, update-admin-password
+    Docker->>Traefik: publish-route writes conf.d/name.yml
+    Note right of Traefik: route live within ~1s
     Docker-->>Operator: serving on APP_HOSTNAME
 ```
 
-The containers started for each instance are the application, PostgreSQL, `postgres-exporter`, `tempo`, and the one-shot `otel-init`, `glowroot-init`, `update-admin-password` and `create-monitoring-user` jobs. The profiling and Glowroot overlays are applied unconditionally — see [profiling and APM](profiling.md).
+The containers started for each instance are the application, PostgreSQL, `postgres-exporter`, `tempo`, and the one-shot `otel-init`, `glowroot-init`, `update-admin-password`, `publish-route` and `create-monitoring-user` jobs. The profiling and Glowroot overlays are applied unconditionally — see [profiling and APM](profiling.md).
 
 `update-admin-password` runs on **every** start, re-applying `DHIS2_ADMIN_PASSWORD` from the env file. This is what makes it safe to restore a database dump that carries its own users and still log in with a password you know. It also means a password you change inside DHIS2 is reset on the next `start-instance` unless you update the env file too.
+
+The public route is not published until `update-admin-password` has succeeded, so the instance is never reachable from the internet with the default `admin` / `district` credentials. `start-instance` removes the route before starting, and `publish-route` writes it again once the password is set. If `update-admin-password` fails, the instance keeps running but stays unrouted.
 
 Starting an instance is idempotent. Running `start-instance` against a running instance reconciles it with its configuration, which is how you apply a configuration change.
 
@@ -118,7 +122,8 @@ Starting an instance is idempotent. Running `start-instance` against a running i
 | `instances/<name>/.env`                            | `create-instance` | Hostname, versions, all generated credentials (`0600`) |
 | `instances/<name>/dhis2/dhis.conf`                 | `create-instance` | DHIS2 configuration for this instance                 |
 | `instances/<name>/postgresql/`                     | `create-instance` | PostgreSQL configuration for this instance            |
-| `stacks/traefik/conf.d/<name>.yml`                 | `start-instance`  | The public route and the Glowroot internal route      |
+| `instances/<name>/traefik.yml`                     | `start-instance`  | The rendered route, before it is published            |
+| `stacks/traefik/conf.d/<name>.yml`                 | `publish-route`   | The public route and the Glowroot internal route      |
 | `stacks/monitoring/targets/dhis2/<name>.json`      | `start-instance`  | Prometheus scrape target for the application          |
 | `stacks/monitoring/targets/postgres/<name>.json`   | `start-instance`  | Prometheus scrape target for the database exporter    |
 | `backups/<name>/`                                  | `backup`          | Database dumps and file storage archives              |

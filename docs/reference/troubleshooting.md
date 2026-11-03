@@ -136,7 +136,7 @@ Some networks and DNS resolvers block it. Add entries to `/etc/hosts` as a fallb
 
 ### 404 from Traefik
 
-The route file is missing or the hostname does not match. Check that `stacks/traefik/conf.d/<name>.yml` exists and that the `Host()` rule in it matches the name you are requesting exactly — `APP_HOSTNAME` is matched literally, with no wildcard behaviour.
+The route file is missing or the hostname does not match. The route file is only written once DHIS2 is healthy and `update-admin-password` has succeeded, so during a first start a 404 is expected for a few minutes. If it never appears, check the `update-admin-password` and `publish-route` logs. Otherwise check that `stacks/traefik/conf.d/<name>.yml` exists and that the `Host()` rule in it matches the name you are requesting exactly — `APP_HOSTNAME` is matched literally, with no wildcard behaviour.
 
 ## Logging in
 

@@ -73,7 +73,7 @@ Administrative interfaces take a second path. Grafana and Glowroot are routed by
 
 Neither shared stack needs restarting when instances come and go, because both watch a directory.
 
-- **Traefik** uses its file provider on `stacks/traefik/conf.d/`. `start-instance` renders a route file for the instance from a template; `stop-instance` deletes it. Traefik reloads within about a second.
+- **Traefik** uses its file provider on `stacks/traefik/conf.d/`. `start-instance` renders a route file for the instance from a template, and the instance's `publish-route` job copies it into `conf.d/` once the admin password is set; `stop-instance` deletes it. Traefik reloads within about a second.
 - **Prometheus** uses file-based service discovery on `stacks/monitoring/targets/`, with a subdirectory for DHIS2 application targets and one for database exporters. Same pattern: written on start, removed on stop.
 - **Loki** receives logs pushed by the Docker Loki log driver, which every container is configured to use. Logs are labelled with the instance name and container name, so they can be filtered per instance in Grafana.
 
