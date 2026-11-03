@@ -5,7 +5,7 @@ import subprocess
 from pydantic import BaseModel
 from typing import Dict, List
 
-from test_helpers import PROJECT_NAME, exec_in_service
+from test_helpers import PROJECT_NAME, exec_in_service, read_instance_env
 
 CURL_IMAGE = "curlimages/curl:8.11.1"
 PROXY_NETWORK = "proxy"
@@ -60,7 +60,7 @@ def test_glowroot_rejects_anonymous_access():
 @pytest.mark.order(18)
 def test_glowroot_admin_can_log_in():
     """Verify the Glowroot admin user logs in with GLOWROOT_ADMIN_PASSWORD."""
-    login = json.dumps({"username": "admin", "password": os.environ["GLOWROOT_ADMIN_PASSWORD"]})
+    login = json.dumps({"username": "admin", "password": read_instance_env("GLOWROOT_ADMIN_PASSWORD")})
     status = run_on_proxy_network(
         "curl --silent --cookie-jar /tmp/cookies --header 'Content-Type: application/json'"
         f" --data \"$LOGIN\" {GLOWROOT_URL}/backend/login > /dev/null"
