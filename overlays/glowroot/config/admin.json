@@ -23,5 +23,18 @@
         }
       ]
     }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "passwordHash": "GLOWROOT_ADMIN_PASSWORD_HASH",
+      "roles": ["Administrator"]
+    }
+  ],
+  "roles": [
+    {
+      "name": "Administrator",
+      "permissions": ["agent:transaction", "agent:error", "agent:jvm", "agent:incident", "agent:config", "admin"]
+    }
   ]
 }

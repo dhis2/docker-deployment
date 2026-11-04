@@ -1,0 +1,13 @@
+services:
+  init:
+    image: alpine:3.22
+    command: [ "true" ]
+    networks:
+      - proxy
+      - monitoring
+
+networks:
+  proxy:
+    name: proxy
+  monitoring:
+    name: monitoring

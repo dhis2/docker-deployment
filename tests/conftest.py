@@ -1,8 +1,26 @@
 import os
+from pathlib import Path
 
 import pytest
 
-from test_helpers import run_make_command
+from test_helpers import PROJECT_NAME, run_make_command
+
+
+def _load_instance_env() -> None:
+    """Load the instance .env into the environment so tests can read APP_HOSTNAME
+    and admin credentials. Explicit environment values take precedence."""
+    env_file = Path("instances") / PROJECT_NAME / ".env"
+    if not env_file.exists():
+        return
+    for line in env_file.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        os.environ.setdefault(key.strip(), value.strip())
+
+
+_load_instance_env()
 
 
 @pytest.fixture(scope="session")

@@ -2,9 +2,13 @@ name: E2E Test
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, development-2.0 ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, development-2.0 ]
+
+env:
+  PROJECT_NAME: ci
+  APP_HOSTNAME: dhis2-127-0-0-1.nip.io
 
 jobs:
   e2e-test:
@@ -15,13 +19,15 @@ jobs:
 
       - name: Configure environment
         run: |
-          ./scripts/generate-env.sh
-          cat .env | sed '/^#/d' >> $GITHUB_ENV
-
-          ./scripts/install-loki-driver.sh
+          make generate-stack-envs
+          make create-instance
         env:
-          GEN_APP_HOSTNAME: dhis2-127-0-0-1.nip.io
           GEN_LETSENCRYPT_ACME_EMAIL: whatever@dhis2.org
+
+      - name: Start shared stacks
+        run: |
+          make start-traefik COMPOSE_OPTS=-d
+          make start-monitoring COMPOSE_OPTS=-d
 
       - name: E2E test
         id: e2e-test
