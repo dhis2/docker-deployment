@@ -34,7 +34,7 @@ You need:
 - **Network access to GitHub** from your machine: provisioning installs the pinned `sre.server` baseline collection with `ansible-galaxy` before it touches the server.
 - **A domain name**, with DNS you can edit. See [DNS and hostnames](#dns-and-hostnames) below.
 - **An email address** for Let's Encrypt registration.
-- **Inbound firewall rules** at your cloud provider allowing TCP 22, 80 and 443, plus UDP 51820 for WireGuard.
+- **Inbound firewall rules** at your cloud provider allowing TCP 822 (SSH), 80 and 443, plus UDP 51820 for WireGuard. Keep TCP 22 open as well until [step 1](#step-1--provision-the-server) has moved SSH to 822.
 
 > [!NOTE]
 > The requirement for a Ubuntu host is based on the requirements of the provisioning tool in Step 1 below. The Ansible provisioning tool has been tested on Ubuntu 24.04. If you are provisioning your server differently you have more freedom over the host OS.
@@ -52,7 +52,7 @@ Each instance needs its own hostname, resolving publicly to the server's IP addr
 
 ## Step 1 — Provision the server
 
-Run this from your own machine, in the `server-provisioning/` directory of your local checkout. It installs Docker and Compose, applies a default-deny firewall, hardens SSH, the kernel and Docker, and clones this repository onto the server.
+Run this from your own machine, in the `server-provisioning/` directory of your local checkout. It installs Docker and Compose, applies a default-deny firewall, hardens SSH, the kernel and Docker, moves SSH to port 822, and clones this repository onto the server.
 
 Describe your host in the inventory:
 
@@ -66,6 +66,7 @@ dhis2-prod
 ansible_host=203.0.113.10        # your server's public IP or DNS name
 ansible_user=ubuntu
 #ansible_ssh_private_key_file=~/.ssh/id_dhis2
+#ansible_port=822                 # uncomment after the first run, see below
 EOF
 ```
 
@@ -77,10 +78,19 @@ printf '%s' 'YOUR_SUDO_PASSWORD' > ./.ansible_become_pass   # gitignored
 make provision
 ```
 
-**Verify:** `ansible-galaxy` installs the pinned `sre.server` collection into a gitignored `collections/` directory, and the play finishes with `failed=0`. Then, on the server:
+The first run connects on port 22 and moves SSH to port 822. It keeps 22 open alongside 822, so the run never cuts off its own connection, and ends by reporting that the move is not finished. Uncomment `ansible_port=822` in `inventory/production.ini` and run it again, which closes 22:
 
 ```shell
-ssh ubuntu@203.0.113.10
+make provision
+```
+
+> [!NOTE]
+> To keep SSH on port 22, set `ssh_port: 22` in `inventory/group_vars/all.yml` (described below) before the first run, and skip the second one.
+
+**Verify:** `ansible-galaxy` installs the pinned `sre.server` collection into a gitignored `collections/` directory, and both runs finish with `failed=0`. Then, on the server:
+
+```shell
+ssh -p 822 ubuntu@203.0.113.10
 docker --version && docker compose version   # both present
 ls /opt/dhis2/Makefile                        # repository checked out
 ```

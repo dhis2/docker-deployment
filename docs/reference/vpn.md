@@ -76,8 +76,9 @@ Use `make stop-vpn` to tear down the stack. Peer configs and the cert volume
 persist across restarts.
 
 > **Firewall:** UDP `WIREGUARD_SERVER_PORT` (default `51820`) must be open inbound
-> on the server. The `server-provisioning/` playbook opens it by default
-> (`firewall_allowed_udp_ports`).
+> on the server. The `server-provisioning/` playbook opens 51820 by default
+> (`firewall_allowed_udp_ports`). If you change the port, list the new one there
+> too: the firewall matches the port clients connect to.
 
 > **Running the server on macOS (Docker Desktop):** disable *Settings -> Resources -> Network -> "Use kernel networking for UDP"*. With it enabled (the default), inbound UDP to a published port has its source IP rewritten before delivery, which breaks the WireGuard handshake.
 
