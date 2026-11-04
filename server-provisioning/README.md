@@ -12,9 +12,9 @@ start-monitoring`, `make start-vpn`, `make start-instance`, ...).
 ## Prerequisites
 
 - Ansible installed on the control machine (where you run `make provision`).
-- A target server running Ubuntu 24.04.
+- A target server running Ubuntu 24.04 or 26.04.
 - SSH access to the target server with sudo privileges.
-- Network access to GitHub on the control machine: `make provision` installs the shared baseline collection first (see below), along with the `ansible.posix` collection it depends on.
+- Network access to GitHub on the control machine: `make provision` installs the shared baseline collection first (see below), along with the `ansible.posix` and `community.general` collections it depends on.
 
 ## What it does
 
@@ -27,8 +27,8 @@ a copy each. `make collections` installs it at the tag pinned in
 change under you between two runs of the same playbook.
 
 - **`sre.server.bootstrap`** (shared): installs Docker + Compose and required packages (incl. `make`), optionally creates the operator user, and prepares the deploy directory.
-- **`sre.server.firewall`** (shared): configures a default-deny `DOCKER-USER` firewall, allowing only SSH/HTTP/HTTPS, the WireGuard UDP port, and inter-container traffic.
-- **`sre.server.harden`** (shared): SSH, kernel and Docker hardening (user-namespace remapping, etc.).
+- **`sre.server.firewall`** (shared): a default-deny ufw firewall for services on the host, plus a default-deny `DOCKER-USER` chain for published container ports, opening only SSH, HTTP/HTTPS and the WireGuard UDP port.
+- **`sre.server.harden`** (shared): SSH, kernel and Docker hardening (SSH on port 822, user-namespace remapping, etc.).
 - **`sre.server.baseline`** (shared): the three above, in that order. This is what the playbook lists.
 - **deploy** (optional, `clone_repo`): clones/updates this repository into
   `deploy_dir`, owned by the operator user. This one is specific to this project and stays here.
@@ -73,6 +73,7 @@ my-server-name
 ansible_host=server.example.com
 ansible_user=ubuntu
 #ansible_ssh_private_key_file=~/.ssh/id_my_server
+#ansible_port=822   # after the first run, see Usage
 ```
 
 ### Variables
@@ -103,8 +104,10 @@ docker_user_ssh_key: "ssh-ed25519 AAAA... you@host"
 | `docker_user_password` | _(none)_ | collection | **Pre-hashed** password; required only when `docker_user` is a dedicated account |
 | `docker_user_ssh_key` | _(none)_ | collection | Optional SSH public key for the dedicated operator account |
 | `allowed_ssh_users` | `[ ubuntu ]` | collection | SSH `AllowUsers` (the `docker_user` is added automatically) |
-| `firewall_allowed_ports` | `[ 22, 80, 443 ]` | collection | Host-facing TCP ports |
-| `firewall_allowed_udp_ports` | `[ 51820 ]` | collection | Host-facing UDP ports (51820 = WireGuard) |
+| `ssh_port` | `822` | collection | Port sshd listens on. The firewall opens it, and the port Ansible is connected on, by itself |
+| `firewall_allowed_ports` | `[ 80, 443 ]` | collection | TCP ports reachable from outside, for host services and published container ports alike. Leave SSH out |
+| `firewall_allowed_udp_ports` | `[ 51820 ]` | collection | UDP ports, opened the same way (51820 = WireGuard) |
+| `firewall_docker_bridges` | `[ docker0, br-+ ]` | collection | Bridges containers sit on; traffic leaving them is allowed |
 | `clone_repo` | `true` | here | Whether to clone/check out the repo into `deploy_dir` |
 | `repo_url` | `https://github.com/dhis2/docker-deployment` | here | Repo to check out |
 | `repo_branch` | `master` | here | Branch to check out |
@@ -126,17 +129,25 @@ override it - change it in the playbook.
 
     That installs the pinned collection into `collections/` first. To install it without provisioning anything, run `make collections`.
 
-5. Then, on the server, start the stacks with the `make` workflow (e.g.
+5. The first run connects on port 22 and moves SSH to `ssh_port` (822), keeping 22 open alongside it. Open 822 in any provider firewall, set `ansible_port=822` in the inventory and run `make provision` again, which closes 22. To stay on 22, set `ssh_port: 22` before the first run instead.
+6. Then, on the server, start the stacks with the `make` workflow (e.g.
    `make start-traefik`, `make start-monitoring`, `make start-vpn`). See the repository root `README.md` and `docs/` for those steps.
 
 ## Security notes
 
 - Docker uses user-namespace remapping for least privilege.
 - Operators use `sudo docker` rather than membership of the `docker` group.
-- The firewall is default-deny; only SSH/HTTP/HTTPS + WireGuard are allowed, plus inter-container traffic on default Docker subnets.
+- The firewall is default-deny, for services on the host and published container ports alike; only SSH, HTTP/HTTPS and WireGuard are open. Containers reach each other and the internet, but reach services on the host only on the listed ports.
 - AppArmor and unattended-upgrades are enabled.
 
-> **Important:** Do **not** use UFW or other firewall frontends alongside this
-> setup. Docker bypasses standard host chains, so UFW rules are ignored or may
-> conflict. All host and container traffic is managed through the collection's `firewall` role.
-> See [the firewall role](https://github.com/dhis2-sre/server-baseline/blob/master/roles/firewall/tasks/main.yml).
+The collection's `firewall` role manages ufw. Rules you add by hand with `ufw allow` survive its runs,
+but do not add another firewall frontend or `iptables-persistent`. See
+[the firewall role](https://github.com/dhis2-sre/server-baseline/blob/master/roles/firewall/tasks/main.yml).
+
+### Upgrading a server provisioned with `sre.server` 1.x
+
+`sre.server` 2.0.0 replaces the firewall with ufw and moves SSH to port 822. Before the first run on
+an existing server, check `sudo ss -tulpn` for services listening on the host: any port not in the
+lists above becomes unreachable. Then follow step 5 of [Usage](#usage): run, open 822 at the provider,
+set `ansible_port=822`, run again. See the
+[server-baseline changelog](https://github.com/dhis2-sre/server-baseline/blob/master/CHANGELOG.md).

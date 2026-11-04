@@ -1,4 +1,4 @@
-# The generic server baseline - Docker, the DOCKER-USER firewall, SSH and kernel hardening - lives in
+# The generic server baseline - Docker, the ufw firewall, SSH and kernel hardening - lives in
 # dhis2-sre/server-baseline and is shared with the other projects that provision Ubuntu hosts. This
 # repository owns only what is specific to deploying DHIS2 on top of it.
 #
@@ -12,4 +12,4 @@
 collections:
   - name: https://github.com/dhis2-sre/server-baseline.git
     type: git
-    version: v1.1.0
+    version: v2.0.0
